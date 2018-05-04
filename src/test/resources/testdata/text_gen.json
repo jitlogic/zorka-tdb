@@ -1,0 +1,21 @@
+{
+  "SQL_SELECT": [
+    "select", "SELECT",
+    "delete", "DELETE",
+    "update", "UPDATE",
+    "insert into", "INSERT INTO",
+    "replace into", "REPLACE INTO"],
+  "SQL_FIELDS": [
+    "*", "1",
+    "id, person, name",
+    "SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP, TIME_ZONE_ID",
+    "user, id, operator, firstname, surname, phone, email",
+    "uuid_short()", "TRIGGER_NAME"],
+  "SQL_FROM": [ "FROM", "INTO" ],
+  "SQL_TABLE": [ "QRTZ_CRON", "USERS", "PERSONS", "dual", "QRTZ_PAUSED_TRIGGER_ABCD" ],
+  "SQL_WHERE": ["WHERE"],
+  "SQL_CLAUSES": [
+    "SCHED_NAME = 'CLUSTERED' AND TRIGGER_NAME = ? AND TRIGGER_GROUP = ?", "id = ?",
+    "tstart > ? and tstop < ?", "SCHED_NAME = 'ABCD_SCHEDULER' AND TRIGGER_GROUP = ?"]
+}
+
