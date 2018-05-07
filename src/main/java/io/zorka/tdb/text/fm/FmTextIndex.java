@@ -16,6 +16,10 @@
 
 package io.zorka.tdb.text.fm;
 
+import io.zorka.tdb.search.EmptySearchResult;
+import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.RawDictCodec;
 
@@ -26,17 +30,8 @@ import io.zorka.tdb.text.re.SeqPatternNode;
 import io.zorka.tdb.util.BufferedIntegerSeqResult;
 import io.zorka.tdb.util.IntegerSeqResult;
 import io.zorka.tdb.util.ZicoUtil;
-import io.zorka.tdb.text.RawDictCodec;
-import io.zorka.tdb.text.re.SearchPattern;
-import io.zorka.tdb.text.re.SearchPatternNode;
-import io.zorka.tdb.util.BufferedIntegerSeqResult;
-import io.zorka.tdb.util.IntegerSeqResult;
-import io.zorka.tdb.util.ZicoUtil;
 
 import java.io.*;
-
-import static io.zorka.tdb.text.fm.FmIndexStore.chr;
-import static io.zorka.tdb.text.fm.FmIndexStore.rnk;
 
 
 /**
@@ -243,6 +238,12 @@ public class FmTextIndex extends AbstractTextIndex {
     }
 
 
+    /**
+     * Performs preliminary search in compressed index. Returns eptr and sptr - indexes in compressed BWT string marking
+     * beginning and end of result range.
+     * @param pbuf search phrase as byte array in reversed order
+     * @return long int containing both eptr and sptr (use sp() and ep() functions to decode both numbers);
+     */
     long locateL(byte[] pbuf) {
         return locateL(pbuf, 0, pbuf.length, 0, fif.getDatalen());
     }
@@ -322,6 +323,22 @@ public class FmTextIndex extends AbstractTextIndex {
     @Override
     public IntegerSeqResult searchXIB(byte[] phrase, byte m1) {
         return new FmTextIndexSearchXIBResult(this, phrase, m1);
+    }
+
+
+    @Override
+    public SearchResult searchIds(long tid, boolean deep) {
+        return new FmTextSearchIdsResult(this, (int)tid, deep);
+    }
+
+
+    @Override
+    public SearchResult search(SearchNode expr) {
+        if (expr instanceof TextNode) {
+            return new FmTextSearchResult(this, (TextNode)expr);
+        } else {
+            return EmptySearchResult.INSTANCE;
+        }
     }
 
 }

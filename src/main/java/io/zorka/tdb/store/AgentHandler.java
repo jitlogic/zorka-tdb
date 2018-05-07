@@ -49,7 +49,7 @@ public class AgentHandler implements AgentDataProcessor {
     private String agentUUID;
     private String sessionUUID;
     private int agentId;
-    private int storeId;
+    private long storeId;
 
     private SimpleTraceStore store;
 

@@ -17,6 +17,12 @@
 package io.zorka.tdb.text.wal;
 
 import io.zorka.tdb.ZicoException;
+import io.zorka.tdb.meta.MetaIndexUtils;
+import io.zorka.tdb.search.EmptySearchResult;
+import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.rslt.MappingSearchResult;
+import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.RawDictCodec;
 import io.zorka.tdb.text.TextIndexUtils;
@@ -30,6 +36,11 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.function.Function;
+
+import static io.zorka.tdb.meta.MetadataTextIndex.FIDS_MARKER;
+import static io.zorka.tdb.meta.MetadataTextIndex.TIDS_MARKER;
+import static io.zorka.tdb.meta.MetadataTextIndex.TID_MARKER;
 
 /**
  * This is writable index that will store additional items in Write Ahead Log to be later
@@ -471,6 +482,81 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         return new BufferedIntegerSeqResult(this::getNWords, new WalTextIndexExtractGetter(this, phrase, m1));
     }
 
+    private int jump(int pos, byte b) {
+        while (pos < fpos && buffer.get(pos) != b) pos++;
+        return pos;
+    }
+
+    private int jump(int pos) {
+        return jump(pos, RawDictCodec.MARK_ID1);
+    }
+
+    private void scan(byte[] text, BitmapSet matches, boolean fetchTids) {
+        int rec = 0;
+        int limit = fpos - text.length;  // TODO concurrency
+        byte[] buf = new byte[8];
+
+        for (int pos = jump(4) + 1; pos <= limit; pos = jump(pos) + 1) {
+            if (pos >= limit) break;
+            // TODO obsłużenie matchStart i matchEnd
+            while (pos < limit) {
+                boolean match = true, mbrk = false;
+                for (int i = 0 ; i < text.length; i++) {
+                    byte b = buffer.get(pos+i);
+                    if (b >= 0 && b <= RawDictCodec.MARK_LAST) {
+                        match = false; mbrk = true; break;
+                    } else if (text[i] != b) {
+                        match = false; break;
+                    }
+                }
+                if (mbrk) {
+                    break;
+                } else if (match) {
+                    if (fetchTids) {
+                        for (int i = 0; i < 8; i++) {
+                            byte b = buffer.get(pos-i-1);
+                            if (b >= 0 && b < 32) {
+                                ZicoUtil.reverse(buf, 0, i);
+                                matches.add((int)RawDictCodec.idDecode(buf, 0, i));
+                            } else {
+                                buf[i] = b;
+                            }
+                        }
+                    } else {
+                        matches.add(rec);
+                    }
+                    break;
+                } else {
+                    pos++;
+                }
+            } // while (pos < limit)
+            rec++;
+        } // for ()
+    }
+
+    @Override
+    public SearchResult search(SearchNode expr) {
+        if (expr instanceof TextNode) {
+            byte[] text = ((TextNode)expr).getText();
+            BitmapSet matches = new BitmapSet();
+
+            scan(text, matches, false);
+
+            return new MappingSearchResult(matches.searchAll(), x -> x + idBase);
+        } else {
+            return EmptySearchResult.INSTANCE;
+        }
+    }
+
+    @Override
+    public SearchResult searchIds(long tid, boolean deep) {
+        byte[] text = MetaIndexUtils.encodeMetaInt(TID_MARKER, (int)tid, deep ? FIDS_MARKER : TIDS_MARKER);
+        BitmapSet matches = new BitmapSet();
+
+        scan(text, matches, true);
+
+        return new MappingSearchResult(matches.searchAll(), Function.identity());
+    }
 }
 
 

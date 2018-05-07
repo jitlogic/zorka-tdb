@@ -11,6 +11,7 @@ import io.zorka.tdb.text.re.SearchPatternNode;
 
 import java.nio.ByteBuffer;
 
+@Deprecated
 public class WalTextIndexSearchIterator implements IntegerGetter, SearchBufView {
 
     private WalTextIndex index;

@@ -19,6 +19,12 @@ package io.zorka.tdb.store;
 import io.zorka.tdb.MissingSessionException;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.*;
+import io.zorka.tdb.search.EmptySearchResult;
+import io.zorka.tdb.search.QmiNode;
+import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.SearchableStore;
+import io.zorka.tdb.search.lsn.AndExprNode;
+import io.zorka.tdb.search.rslt.*;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
 import io.zorka.tdb.text.re.SeqPatternNode;
@@ -52,7 +58,7 @@ import static io.zorka.tdb.store.TraceStoreUtil.*;
 /**
  *
  */
-public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder {
+public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder, SearchableStore {
 
     private static final Logger log = LoggerFactory.getLogger(SimpleTraceStore.class);
 
@@ -63,7 +69,7 @@ public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder {
 
     private File baseDir, root;
 
-    private int storeId;
+    private long storeId;
 
     private CompositeIndex ctext, cmeta;
     private StructuredTextIndex itext;
@@ -218,7 +224,7 @@ public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder {
             RawTraceDataFile.ZLIB_COMPRESSION | RawTraceDataFile.CRC32_CHECKSUM);
     }
 
-    public int getStoreId() {
+    public long getStoreId() {
         return storeId;
     }
 
@@ -330,7 +336,7 @@ public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder {
         if (fdata == null) open();
 
         List<Long> rslt = new ArrayList<>();
-        qindex.findChunkIds(rslt, storeId, UUID.fromString(traceUUID));
+        qindex.findChunkIds(rslt, (int)storeId, UUID.fromString(traceUUID));
 
         return rslt;
     }
@@ -338,7 +344,7 @@ public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder {
     public void findChunkIds(List<Long> acc, UUID uuid) {
         if (fdata == null) open();
 
-        qindex.findChunkIds(acc, storeId, uuid);
+        qindex.findChunkIds(acc, (int)storeId, uuid);
     }
 
     @Override
@@ -431,7 +437,7 @@ public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder {
         throw new ZicoException("Regexps not implemented (yet).");
     }
 
-    @Override
+    @Override @Deprecated
     public Object functionToken(String fn, List<Object> args) {
         if ("==".equals(fn)) {
             if (args.size() != 2) throw new ZicoException("Requires exactly two arguments.");
@@ -502,6 +508,46 @@ public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder {
         return slot >= 0 ? (((long)storeId) << 32) | slot : -1;
     }
 
+
+    private SearchResult tidTranslatingResult(SearchResult rslt, boolean deep) {
+        CascadingSearchResultsMapper mapper = new CascadingSearchResultsMapper(rslt,
+                tid -> imeta.searchIds(tid, deep));
+        return new StreamingSearchResult(mapper);
+    }
+
+
+    @Override
+    public SearchResult search(SearchNode expr) {
+        boolean deep = true;
+        SearchResult sr = null;
+        if (expr instanceof QmiNode) {
+            sr = qindex.search(expr);
+        } else if (expr instanceof AndExprNode) {
+            List<SearchResult> tsr = new ArrayList<>();
+            SearchResult qsr = null;
+            for (SearchNode node : ((AndExprNode)expr).getArgs()) {
+                if (node instanceof QmiNode) {
+                    qsr = qindex.search(node);
+                    deep = ((QmiNode)node).isDeepSearch();
+                } else {
+                    tsr.add(itext.search(node));
+                }
+            }
+            for (int i = 0; i < tsr.size(); i++) {
+                tsr.set(i, tidTranslatingResult(tsr.get(i), deep));
+            }
+            if (tsr.size() == 0) {
+                sr = qsr;
+            } else  {
+                sr = tsr.size() == 1 ? tsr.get(0) : new ConjunctionSearchResult(tsr);
+                if (qsr != null) {
+                    sr = new ConjunctionSearchResult(qsr, sr);
+                }
+            }
+        }
+
+        return sr != null ? new MappingSearchResult(sr, x -> (x | (storeId << 32))) : EmptySearchResult.INSTANCE;
+    }
 
 } // class SimpleTraceStore { .. }
 

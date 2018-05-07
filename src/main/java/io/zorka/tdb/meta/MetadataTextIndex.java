@@ -16,6 +16,7 @@
 
 package io.zorka.tdb.meta;
 
+import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.text.RawDictCodec;
 import io.zorka.tdb.util.IntegerSeqResult;
 import io.zorka.tdb.text.WritableTextIndex;
@@ -131,12 +132,14 @@ public class MetadataTextIndex {
     }
 
 
+    @Deprecated
     public IntegerSeqResult findByIds(int tid, boolean deep) {
         byte[] buf = MetaIndexUtils.encodeMetaInt(TID_MARKER, tid, deep ? FIDS_MARKER : TIDS_MARKER);
         return tidx.searchXIB(buf, TID_MARKER);
     }
 
 
+    @Deprecated
     public List<Integer> extractTids(String re, byte marker) {
         List<Integer> rslt = new ArrayList<>();
 
@@ -177,6 +180,7 @@ public class MetadataTextIndex {
         return rslt;
     }
 
+    @Deprecated
     public String getTraceUUID(int traceId) {
         byte[] buf = new byte[16];
         int pos = 0;
@@ -209,6 +213,9 @@ public class MetadataTextIndex {
         return null;
     }
 
+    public SearchResult searchIds(long tid, boolean deep) {
+        return tidx.searchIds(tid, deep);
+    }
 
     public void close() throws IOException {
         tidx.close();

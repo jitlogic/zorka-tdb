@@ -1,12 +1,13 @@
 package io.zorka.tdb.text.ci;
 
 
+import io.zorka.tdb.search.EmptySearchResult;
+import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.rslt.ListSearchResultsMapper;
+import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.StreamingSearchResult;
+import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.text.AbstractTextIndex;
-import io.zorka.tdb.text.TextIndex;
-import io.zorka.tdb.text.WritableTextIndex;
-import io.zorka.tdb.text.re.SearchPattern;
-import io.zorka.tdb.text.re.SearchPatternNode;
-import io.zorka.tdb.util.IntegerSeqResult;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WritableTextIndex;
 import io.zorka.tdb.text.re.SearchPattern;
@@ -479,6 +480,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         return rslt;
     }
 
+
     /**
      * Locates all archived index files suitable for removal.
      */
@@ -501,6 +503,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
         return rslt;
     }
+
 
     public List<TextIndex> findRemoveWalIndexes(List<TextIndex> idxs) {
         List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, TextIndex::isOpen);
@@ -531,6 +534,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
         return -1;
     }
+
 
     /**
      * Looks for candidate for merge in normal working condition.
@@ -581,6 +585,26 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         }
 
         return rslt.size() > 1 ? rslt : null;
+    }
+
+
+    @Override
+    public SearchResult search(SearchNode expr) {
+        if (expr instanceof TextNode) {
+            ListSearchResultsMapper<TextIndex> results = new ListSearchResultsMapper<>(
+                    getCState().getSearchIndexes(), x -> x.search(expr));
+            return new StreamingSearchResult(results);
+        } else {
+            return EmptySearchResult.INSTANCE;
+        }
+    }
+
+
+    @Override
+    public SearchResult searchIds(long tid, boolean deep) {
+        ListSearchResultsMapper<TextIndex> results = new ListSearchResultsMapper<>(
+                getCState().getSearchIndexes(), x -> x.searchIds(tid, deep));
+        return new StreamingSearchResult(results);
     }
 
 }

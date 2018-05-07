@@ -18,6 +18,7 @@ package io.zorka.tdb.util;
 
 import java.util.Arrays;
 
+@Deprecated
 public class BufferedIntegerSeqResult implements IntegerSeqResult {
 
     private int[] results;

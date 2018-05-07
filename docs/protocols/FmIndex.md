@@ -17,6 +17,14 @@ Raw dictionary data (non-transformed, non-compressed) is encoded in the followin
 0x03|id1|0x01|text1|0x02|id1|0x03|id2|0x01|text2|0x02|id2|0x03|.....idN|0x01|textN|0x02|idN|0x03
 ```
 
+Markers used have their corresponding constants defined in RawDictCodec class:
+
+* `MARK_ID1 = 0x01` - leading ID marker;
+
+* `MARK_TXT = 0x02` - text marker;
+
+* `MARK_ID2 = 0x03` - trailing ID marker;
+
 ID is a variable length integer encoding as described in _Encoding Numbers_ section below.
 
 For each FM file IDs always start from idBase and are incremented by 1. Thus number of dictionary entries can be 

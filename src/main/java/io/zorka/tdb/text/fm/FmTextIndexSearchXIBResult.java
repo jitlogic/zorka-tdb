@@ -10,6 +10,7 @@ import static io.zorka.tdb.text.fm.FmIndexStore.chi;
 import static io.zorka.tdb.text.fm.FmIndexStore.chr;
 import static io.zorka.tdb.text.fm.FmIndexStore.rnk;
 
+@Deprecated
 public class FmTextIndexSearchXIBResult implements IntegerSeqResult {
 
     private FmTextIndex index;

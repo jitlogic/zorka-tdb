@@ -16,6 +16,8 @@
 
 package io.zorka.tdb.text;
 
+import io.zorka.tdb.search.SearchableStore;
+import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.text.re.SearchPattern;
 import io.zorka.tdb.text.re.SearchPatternNode;
 import io.zorka.tdb.util.IntegerSeqResult;
@@ -24,9 +26,8 @@ import java.io.Closeable;
 
 /**
  * Read only full text index. Basic API.
- * It maps
  */
-public interface TextIndex extends Closeable {
+public interface TextIndex extends Closeable, SearchableStore {
 
     String getPath();
 
@@ -115,7 +116,7 @@ public interface TextIndex extends Closeable {
      */
     long length();
 
-
+    @Deprecated
     IntegerSeqResult searchIds(SearchPatternNode node);
 
 
@@ -124,9 +125,10 @@ public interface TextIndex extends Closeable {
      * @param pattern
      * @return
      */
+    @Deprecated
     IntegerSeqResult searchIds(SearchPattern pattern);
 
-
+    @Deprecated
     default IntegerSeqResult searchIds(String text) {
         return searchIds(new SearchPattern(text));
     }
@@ -139,8 +141,15 @@ public interface TextIndex extends Closeable {
      * @param m1 marker starting preceeding value
      * @return iterable result
      */
+    @Deprecated
     IntegerSeqResult searchXIB(byte[] phrase, byte m1);
 
+    /**
+     * Used in metadata text index
+     * @param tid
+     * @return
+     */
+    SearchResult searchIds(long tid, boolean deep);
 
     TextIndexState getState();
 

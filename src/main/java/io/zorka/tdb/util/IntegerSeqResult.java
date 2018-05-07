@@ -24,6 +24,7 @@ import java.util.Set;
 /**
  * Search result from text index. Objects implementing this interface are returned from text index search functions.
  */
+@Deprecated
 public interface  IntegerSeqResult {
 
     /**

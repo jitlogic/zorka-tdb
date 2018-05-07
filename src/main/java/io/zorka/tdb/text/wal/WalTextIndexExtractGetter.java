@@ -7,6 +7,7 @@ import io.zorka.tdb.util.ZicoUtil;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+@Deprecated
 public class WalTextIndexExtractGetter implements IntegerGetter {
     private WalTextIndex index;
     private byte[] phrase;

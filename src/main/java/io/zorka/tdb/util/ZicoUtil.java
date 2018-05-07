@@ -282,6 +282,12 @@ public class ZicoUtil {
         reverse(arr, 0, arr.length);
     }
 
+    /**
+     * Reverses order of bytes in given part of array
+     * @param arr byte array
+     * @param from start index (inclusive)
+     * @param to end index (exclusive)
+     */
     public static void reverse(byte[] arr, int from, int to) {
         if (to - from < 2) {
             return;

@@ -19,6 +19,7 @@ import java.util.Set;
 import static io.zorka.tdb.text.fm.FmIndexStore.chr;
 import static io.zorka.tdb.text.fm.FmIndexStore.rnk;
 
+@Deprecated
 public class FmTextIndexRegexIterator implements IntegerGetter, SearchBufView {
     private FmTextIndex index;
     private Set<Integer> rslts = new HashSet<>();

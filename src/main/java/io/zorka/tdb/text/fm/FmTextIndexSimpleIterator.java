@@ -8,6 +8,7 @@ import io.zorka.tdb.util.IntegerGetter;
 import java.util.HashSet;
 import java.util.Set;
 
+@Deprecated
 public class FmTextIndexSimpleIterator implements IntegerGetter {
     private FmTextIndex index;
     private Set<Integer> rslts = new HashSet<>();

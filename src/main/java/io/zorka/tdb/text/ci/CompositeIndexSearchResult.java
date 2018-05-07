@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+@Deprecated
 public class CompositeIndexSearchResult implements IntegerSeqResult {
 
     private List<TextIndex> indexes;

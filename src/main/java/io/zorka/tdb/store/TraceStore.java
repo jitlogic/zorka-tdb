@@ -18,6 +18,7 @@ package io.zorka.tdb.store;
 
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.ChunkMetadata;
+import io.zorka.tdb.search.SearchableStore;
 
 import java.io.Closeable;
 import java.util.Collections;
@@ -29,7 +30,7 @@ import java.util.concurrent.Executor;
 /**
  * API do trace storage.
  */
-public interface TraceStore extends Closeable {
+public interface TraceStore extends Closeable, SearchableStore {
 
     /**
      * Handles trace data coming from agents.

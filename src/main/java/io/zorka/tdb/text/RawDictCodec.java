@@ -26,9 +26,10 @@ public class RawDictCodec {
     /** ID marker. Occurs just before leading ID (that is, ID placed before text). */
     public static final byte MARK_ID1   = 0x01;
 
-    /** Text marker. */
+    /** Text marker. Occurs just before text. */
     public static final byte MARK_TXT   = 0x02;
 
+    /** ID marker. Occurs just before trailing ID (at the end of text). */
     public static final byte MARK_ID2   = 0x03;
 
     public static final byte MARK_LAST  = MARK_ID2;

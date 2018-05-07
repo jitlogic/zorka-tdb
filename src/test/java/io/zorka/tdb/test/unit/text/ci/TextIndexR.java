@@ -1,5 +1,7 @@
 package io.zorka.tdb.test.unit.text.ci;
 
+import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.re.SearchPattern;
@@ -88,6 +90,11 @@ public class TextIndexR extends AbstractTextIndex implements TextIndex {
     }
 
     @Override
+    public SearchResult searchIds(long tid, boolean deep) {
+        return null;
+    }
+
+    @Override
     public void close() { }
 
     @Override
@@ -109,4 +116,10 @@ public class TextIndexR extends AbstractTextIndex implements TextIndex {
     public NavigableMap<Integer,String> getWords() {
         return words;
     }
+
+    @Override
+    public SearchResult search(SearchNode expr) {
+        return null;
+    }
+
 }

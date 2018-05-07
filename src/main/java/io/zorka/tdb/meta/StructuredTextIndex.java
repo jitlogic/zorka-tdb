@@ -16,6 +16,14 @@
 
 package io.zorka.tdb.meta;
 
+import io.zorka.tdb.ZicoException;
+import io.zorka.tdb.search.EmptySearchResult;
+import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.rslt.DirectMappingSearchResult;
+import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.CachedItemsSearchResult;
+import io.zorka.tdb.search.ssn.TextNode;
+import io.zorka.tdb.search.tsn.KeyValSearchNode;
 import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
 import io.zorka.tdb.text.AbstractTextIndex;
@@ -489,6 +497,11 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
     }
 
     @Override
+    public SearchResult searchIds(long tid, boolean deep) {
+        throw new ZicoException("Not implemented.");
+    }
+
+    @Override
     public IntegerSeqResult searchIds(String pattern) {
         return tidx.searchIds(pattern);
     }
@@ -589,4 +602,48 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
     public void close() throws IOException {
         tidx.close();
     }
+
+
+    private SearchResult searchKeyVal(KeyValSearchNode expr) {
+
+        int idk = tidx.get(expr.getKey());
+
+        if (idk < 0) return EmptySearchResult.INSTANCE;
+
+        // Character class search nodes not supported (yet)
+        if (!(expr.getVal() instanceof TextNode)) return EmptySearchResult.INSTANCE;
+
+
+        TextNode tsn = (TextNode)expr.getVal();
+
+        if (tsn.isMatchStart() && tsn.isMatchEnd()) {
+            // Looking for exact match ...
+            int idv = tidx.get(tsn.getText());
+            if (idv < 0) return EmptySearchResult.INSTANCE;
+
+            byte[] buf = encTuple2(KR_PAIR, idk, idv);
+            int rslt = tidx.get(buf);
+            return rslt >= 0 ? new CachedItemsSearchResult(rslt) : EmptySearchResult.INSTANCE;
+        } else {
+            SearchResult sr = tidx.search(tsn);
+            int sz = sr.estimateSize(100);
+            if (sz == 0) return EmptySearchResult.INSTANCE;
+            return new DirectMappingSearchResult(sr, r -> {
+                byte[] buf = encTuple2(KR_PAIR, idk, (int)(long)r);
+                return (long)tidx.get(buf); });
+        }
+    }
+
+
+    @Override
+    public SearchResult search(SearchNode expr) {
+        if (expr instanceof TextNode) {
+            return tidx.search(expr);
+        } else if (expr instanceof KeyValSearchNode) {
+            return searchKeyVal((KeyValSearchNode) expr);
+        } else {
+            return EmptySearchResult.INSTANCE;
+        }
+    }
+
 }

@@ -17,6 +17,11 @@
 package io.zorka.tdb.meta;
 
 import io.zorka.tdb.ZicoException;
+import io.zorka.tdb.search.EmptySearchResult;
+import io.zorka.tdb.search.QmiNode;
+import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.SearchableStore;
+import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.util.*;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.util.BufferedIntegerSeqResult;
@@ -45,7 +50,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * but not removed, record index is later used as part of chunkId exposed to user
  * code.
  *
- * Header format (40 bytes):
+ * Header format (64 bytes):
  *
  * 0        8       16       24       32       40       48       56       64
  * +--------+--------+--------+--------+--------+--------+--------+--------+
@@ -63,7 +68,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * +--------+--------+--------+--------+--------+--------+--------+--------+
  *
  *
- * Record format (40 bytes):
+ * Record format (64 bytes):
  *
  * 0        8       16       24       32       40       48       56       64
  * +--------+--------+--------+--------+--------+--------+--------+--------+
@@ -83,14 +88,38 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * |                                 UUID (low word)                       | W8
  * +--------+--------+--------+--------+--------+--------+--------+--------+
  *
+ * W1 - timestamp and offset
+ * tstamp - timestamp (seconds since Epoch);
+ * startOffs - logical offset (of chunk inside whole trace)
+ *
+ * W2 - various trace attributes
+ * e - error flag (if 1, tracer has marked error);
+ * tst-ms - millisecond part of timestamp (rounded up to 10-s of millisecods);
+ * typeId - trace type ID (assigned from configuration database);
+ * envId - environment ID (assigned from configuration database);
+ * appId - application ID (assigned from configuration database);
+ *
+ * W3 - trace store position
+ * dataOffs - offset in trace data store;
+ * chunkNum - chunk sequential number
+ *
+ * W4 - description and duration
+ * did - description text ID;
+ * duration - trace (chunk) duration (ticks);
+ *
+ * W5 - metadata index references
+ * ftid - full-depth search metadata
+ * ttid - shallow search metadata (only top trace record)
  *
  * W6 - tracer stats, if values greater than
  * calls - number of calls registered by tracer (up to 4G);
  * recs - number of records registered by tracer (up to 24M);
  * errors - number of errors registered by tracer (up to 64k) - errL|errH (lower and higher byte);
  *
+ * W7, W8 - trace UUID (encoded)
+ *
  */
-public class MetadataQuickIndex implements Closeable {
+public class MetadataQuickIndex implements Closeable, SearchableStore {
 
     private final static int DEFAULT_DELTA = 16 * 1024 * 1024;
     private final static int DEFAULT_FUZZ  = 1024;
@@ -485,6 +514,90 @@ public class MetadataQuickIndex implements Closeable {
         buffer = null;
     }
 
+    @Override
+    public SearchResult search(SearchNode expr) {
+        if (expr instanceof QmiNode) {
+            return new MetadataSearchResult((QmiNode)expr);
+        } else {
+            return EmptySearchResult.INSTANCE;
+        }
+    }
+
+    public class MetadataSearchResult implements SearchResult {
+        private QmiNode node;
+
+        private long tstart, tstop;
+        private int pos;
+        private long minDuration, maxDuration;
+        private long w2v, w2m;
+
+        public MetadataSearchResult(QmiNode node) {
+            this.node = node;
+            this.tstart = node.getTstart() / 1000;
+            this.tstop = node.getTstop() / 1000;
+            this.w2v = format_W2(node);
+            this.w2m = format_W2M(node);
+            this.minDuration = node.getMinDuration();
+            this.maxDuration = node.getMaxDuration();
+            this.pos = fpos;
+        }
+
+        private long format_W2(QmiNode md) {
+            return (((long)md.getAppId()) << 48)
+                    | (((long)md.getEnvId()) << 32)
+                    | (((long)md.getTypeId()) << 16)
+                    | (md.isErrorFlag() ? 1 : 0);
+        }
+
+        private long format_W2M(QmiNode md) {
+            return
+                    (md.getAppId()  != 0 ? 0xffff000000000000L : 0L)
+                            | (md.getEnvId()  != 0 ? 0x0000ffff00000000L : 0L)
+                            | (md.getTypeId() != 0 ? 0x00000000ffff0000L : 0L)
+                            | (md.isErrorFlag() ? 0x0000000000000001L : 0L);
+        }
+
+        @Override
+        public long nextResult() {
+            ByteBuffer bb = buffer;
+
+            int rslt = -1;
+            int lfu = 0;
+
+            rwlock.readLock().lock();
+
+            try {
+                while (pos >= HEADER_SIZE + RECORD_SIZE) {
+                    pos -= RECORD_SIZE;
+                    long w1 = bb.getLong(pos), t = w1 & 0xffffffffL;
+                    if (t < tstart) {
+                        if (lfu < fuzz) {
+                            lfu++; continue;
+                        } else {
+                            break;
+                        }
+                    }
+                    lfu = 0;
+                    long w2 = bb.getLong(pos + WORD_SIZE);
+                    long w4 = bb.getLong(pos + WORD_SIZE * 3);
+                    long wd = w4 >>> 32;
+                    if (w2v == (w2 & w2m) && t <= tstop && wd >= minDuration && wd < maxDuration) {
+                        rslt = ((pos - HEADER_SIZE) / RECORD_SIZE);
+                        break;
+                    }
+                }
+            } finally {
+                rwlock.readLock().unlock();
+            }
+
+            return rslt;
+        }
+
+        @Override
+        public int estimateSize(int limit) {
+            return 0;
+        }
+    }
 
     /**  */
     public class UnsortedSearchResult implements IntegerGetter {

@@ -18,8 +18,11 @@ package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.ChunkMetadata;
+import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.SearchableStore;
+import io.zorka.tdb.search.rslt.ListSearchResultsMapper;
+import io.zorka.tdb.search.rslt.StreamingSearchResult;
 import io.zorka.tdb.text.ci.CompositeIndex;
-import io.zorka.tdb.meta.ChunkMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +44,7 @@ import static io.zorka.tdb.store.TraceStoreUtil.*;
 /**
  *
  */
-public class RotatingTraceStore implements TraceStore {
+public class RotatingTraceStore implements TraceStore, SearchableStore {
 
     private static final Logger log = LoggerFactory.getLogger(RotatingTraceStore.class);
 
@@ -345,6 +348,23 @@ public class RotatingTraceStore implements TraceStore {
         current.close();
     }
 
+
+    private synchronized List<TraceStore> listStores() {
+        List<TraceStore> lst = new ArrayList<>();
+        lst.add(current);
+        lst.addAll(archived.values());
+        return lst;
+    }
+
+
+    @Override
+    public io.zorka.tdb.search.rslt.SearchResult search(SearchNode expr) {
+        ListSearchResultsMapper<TraceStore> results = new ListSearchResultsMapper<>(
+                listStores(), store -> store.search(expr));
+        return new StreamingSearchResult(results);
+    }
+
+
     private class SearchResult implements TraceSearchResult {
 
         private List<SimpleTraceStore> stores = new ArrayList<>();
@@ -355,7 +375,7 @@ public class RotatingTraceStore implements TraceStore {
         SearchResult(StoreSearchQuery query) {
             this.query = query;
             stores.addAll(archived.values());
-            stores.sort(Comparator.comparingInt(SimpleTraceStore::getStoreId));
+            stores.sort(Comparator.comparingLong(SimpleTraceStore::getStoreId));
             cur = current.search(query);
         }
 
