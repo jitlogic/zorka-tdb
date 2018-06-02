@@ -16,8 +16,7 @@
 
 package io.zorka.tdb.text.fm;
 
-import io.zorka.tdb.text.wal.WalTextIndex;
-import io.zorka.tdb.text.wal.WalTextIndex;
+import io.zorka.tdb.text.WalTextIndex;
 
 import java.io.IOException;
 

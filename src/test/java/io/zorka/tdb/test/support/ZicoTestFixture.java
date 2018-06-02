@@ -19,22 +19,21 @@ package io.zorka.tdb.test.support;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.store.*;
 import io.zorka.tdb.text.*;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
 import io.zorka.tdb.text.fm.FmTextIndex;
-import io.zorka.tdb.text.wal.WalTextIndex;
-import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.WalTextIndex;
 import io.zorka.tdb.store.RecursiveTraceDataRetriever;
 import io.zorka.tdb.store.RotatingTraceStore;
-import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
-import io.zorka.tdb.text.wal.WalTextIndex;
 import org.junit.Before;
 
 import java.io.*;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.Assert.*;
@@ -225,4 +224,13 @@ public class ZicoTestFixture {
     }
 
 
+    public Set<Long> drain(SearchResult rslt) {
+        Set<Long> set = new HashSet<>();
+
+        for (long l = rslt.nextResult(); l >= 0; l = rslt.nextResult()) {
+            set.add(l);
+        }
+
+        return set;
+    }
 }

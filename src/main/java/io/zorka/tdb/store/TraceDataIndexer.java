@@ -17,18 +17,12 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.MetadataInfo;
 import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.util.CborDataWriter;
-import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.StructuredTextIndex;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static io.zorka.tdb.store.TraceDataFormat.*;
 
 /**
  * Normalizes all strings and translates IDs. Extract
@@ -88,7 +82,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         mrslt.clear();
         if (mrecs.size() > 0) {
             for (ChunkMetadata md : mrecs) {
-                md.clearFlag(MetadataInfo.TF_INITIAL);
+                md.clearFlag(ChunkMetadata.TF_INITIAL);
             }
         }
     }
@@ -151,7 +145,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     public void mpop() {
         if (mrecs.size() > 0) {
             ChunkMetadata md = mrecs.get(mrecs.size()-1);
-            md.markFlag(MetadataInfo.TF_FINAL);
+            md.markFlag(ChunkMetadata.TF_FINAL);
             md.setTstop(tstop);
             md.setDuration(md.getTstop()-md.getTstart());
             mrslt.add(md);
@@ -194,7 +188,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         md.setStackDepth(stackDepth);
         md.setChunkNum(chnum);
         md.setTraceUUID(mtop == null ? traceUUID : UUID.randomUUID().toString());
-        md.markFlag(MetadataInfo.TF_INITIAL);
+        md.markFlag(ChunkMetadata.TF_INITIAL);
         md.setStartOffs(lastPos);
         md.setMethodId(lastMethod);
         md.setTstamp(lastTstamp);

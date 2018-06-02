@@ -18,7 +18,7 @@ package io.zorka.tdb.test.unit.text.wal;
 
 import io.zorka.tdb.test.support.TestUtil;
 import io.zorka.tdb.test.support.ZicoTestFixture;
-import io.zorka.tdb.text.wal.WalTextIndex;
+import io.zorka.tdb.text.WalTextIndex;
 
 import org.junit.Test;
 import static org.junit.Assert.*;

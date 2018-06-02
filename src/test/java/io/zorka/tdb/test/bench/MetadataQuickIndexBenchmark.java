@@ -17,11 +17,9 @@
 package io.zorka.tdb.test.bench;
 
 import io.zorka.tdb.meta.MetadataQuickIndex;
-import io.zorka.tdb.meta.MetadataSearchQuery;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.test.support.BenchmarkUtil;
 import io.zorka.tdb.test.support.ZicoTestFixture;
-import io.zorka.tdb.util.IntegerSeqResult;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
@@ -31,8 +29,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
-import static org.junit.Assume.*;
 
 @Warmup(iterations = 2, time = 4, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 4, time = 8, timeUnit =  TimeUnit.SECONDS)
@@ -90,14 +86,14 @@ public class MetadataQuickIndexBenchmark {
     public void benchmarkQueryGeneric(BenchmarkState state, Blackhole hole, int nrecs) {
         MetadataQuickIndex mqi = state.get(nrecs);
         ChunkMetadata tm = new ChunkMetadata();
-        MetadataSearchQuery mq = new MetadataSearchQuery();
-        mq.setTstop(Long.MAX_VALUE);
+//        MetadataSearchQuery mq = new MetadataSearchQuery();
+//        mq.setTstop(Long.MAX_VALUE);
         int pos = 0;
         for (int i = 0; i < 1000; i++) {
             //tm.setAppId(i % 8 + 1);
             //tm.setAppId(0);
             //tm.setErrorFlag(true);
-            IntegerSeqResult rslt = mqi.search(mq); // TODO this is not proper benchmark
+            //IntegerSeqResult rslt = mqi.search(mq); // TODO this is not proper benchmark
             //pos = rslt.getLastPos();
             hole.consume(pos);
         }

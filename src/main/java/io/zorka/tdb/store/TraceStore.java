@@ -75,13 +75,6 @@ public interface TraceStore extends Closeable, SearchableStore {
 
     ChunkMetadata getChunkMetadata(long chunkId);
 
-    /**
-     * Returns list of traces matching selected criteria.
-     * @param query search query;
-     * @return list of results
-     */
-    TraceSearchResult search(StoreSearchQuery query);
-
     /** Starts store archival process.
      *  Simple store will rebuild all indexes in compressed, read-only form.
      *  Rotating store will archive current simple store and start a new one.

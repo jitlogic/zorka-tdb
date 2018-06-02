@@ -22,11 +22,7 @@ import io.zorka.tdb.text.fm.FmCompressionLevel;
 import io.zorka.tdb.text.fm.FmIndexFileStore;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
 import io.zorka.tdb.text.fm.FmTextIndex;
-import io.zorka.tdb.text.wal.WalTextIndex;
-import io.zorka.tdb.test.support.*;
-import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
-import io.zorka.tdb.text.fm.FmTextIndex;
-import io.zorka.tdb.text.wal.WalTextIndex;
+import io.zorka.tdb.text.WalTextIndex;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
@@ -37,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-import static io.zorka.tdb.test.support.ZicoTestFixture.MB;
 import static io.zorka.tdb.text.fm.FmCompressionLevel.*;
 
 @Warmup(iterations = 2, time = 4, timeUnit = TimeUnit.SECONDS)

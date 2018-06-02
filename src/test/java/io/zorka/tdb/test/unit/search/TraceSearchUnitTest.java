@@ -16,24 +16,16 @@
 
 package io.zorka.tdb.test.unit.search;
 
-import io.zorka.tdb.meta.MetadataSearchQuery;
+import io.zorka.tdb.search.QueryBuilder;
+import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.store.*;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
-import static io.zorka.tdb.test.support.TraceTestDataBuilder.*;
-
-import io.zorka.tdb.meta.MetadataSearchQuery;
-import io.zorka.tdb.store.*;
 import io.zorka.tdb.test.support.TraceTestDataBuilder;
-import io.zorka.tdb.test.support.ZicoTestFixture;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -106,74 +98,50 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
     }
 
 
-    private List<Long> searchStore(TraceStore store, String...patterns) {
-        return searchStore(store, false, patterns);
-    }
-
-
-    private List<Long> searchStore(TraceStore store, boolean deep, String...patterns) {
-        StoreSearchQuery query = new StoreSearchQuery();
-        query.setLimit(50);
-        query.setSPos(0);
-
-        if (deep) query.setSflags(MetadataSearchQuery.DEEP_SEARCH);
-
-        for (String pattern : patterns) { query.addPattern(pattern); }
-
-        TraceSearchResult rslt = store.search(query);
-        assertNotNull("TraceStore search result is NULL !", rslt);
-
-        return rslt.drain();
-    }
-
-
     @Test
     public void testListAllTracesInArchivedStore() {
-        assertEquals(2, searchStore(store).size());
+        SearchNode q = QueryBuilder.qmi().node();
+        assertEquals(2, drain(store.search(q)).size());
     }
 
 
     @Test
     public void searchByFreeFormStrings() {
-        assertEquals(1, searchStore(store, "XYZ").size());
+        SearchNode q = QueryBuilder.stext("XYZ").node();
+        assertEquals(1, drain(store.search(q)).size());
     }
 
 
     @Test
     public void searchByFreeFormStringsShallow() {
-        assertEquals(0, searchStore(store, "UVW").size());
+        SearchNode q = QueryBuilder.stext("UVW").shallow().query();
+        assertEquals(0, drain(store.search(q)).size());
     }
 
     @Test
     public void searchByFreeFormStringsDeep() {
-        assertEquals(2, searchStore(store, true, "UVW").size());
+        SearchNode q = QueryBuilder.stext("UVW").node();
+        assertEquals(2, drain(store.search(q)).size());
     }
 
     @Test
     public void searchByFreeFormStringsPartial() {
-        assertEquals(1, searchStore(store, "YZ").size());
+        SearchNode q = QueryBuilder.stext("YZ").node();
+        assertEquals(1, drain(store.search(q)).size());
     }
 
-    @Test @Ignore("Bugfix later.")
+    @Test
     public void searchByKeyValShallow() {
-        assertEquals(1, searchStore(store, false, "AAA == \"UVW\"").size());
+        SearchNode q = QueryBuilder.kv("AAA", "UVW").node();
+        assertEquals(1, drain(store.search(q)).size());
     }
 
     @Test
     public void searchByKeyValDeep() {
-        assertEquals(1, searchStore(store, true, "AAA == \"UVW\"").size());
+        SearchNode q = QueryBuilder.kv("AAA", "UVW").node();
+        assertEquals(1, drain(store.search(q)).size());
     }
 
-    // TODO searchByPartialKeyVal()
-
-    // TODO szukanie po parach klucz-wartość;
-
-    // TODO szukanie po regexpach
-
-    // TODO szukanie par po regexach
-
-    // TODO szukanie po wyjątkach
-
-    // TODO szukanie po rekordach stack trace'ów
+    // TODO search for exceptions, exception stack traces, stack trace elements
 
 }

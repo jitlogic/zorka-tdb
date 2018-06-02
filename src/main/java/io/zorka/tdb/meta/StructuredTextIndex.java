@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2017 Rafal Lewczuk <rafal.lewczuk@jitlogic.com>
  * <p/>
  * This is free software. You can redistribute it and/or modify it under the
@@ -18,6 +18,7 @@ package io.zorka.tdb.meta;
 
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.search.EmptySearchResult;
+import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.rslt.DirectMappingSearchResult;
 import io.zorka.tdb.search.rslt.SearchResult;
@@ -28,10 +29,7 @@ import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.RawDictCodec;
-import io.zorka.tdb.util.IntegerSeqResult;
 import io.zorka.tdb.text.WritableTextIndex;
-import io.zorka.tdb.text.re.SearchPattern;
-import io.zorka.tdb.text.re.SearchPatternNode;
 import io.zorka.tdb.util.ZicoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,10 +111,11 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         }
 
         Map<String,String> rslt = new HashMap<>();
-        IntegerSeqResult sr = tidx.searchIds("^\u000f" + RawDictCodec.idEncodeStr(agentId));
-        for (int id = sr.getNext(); id != -1; id = sr.getNext()) {
+        QueryBuilder query = QueryBuilder.text("\u000f" + RawDictCodec.idEncodeStr(agentId), true, false);
+        SearchResult sr = tidx.search(query.node());
+        for (long id = sr.nextResult(); id != -1; id = sr.nextResult()) {
 
-            byte[] b = tidx.get(id);
+            byte[] b = tidx.get((int)id);
 
             int idk = MetaIndexUtils.getInt(b, AGENT_ATTR_DESC, 1);
 
@@ -146,10 +145,10 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         Map<String,List<String>> rslt = new HashMap<>();
 
         Map<Integer,String> tmp = new HashMap<>();
-
-        IntegerSeqResult sr = tidx.searchIds("^\u000f");
-        for (int id = sr.getNext(); id != -1; id = sr.getNext()) {
-            byte[] b = tidx.get(id);
+        QueryBuilder query = QueryBuilder.text("\u000f", true, false);
+        SearchResult sr = tidx.search(query.node());
+        for (long id = sr.nextResult(); id != -1; id = sr.nextResult()) {
+            byte[] b = tidx.get((int)id);
 
             int ida = MetaIndexUtils.getInt(b, AGENT_ATTR_DESC, 0);
 
@@ -481,31 +480,11 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         return tidx.length();
     }
 
-    @Override
-    public IntegerSeqResult searchIds(SearchPatternNode node) {
-        return tidx.searchIds(node);
-    }
-
-    @Override
-    public IntegerSeqResult searchIds(SearchPattern pattern) {
-        return tidx.searchIds(pattern);
-    }
-
-    @Override
-    public IntegerSeqResult searchXIB(byte[] phrase, byte m1) {
-        return tidx.searchXIB(phrase, m1);
-    }
 
     @Override
     public SearchResult searchIds(long tid, boolean deep) {
         throw new ZicoException("Not implemented.");
     }
-
-    @Override
-    public IntegerSeqResult searchIds(String pattern) {
-        return tidx.searchIds(pattern);
-    }
-
 
     @Override
     public int add(byte[] buf, int offs, int len, boolean esc) {

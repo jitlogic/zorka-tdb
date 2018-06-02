@@ -14,7 +14,7 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.zorka.tdb.text.wal;
+package io.zorka.tdb.text;
 
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.MetaIndexUtils;
@@ -27,10 +27,7 @@ import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.RawDictCodec;
 import io.zorka.tdb.text.TextIndexUtils;
 import io.zorka.tdb.text.WritableTextIndex;
-import io.zorka.tdb.text.re.*;
 import io.zorka.tdb.util.*;
-import io.zorka.tdb.text.re.SearchPattern;
-import io.zorka.tdb.util.BufferedIntegerSeqResult;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -454,34 +451,6 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     }
 
 
-    @Override
-    public IntegerSeqResult searchIds(SearchPatternNode node) {
-        return new BufferedIntegerSeqResult(this::getNWords, new WalTextIndexSearchIterator(this, node));
-    }
-
-    @Override
-    public IntegerSeqResult searchIds(SearchPattern pattern) {
-        return searchIds(pattern.getInverted());
-    }
-
-    @Override
-    public IntegerSeqResult searchIds(String text) {
-        if (text.startsWith("^")) {
-            text = "\01" + text.substring(1);
-        }
-        if (!text.endsWith("$")) {
-            text = text + ".*";
-        } else {
-            text = text.substring(0, text.length()-1);
-        }
-        return searchIds(new SearchPattern(text));
-    }
-
-    @Override
-    public IntegerSeqResult searchXIB(byte[] phrase, byte m1) {
-        return new BufferedIntegerSeqResult(this::getNWords, new WalTextIndexExtractGetter(this, phrase, m1));
-    }
-
     private int jump(int pos, byte b) {
         while (pos < fpos && buffer.get(pos) != b) pos++;
         return pos;
@@ -516,8 +485,9 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
                         for (int i = 0; i < 8; i++) {
                             byte b = buffer.get(pos-i-1);
                             if (b >= 0 && b < 32) {
-                                ZicoUtil.reverse(buf, 0, i);
+                                if (i > 1) ZicoUtil.reverse(buf, 0, i);
                                 matches.add((int)RawDictCodec.idDecode(buf, 0, i));
+                                break;
                             } else {
                                 buf[i] = b;
                             }

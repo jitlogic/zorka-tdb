@@ -22,10 +22,6 @@ import io.zorka.tdb.search.QmiNode;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.SearchableStore;
 import io.zorka.tdb.search.rslt.SearchResult;
-import io.zorka.tdb.util.*;
-import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.util.BufferedIntegerSeqResult;
-import io.zorka.tdb.util.IntegerSeqResult;
 import io.zorka.tdb.util.ZicoUtil;
 
 import java.io.Closeable;
@@ -196,7 +192,7 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         md.setStartOffs((int)(w1 >>> 32));
     }
 
-    private static long format_W2(MetadataInfo md) {
+    private static long format_W2(ChunkMetadata md) {
         int errL = md.getErrors() > 0x10000 ? 0xff : (md.getErrors() & 0xff);
         return (((long)md.getAppId()) << 48)
             | (((long)md.getEnvId()) << 32)
@@ -221,7 +217,7 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         return (int)(w2 & 0xff);
     }
 
-    private static long format_W2M(MetadataInfo md) {
+    private static long format_W2M(ChunkMetadata md) {
         return
               (md.getAppId()  != 0 ? 0xffff000000000000L : 0L)
             | (md.getEnvId()  != 0 ? 0x0000ffff00000000L : 0L)
@@ -490,11 +486,6 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
     }
 
 
-    public IntegerSeqResult search(MetadataSearchQuery query) {
-        IntegerGetter nextFn = new UnsortedSearchResult(query);
-        return new BufferedIntegerSeqResult(this::size, nextFn);
-    }
-
     public int size() {
         return (fpos - HEADER_SIZE) / RECORD_SIZE;
     }
@@ -598,64 +589,5 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
             return 0;
         }
     }
-
-    /**  */
-    public class UnsortedSearchResult implements IntegerGetter {
-
-        private MetadataSearchQuery query;
-
-        private long tstart, tstop;
-        private int pos;
-        private long duration;
-        private long w2v, w2m;
-
-
-        public UnsortedSearchResult(MetadataSearchQuery query) {
-            this.query = query;
-            this.tstart = query.getTstart() / 1000;
-            this.tstop = query.getTstop() / 1000;
-            this.w2v = format_W2(query);
-            this.w2m = format_W2M(query);
-            this.duration = query.getDuration();
-            this.pos = fpos;
-        }
-
-        @Override
-        public int get() {
-            ByteBuffer bb = buffer;
-
-            int rslt = -1;
-            int lfu = 0;
-
-            rwlock.readLock().lock();
-
-            try {
-                while (pos >= HEADER_SIZE + RECORD_SIZE) {
-                    pos -= RECORD_SIZE;
-                    long w1 = bb.getLong(pos), t = w1 & 0xffffffffL;
-                    if (t < tstart) {
-                        if (lfu < fuzz) {
-                            lfu++; continue;
-                        } else {
-                            break;
-                        }
-                    }
-                    lfu = 0;
-                    long w2 = bb.getLong(pos + WORD_SIZE);
-                    long w4 = bb.getLong(pos + WORD_SIZE * 3);
-                    long wd = w4 >>> 32;
-                    if (w2v == (w2 & w2m) && t <= tstop && wd >= duration) {
-                        rslt = ((pos - HEADER_SIZE) / RECORD_SIZE);
-                        break;
-                    }
-                }
-            } finally {
-                rwlock.readLock().unlock();
-            }
-
-            return rslt;
-        }
-    }
-
 
 }

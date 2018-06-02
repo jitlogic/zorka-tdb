@@ -47,12 +47,5 @@ public class IntMapUnitTest {
             assertEquals(keys[x]/2, imap.get(keys[x]));
         }
 
-        System.out.println("datalen=" + imap.datalen() + ", size=" + imap.size());
-    }
-
-    @Test
-    public void testXX() {
-        int i = Integer.MAX_VALUE;
-        System.out.println(i+1);
     }
 }

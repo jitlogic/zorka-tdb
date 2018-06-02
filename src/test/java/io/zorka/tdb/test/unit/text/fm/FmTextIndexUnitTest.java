@@ -27,9 +27,7 @@ import io.zorka.tdb.text.fm.FmCompressionLevel;
 import io.zorka.tdb.text.fm.FmIndexFileStore;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
 import io.zorka.tdb.text.fm.FmTextIndex;
-import io.zorka.tdb.text.wal.WalTextIndex;
-import io.zorka.tdb.test.support.TestUtil;
-import io.zorka.tdb.text.wal.WalTextIndex;
+import io.zorka.tdb.text.WalTextIndex;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

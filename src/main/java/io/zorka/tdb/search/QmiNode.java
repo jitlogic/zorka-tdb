@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2017 Rafal Lewczuk <rafal.lewczuk@jitlogic.com>
+ * <p/>
+ * This is free software. You can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p/>
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * <p/>
+ * You should have received a copy of the GNU General Public License
+ * along with this software. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package io.zorka.tdb.search;
 
 import io.zorka.tdb.search.ssn.StringSearchNode;
@@ -27,8 +43,6 @@ public class QmiNode implements SearchNode {
 
     /** All traces or only errors */
     private boolean errorFlag = false;
-
-    private boolean deepSearch = false;
 
     /** Looking for records with specific description ID (useful for some forms of grouping). */
     private StringSearchNode desc;
@@ -173,14 +187,6 @@ public class QmiNode implements SearchNode {
         this.desc = desc;
     }
 
-    public boolean isDeepSearch() {
-        return deepSearch;
-    }
-
-    public void setDeepSearch(boolean deepSearch) {
-        this.deepSearch = deepSearch;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -194,7 +200,6 @@ public class QmiNode implements SearchNode {
                 tstart == that.tstart &&
                 tstop == that.tstop &&
                 errorFlag == that.errorFlag &&
-                deepSearch == that.deepSearch &&
                 minCalls == that.minCalls &&
                 maxCalls == that.maxCalls &&
                 minRecs == that.minRecs &&
@@ -211,7 +216,7 @@ public class QmiNode implements SearchNode {
                 appId, envId, typeId,
                 minDuration, maxDuration, tstart, tstop,
                 minCalls, maxCalls, minRecs, maxRecs, minErrs, maxErrs,
-                errorFlag, deepSearch, uuid, desc);
+                errorFlag, uuid, desc);
     }
 }
 

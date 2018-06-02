@@ -20,11 +20,9 @@ import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.*;
 import io.zorka.tdb.util.CborDataReader;
 import io.zorka.tdb.util.CborDataWriter;
-import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataTextIndex;
 import io.zorka.tdb.meta.StructuredTextIndex;
-import io.zorka.tdb.util.CborDataReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,7 +133,7 @@ public class AgentHandler implements AgentDataProcessor {
             for (ChunkMetadata metadata : tmd) {
 
                 if (stackSize > 0 || md.getChunkNum() > 0) {
-                    metadata.markFlag(MetadataInfo.TF_CHUNKED);
+                    metadata.markFlag(ChunkMetadata.TF_CHUNKED);
                 }
 
                 metadata.setDataOffs(dataOffs);

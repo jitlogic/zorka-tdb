@@ -24,6 +24,6 @@ public class ZicoException extends RuntimeException {
     }
 
     public ZicoException(String msg, Throwable cause) {
-        super(msg);
+        super(msg, cause);
     }
 }

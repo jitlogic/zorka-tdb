@@ -21,7 +21,22 @@ import java.util.*;
 /**
  *
  */
-public class ChunkMetadata implements MetadataInfo {
+public class ChunkMetadata {
+
+    /** Retrieve also trace attibutes. */
+    public static final int SF_ATTRS = 0x01;
+    /** Start with oldest traces, not newest (default) */
+    public static final int SF_REVERSE = 0x02;
+    /** Search only last (active) store. */
+    public static final int SF_CURRENT = 0x04;
+    /** Error flag  */
+    public static final int TF_ERROR = 0x01;
+    /** If set, chunk is only part of whole trace. */
+    public static final int TF_CHUNKED = 0x02;
+    /** Marks first chunk of trace. */
+    public static final int TF_INITIAL = 0x04;
+    /** Marks final chunk of trace. */
+    public static final int TF_FINAL = 0x08;
 
     private int typeId; // Trace type (eg.
     private int appId;
@@ -123,7 +138,6 @@ public class ChunkMetadata implements MetadataInfo {
         this.duration = duration;
     }
 
-    @Override
     public long getDuration() {
         return duration;
     }

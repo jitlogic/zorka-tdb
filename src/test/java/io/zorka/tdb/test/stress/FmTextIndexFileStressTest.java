@@ -26,7 +26,7 @@ import java.io.File;
 import io.zorka.tdb.text.fm.FmIndexFileStore;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
 import io.zorka.tdb.text.fm.FmTextIndex;
-import io.zorka.tdb.text.wal.WalTextIndex;
+import io.zorka.tdb.text.WalTextIndex;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

@@ -29,11 +29,12 @@ import static io.zorka.tdb.test.support.TraceTestDataBuilder.*;
 
 import io.zorka.tdb.meta.StructuredTextIndex;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- *
+ * Submitting and retrieving agent state.
  */
 public class AgentStateSubmissionUnitTest extends ZicoTestFixture {
 
@@ -61,7 +62,7 @@ public class AgentStateSubmissionUnitTest extends ZicoTestFixture {
             store.getTextIndex().getAgentInfo(agentUUID));
 
         assertEquals(
-            map(agentUUID, Arrays.asList("APP", "ENV")),
+            map(agentUUID, Arrays.asList("ENV", "APP")),
             store.getTextIndex().getAgentAttrs());
     }
 

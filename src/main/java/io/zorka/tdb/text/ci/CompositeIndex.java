@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2017 Rafal Lewczuk <rafal.lewczuk@jitlogic.com>
+ * <p/>
+ * This is free software. You can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p/>
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * <p/>
+ * You should have received a copy of the GNU General Public License
+ * along with this software. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package io.zorka.tdb.text.ci;
 
 
@@ -10,9 +26,6 @@ import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WritableTextIndex;
-import io.zorka.tdb.text.re.SearchPattern;
-import io.zorka.tdb.text.re.SearchPatternNode;
-import io.zorka.tdb.util.IntegerSeqResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -305,30 +318,6 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         }
         return len;
     }
-
-
-    @Override
-    public IntegerSeqResult searchIds(SearchPatternNode node) {
-        return new CompositeIndexSearchResult(this, t -> t.searchIds(node));
-    }
-
-
-    @Override
-    public IntegerSeqResult searchIds(SearchPattern pattern) {
-        return searchIds(pattern.getInverted());
-    }
-
-
-    public IntegerSeqResult searchIds(String pattern) {
-        return new CompositeIndexSearchResult(this, t -> t.searchIds(pattern));
-    }
-
-
-    @Override
-    public IntegerSeqResult searchXIB(byte[] phrase, byte m1) {
-        return new CompositeIndexSearchResult(this, t -> t.searchXIB(phrase, m1));
-    }
-
 
     @Override
     public void close() throws IOException {

@@ -24,11 +24,6 @@ import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.RawDictCodec;
 
 import io.zorka.tdb.text.TextIndexUtils;
-import io.zorka.tdb.text.re.SearchPattern;
-import io.zorka.tdb.text.re.SearchPatternNode;
-import io.zorka.tdb.text.re.SeqPatternNode;
-import io.zorka.tdb.util.BufferedIntegerSeqResult;
-import io.zorka.tdb.util.IntegerSeqResult;
 import io.zorka.tdb.util.ZicoUtil;
 
 import java.io.*;
@@ -151,17 +146,17 @@ public class FmTextIndex extends AbstractTextIndex {
     }
 
 
-    public int extractUntil(byte[] buf, int pos, byte term) {
-        return extractUntil(buf, 0, buf.length, pos, term);
+    public int extractChunk(byte[] buf, int pos) {
+        return extractChunk(buf, 0, buf.length, pos);
     }
 
 
-    public int extractUntil(byte[] buf, int offs, int len, int pos, byte term) {
+    public int extractChunk(byte[] buf, int offs, int len, int pos) {
         int i;
         for (i = 0; i < len; i++) {
             long car = fif.charAndRank(pos);
             byte ch = FmIndexStore.chr(car);
-            if (ch == term) break;
+            if (ch >= 0 && ch < 32) break;
             buf[offs+i] = ch;
             pos = fif.getCharOffs(ch) + FmIndexStore.rnk(car);
         }
@@ -185,7 +180,7 @@ public class FmTextIndex extends AbstractTextIndex {
 
     int extractId(int pos) {
         byte[] ibuf = new byte[8];
-        int ilen = extractUntil(ibuf, pos, RawDictCodec.MARK_ID2);
+        int ilen = extractChunk(ibuf, pos);
         return (int)RawDictCodec.idDecode(ibuf, 0, ilen);
     }
 
@@ -291,39 +286,6 @@ public class FmTextIndex extends AbstractTextIndex {
     }
 
     public final static int CHUNK_MAX = 1024 * 1024;
-
-
-    public IntegerSeqResult searchIds(SearchPatternNode node) {
-        if (node instanceof SeqPatternNode) {
-            return new BufferedIntegerSeqResult(this::getNWords, new FmTextIndexSimpleIterator(this, (SeqPatternNode)node));
-        } else {
-            return new BufferedIntegerSeqResult(this::getNWords, new FmTextIndexRegexIterator(this, node));
-        }
-    }
-
-
-    @Override
-    public IntegerSeqResult searchIds(SearchPattern pattern) {
-        return searchIds(pattern.getInverted());
-    }
-
-
-    @Override
-    public IntegerSeqResult searchIds(String text) {
-        if (text.startsWith("^")) {
-            text = "\1" + text.substring(1);
-        }
-        if (text.endsWith("$")) {
-            text = text.substring(0, text.length()-1) + "\2";
-        }
-        return searchIds(new SearchPattern(text));
-    }
-
-
-    @Override
-    public IntegerSeqResult searchXIB(byte[] phrase, byte m1) {
-        return new FmTextIndexSearchXIBResult(this, phrase, m1);
-    }
 
 
     @Override

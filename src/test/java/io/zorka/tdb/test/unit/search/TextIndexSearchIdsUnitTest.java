@@ -1,15 +1,31 @@
+/*
+ * Copyright 2016-2017 Rafal Lewczuk <rafal.lewczuk@jitlogic.com>
+ * <p/>
+ * This is free software. You can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p/>
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * <p/>
+ * You should have received a copy of the GNU General Public License
+ * along with this software. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package io.zorka.tdb.test.unit.search;
 
+import io.zorka.tdb.search.QueryBuilder;
+import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
 import io.zorka.tdb.text.ci.CompositeIndexStore;
-import io.zorka.tdb.text.re.SearchPattern;
 import io.zorka.tdb.util.ZicoUtil;
-import io.zorka.tdb.text.ci.CompositeIndexStore;
-import io.zorka.tdb.text.re.SearchPattern;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -20,6 +36,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+
 
 @RunWith(Parameterized.class)
 public class TextIndexSearchIdsUnitTest extends ZicoTestFixture {
@@ -41,7 +58,7 @@ public class TextIndexSearchIdsUnitTest extends ZicoTestFixture {
     }
 
     @Before
-    public void createIndex() throws IOException {
+    public void createIndex() {
         CompositeIndexStore store = new CompositeIndexFileStore(tmpDir, "test", ZicoUtil.props());
         this.idx = new CompositeIndex(store, ZicoUtil.props(), Runnable::run);
     }
@@ -59,12 +76,12 @@ public class TextIndexSearchIdsUnitTest extends ZicoTestFixture {
             idx.add("blop"+i);
         }
 
-        Set<Integer> ids1 = ZicoUtil.set(idx.add("XYZ"));
+        Set<Long> ids1 = ZicoUtil.<Long>set((long)idx.add("XYZ"));
 
-        System.out.println("ARCHIVE = " + archive);
         if (archive) idx.archive();
 
-        Set<Integer> ids2 = idx.searchIds(new SearchPattern("XYZ")).toSet();
+        SearchResult sr = idx.search(QueryBuilder.stext("XYZ").node());
+        Set<Long> ids2 = drain(sr);
 
         assertEquals(ids1, ids2);
     }

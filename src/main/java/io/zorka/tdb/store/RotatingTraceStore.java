@@ -257,12 +257,6 @@ public class RotatingTraceStore implements TraceStore, SearchableStore {
 
 
     @Override
-    public TraceSearchResult search(StoreSearchQuery query) {
-        return new SearchResult(query);
-    }
-
-
-    @Override
     public void archive() {
         rotate();
     }
@@ -365,31 +359,5 @@ public class RotatingTraceStore implements TraceStore, SearchableStore {
     }
 
 
-    private class SearchResult implements TraceSearchResult {
-
-        private List<SimpleTraceStore> stores = new ArrayList<>();
-        private StoreSearchQuery query;
-
-        private TraceSearchResult cur;
-
-        SearchResult(StoreSearchQuery query) {
-            this.query = query;
-            stores.addAll(archived.values());
-            stores.sort(Comparator.comparingLong(SimpleTraceStore::getStoreId));
-            cur = current.search(query);
-        }
-
-        @Override
-        public long getNext() {
-            long rslt = cur.getNext();
-            while (rslt == -1 && stores.size() > 0) {
-                cur = stores.get(stores.size()-1).search(query);
-                stores.remove(stores.size()-1);
-                rslt = cur.getNext();
-            }
-
-            return rslt;
-        }
-    } // class CompositeIndexSearchResult { .. }
 
 } // class RotatingTraceStore { .. }

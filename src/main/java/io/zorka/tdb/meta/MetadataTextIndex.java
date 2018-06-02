@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2016-2017 Rafal Lewczuk <rafal.lewczuk@jitlogic.com>
  * <p/>
  * This is free software. You can redistribute it and/or modify it under the
@@ -18,15 +18,11 @@ package io.zorka.tdb.meta;
 
 import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.text.RawDictCodec;
-import io.zorka.tdb.util.IntegerSeqResult;
 import io.zorka.tdb.text.WritableTextIndex;
-import io.zorka.tdb.text.re.SearchPattern;
-import io.zorka.tdb.text.re.SearchPattern;
 
 import static io.zorka.tdb.text.RawDictCodec.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class MetadataTextIndex {
@@ -126,36 +122,6 @@ public class MetadataTextIndex {
     }
 
 
-    public List<Integer> findTraceSlots(String traceUUID) {
-        byte[] buf = MetaIndexUtils.encodeMetaStr(CHO_MARKER, traceUUID, CHT_MARKER);
-        return extractTids(SearchPattern.escape(buf, 0, buf.length), CHO_MARKER);
-    }
-
-
-    @Deprecated
-    public IntegerSeqResult findByIds(int tid, boolean deep) {
-        byte[] buf = MetaIndexUtils.encodeMetaInt(TID_MARKER, tid, deep ? FIDS_MARKER : TIDS_MARKER);
-        return tidx.searchXIB(buf, TID_MARKER);
-    }
-
-
-    @Deprecated
-    public List<Integer> extractTids(String re, byte marker) {
-        List<Integer> rslt = new ArrayList<>();
-
-        IntegerSeqResult sr = tidx.searchIds(re);
-        for (int id = sr.getNext(); id != -1; id = sr.getNext()) {
-            byte[] b = tidx.get(id);
-            for (int i = 0; i < b.length; i++) {
-                if (b[i] == marker) {
-                    rslt.add((int) RawDictCodec.idDecode(b, 0, i));
-                    break;
-                }
-            }
-        }
-        return rslt;
-    }
-
     /**
      * Extracts ids of all strings referenced in given chunk.
      * @param id chunk ID
@@ -178,39 +144,6 @@ public class MetadataTextIndex {
             p1 = p2;
         }
         return rslt;
-    }
-
-    @Deprecated
-    public String getTraceUUID(int traceId) {
-        byte[] buf = new byte[16];
-        int pos = 0;
-
-        pos += idEncode(buf, pos, traceId);
-        buf[pos++] = CHO_MARKER;
-
-        String re = "^" + SearchPattern.escape(buf, 0, pos);
-
-        int id = -1;
-
-        IntegerSeqResult sr = tidx.searchIds(re);
-        for (int i = sr.getNext(); i != -1; i = sr.getNext()) {
-            // TODO what about multiple results ?
-            id = i;
-        }
-
-        if (id != -1) {
-            byte[] b = tidx.get(id);
-
-            for (int i = 0; i < b.length; i++) {
-                if (b[i] == CHO_MARKER) {
-                    byte[] rslt = new byte[b.length - i - 2];
-                    System.arraycopy(b, i+1, rslt, 0, b.length - i - 2);
-                    return new String(rslt);
-                }
-            }
-        }
-
-        return null;
     }
 
     public SearchResult searchIds(long tid, boolean deep) {

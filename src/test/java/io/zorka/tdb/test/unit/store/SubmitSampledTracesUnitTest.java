@@ -1,18 +1,34 @@
+/*
+ * Copyright 2016-2017 Rafal Lewczuk <rafal.lewczuk@jitlogic.com>
+ * <p/>
+ * This is free software. You can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * <p/>
+ * This software is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * <p/>
+ * You should have received a copy of the GNU General Public License
+ * along with this software. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package io.zorka.tdb.test.unit.store;
 
 import io.zorka.tdb.meta.ChunkMetadata;
+import io.zorka.tdb.search.QueryBuilder;
+import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.store.RotatingTraceStore;
-import io.zorka.tdb.store.StoreSearchQuery;
-import io.zorka.tdb.store.TraceSearchResult;
 import io.zorka.tdb.test.support.ZicoTestFixture;
-import io.zorka.tdb.store.StoreSearchQuery;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+
 
 public class SubmitSampledTracesUnitTest extends ZicoTestFixture {
 
@@ -31,7 +47,7 @@ public class SubmitSampledTracesUnitTest extends ZicoTestFixture {
         return rslt;
     }
 
-    @Test @Ignore
+    @Test @Ignore("Fix me.")
     public void testSubmitTomcatOldTracerSinglePkt() throws Exception {
         RotatingTraceStore store = openRotatingStore();
 
@@ -45,9 +61,8 @@ public class SubmitSampledTracesUnitTest extends ZicoTestFixture {
         store.handleAgentData(agentUUID, sessnUUID, AGD_PACKETS[0]);
         store.handleTraceData(agentUUID, sessnUUID, trc01UUID, TRC_PACKETS[0], cm(1, 1));
 
-        TraceSearchResult sr0 = store.search(new StoreSearchQuery());
-        List<Long> sl0 = sr0.drain();
-
+        SearchResult sr0 = store.search(QueryBuilder.qmi().node());
+        Set<Long> sl0 = drain(sr0);
         assertEquals("Should store exactly one record.", 1, sl0.size());
     }
 

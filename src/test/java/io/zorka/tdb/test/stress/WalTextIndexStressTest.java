@@ -19,13 +19,12 @@ package io.zorka.tdb.test.stress;
 import io.zorka.tdb.test.support.TestStrGen;
 import io.zorka.tdb.test.support.TestUtil;
 import io.zorka.tdb.test.support.ZicoTestFixture;
-import io.zorka.tdb.text.wal.WalTextIndex;
+import io.zorka.tdb.text.WalTextIndex;
 
 import io.zorka.tdb.util.ZicoUtil;
 
 import java.util.Random;
 
-import io.zorka.tdb.text.wal.WalTextIndex;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

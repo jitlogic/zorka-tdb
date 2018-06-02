@@ -19,29 +19,17 @@ package io.zorka.tdb.store;
 import io.zorka.tdb.MissingSessionException;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.*;
-import io.zorka.tdb.search.EmptySearchResult;
-import io.zorka.tdb.search.QmiNode;
-import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.SearchableStore;
+import io.zorka.tdb.search.*;
 import io.zorka.tdb.search.lsn.AndExprNode;
 import io.zorka.tdb.search.rslt.*;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
-import io.zorka.tdb.text.re.SeqPatternNode;
-import io.zorka.tdb.util.IntegerSeqResult;
-import io.zorka.tdb.text.re.SearchPattern;
 import io.zorka.tdb.util.CborDataReader;
 
 import io.zorka.tdb.util.ZicoUtil;
-import io.zorka.tdb.MissingSessionException;
-import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataTextIndex;
 import io.zorka.tdb.meta.StructuredTextIndex;
-import io.zorka.tdb.text.re.SearchPattern;
-import io.zorka.tdb.util.CborDataReader;
-import io.zorka.tdb.util.IntegerSeqResult;
-import io.zorka.tdb.util.ZicoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,16 +37,13 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
-
-import static io.zorka.tdb.store.ConfigProps.*;
 
 import static io.zorka.tdb.store.TraceStoreUtil.*;
 
 /**
  *
  */
-public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder, SearchableStore {
+public class SimpleTraceStore implements TraceStore, SearchableStore {
 
     private static final Logger log = LoggerFactory.getLogger(SimpleTraceStore.class);
 
@@ -424,86 +409,6 @@ public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder, Sea
     public static int SEARCH_QR_THRESHOLD = 512;
     public static int SEARCH_TX_THRESHOLD = 512;
 
-    @Override
-    public Object stringToken(String s, boolean exact) {
-        SeqPatternNode root = new SeqPatternNode(s);
-        root.setMatchStart(exact);
-        root.setMatchEnd(exact);
-        return new SearchPattern(root);
-    }
-
-    @Override
-    public Object regexToken(Object s) {
-        throw new ZicoException("Regexps not implemented (yet).");
-    }
-
-    @Override @Deprecated
-    public Object functionToken(String fn, List<Object> args) {
-        if ("==".equals(fn)) {
-            if (args.size() != 2) throw new ZicoException("Requires exactly two arguments.");
-            SearchPattern spk = (SearchPattern)args.get(0), spv = (SearchPattern)args.get(1);
-            if (spk.getRoot().getClass() != SeqPatternNode.class) throw new StoreSearchExprParseException("First argument must be string.");
-            if (spv.getRoot().getClass() != SeqPatternNode.class) throw new StoreSearchExprParseException("Second argument must be string.");
-            byte[] k = ((SeqPatternNode)spk.getRoot()).asBytes(), v = ((SeqPatternNode)spv.getRoot()).asBytes();
-            if (((SeqPatternNode)spv.getRoot()).isExact()) {
-                int idk = itext.get(k);
-                if (idk == -1) return SearchPattern.NO_MATCH;
-                int idv = itext.get(v);
-                if (idv == -1) return SearchPattern.NO_MATCH;
-                byte[] pat = itext.encTuple2(StructuredTextIndex.KR_PAIR, idk, idv);
-                return SearchPattern.search(pat, true, true);
-                // TODO K-V pairs are suitable only for numeric data types (integers, booleans etc.) - this should be distinguished on query language level, not here;
-                //return SearchPattern.search(itext.encKVPair(idk, v), true, true);
-            } else {
-                throw new StoreSearchExprParseException("Non-exact key-val matches not supported (yet).");
-            }
-        } else {
-            throw new ZicoException("Function '" + fn + "' not implemented.");
-        }
-    }
-
-
-    private SearchPattern parseSearchExpr(String expr) {
-        StoreSearchExprParser x = new StoreSearchExprParser(expr, this);
-        return (SearchPattern)x.parse();
-    }
-
-    @Override
-    public TraceSearchResult search(StoreSearchQuery query) {
-        if (query.getPatterns() == null || query.getPatterns().size() == 0) {
-            // No patterns. Use scanning search result generator.
-            return new SimpleScanningSearchResult(this, query, new ArrayList<>());
-        } else {
-
-            IntegerSeqResult msr = qindex.search(query);
-
-            List<SearchPattern> patterns = query.getPatterns().stream()
-                    .map(this::parseSearchExpr)
-                    .collect(Collectors.toList());
-
-            if (msr.estimateSize(SEARCH_QR_THRESHOLD) < SEARCH_QR_THRESHOLD) {
-                // Limited number of quick index entries. Use scanning search result generator.
-                // TODO pass msr to ScanningSearchResult to avoid unnecessary search
-                return new SimpleScanningSearchResult(this, query, patterns);
-            } else {
-                // Lots of quick index entries. Use full text indexes first.
-                List<IntegerSeqResult> tsr = new ArrayList<>();
-                for (String sp :query.getPatterns()) {
-                    SearchPattern p = parseSearchExpr(sp);
-                    tsr.add(itext.searchIds(p));
-                }
-                int rslt = Integer.MAX_VALUE;
-                for (IntegerSeqResult t : tsr) {
-                    int b = t.estimateSize(SEARCH_TX_THRESHOLD);
-                    rslt = Integer.min(rslt, b);
-                }
-                // TODO this is incomplete. Determine smallest index here.
-                return new SimpleIndexingSearchResult(this, query, msr, tsr, patterns);
-            }
-        }
-    }
-
-
     long toChunkId(int slot) {
         return slot >= 0 ? (((long)storeId) << 32) | slot : -1;
     }
@@ -518,8 +423,15 @@ public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder, Sea
 
     @Override
     public SearchResult search(SearchNode expr) {
-        boolean deep = true;
-        SearchResult sr = null;
+        SearchResult sr;
+
+        SearchQuery q = SearchQuery.DEFAULT;
+
+        if (expr instanceof SearchQuery) {
+            q = (SearchQuery)expr;
+            expr = q.getNode();
+        }
+
         if (expr instanceof QmiNode) {
             sr = qindex.search(expr);
         } else if (expr instanceof AndExprNode) {
@@ -528,13 +440,12 @@ public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder, Sea
             for (SearchNode node : ((AndExprNode)expr).getArgs()) {
                 if (node instanceof QmiNode) {
                     qsr = qindex.search(node);
-                    deep = ((QmiNode)node).isDeepSearch();
                 } else {
                     tsr.add(itext.search(node));
                 }
             }
             for (int i = 0; i < tsr.size(); i++) {
-                tsr.set(i, tidTranslatingResult(tsr.get(i), deep));
+                tsr.set(i, tidTranslatingResult(tsr.get(i), q.isDeepSearch()));
             }
             if (tsr.size() == 0) {
                 sr = qsr;
@@ -544,6 +455,8 @@ public class SimpleTraceStore implements TraceStore, StoreSearchExprBuilder, Sea
                     sr = new ConjunctionSearchResult(qsr, sr);
                 }
             }
+        } else {
+            sr = tidTranslatingResult(itext.search(expr), q.isDeepSearch());
         }
 
         return sr != null ? new MappingSearchResult(sr, x -> (x | (storeId << 32))) : EmptySearchResult.INSTANCE;

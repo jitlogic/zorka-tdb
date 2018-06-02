@@ -17,21 +17,16 @@
 package io.zorka.tdb.test.unit.store;
 
 import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.MetadataInfo;
 import io.zorka.tdb.store.*;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
 import java.util.List;
 import java.util.UUID;
 
-import static io.zorka.tdb.test.support.TraceTestDataBuilder.*;
-
-import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.store.RecursiveTraceDataRetriever;
 import io.zorka.tdb.store.RotatingTraceStore;
 import io.zorka.tdb.store.TraceDataIndexer;
 import io.zorka.tdb.test.support.TraceTestDataBuilder;
-import io.zorka.tdb.test.support.ZicoTestFixture;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -70,9 +65,9 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
         assertEquals(1, tdi.getStackDepth());
 
         ChunkMetadata md1 = store.getChunkMetadata(store.getChunkIds(traceUUID).get(0));
-        assertTrue(0 != (md1.getFlags() & MetadataInfo.TF_CHUNKED));
-        assertTrue(0 != (md1.getFlags() & MetadataInfo.TF_INITIAL));
-        assertTrue(0 == (md1.getFlags() & MetadataInfo.TF_FINAL));
+        assertTrue(0 != (md1.getFlags() & ChunkMetadata.TF_CHUNKED));
+        assertTrue(0 != (md1.getFlags() & ChunkMetadata.TF_INITIAL));
+        assertTrue(0 == (md1.getFlags() & ChunkMetadata.TF_FINAL));
 
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
         TraceRecord rslt1 = store.retrieve(traceUUID, rtr);
@@ -91,9 +86,9 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
         store.handleTraceData(agentUUID, sessnUUID, traceUUID, t1, md);
 
         ChunkMetadata md2 = store.getChunkMetadata(store.getChunkIds(traceUUID).get(1));
-        assertTrue(0 != (md2.getFlags() & MetadataInfo.TF_CHUNKED));
-        assertTrue(0 == (md2.getFlags() & MetadataInfo.TF_INITIAL));
-        assertTrue(0 != (md2.getFlags() & MetadataInfo.TF_FINAL));
+        assertTrue(0 != (md2.getFlags() & ChunkMetadata.TF_CHUNKED));
+        assertTrue(0 == (md2.getFlags() & ChunkMetadata.TF_INITIAL));
+        assertTrue(0 != (md2.getFlags() & ChunkMetadata.TF_FINAL));
 
         rtr.clear();
         TraceRecord rslt2 = store.retrieve(traceUUID, rtr);
