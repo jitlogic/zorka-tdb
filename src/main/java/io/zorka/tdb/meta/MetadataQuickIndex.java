@@ -402,9 +402,8 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         parse_W4(buffer.getLong(pos+3*WORD_SIZE), md);
         // TODO where is w5 ?
         parse_W6(buffer.getLong(pos+5*WORD_SIZE), md);
-
-        UUID uuid = new UUID(buffer.getLong(pos + 6 * WORD_SIZE), buffer.getLong(pos + 7 * WORD_SIZE));
-        md.setTraceUUID(uuid.toString());
+        md.setUuidMSB(buffer.getLong(pos + 6 * WORD_SIZE));
+        md.setUuidLSB(buffer.getLong(pos + 7 * WORD_SIZE));
 
         return md;
     }

@@ -63,13 +63,13 @@ public class ChunkMetadata {
 
     private long tstart, tstop;
 
-    private String traceUUID;
+    private long uuidLSB, uuidMSB;
 
-    private Set<Integer> fids = new HashSet<>();
+    private Set<Integer> fids = null;
 
-    private Set<Integer> tids = new HashSet<>();
+    private Set<Integer> tids = null;
 
-    private Map<Object,Object> attrs;
+    private Map<Object,Object> attrs = null;
 
     @Override
     public String toString() {
@@ -80,7 +80,12 @@ public class ChunkMetadata {
     public ChunkMetadata() { }
 
     public ChunkMetadata(String traceUUID) {
-        this.traceUUID = traceUUID;
+        setTraceUUID(traceUUID);
+    }
+
+    public ChunkMetadata(long uuidLSB, long uuidMSB) {
+        this.uuidLSB = uuidLSB;
+        this.uuidMSB = uuidMSB;
     }
 
     public ChunkMetadata(int zeroLevel) {
@@ -121,11 +126,14 @@ public class ChunkMetadata {
     }
 
     public String getTraceUUID() {
-        return traceUUID;
+        UUID uuid = new UUID(uuidMSB, uuidLSB);
+        return uuid.toString();
     }
 
     public void setTraceUUID(String traceUUID) {
-        this.traceUUID = traceUUID;
+        UUID uuid = UUID.fromString(traceUUID);
+        uuidLSB = uuid.getLeastSignificantBits();
+        uuidMSB = uuid.getMostSignificantBits();
     }
 
     public long catchTstamp(long tstamp) {
@@ -293,23 +301,41 @@ public class ChunkMetadata {
     }
 
     public List<Integer> getFids() {
-        List<Integer> lst = new ArrayList<>(fids.size());
-        lst.addAll(fids);
+        List<Integer> lst = new ArrayList<>(fids != null ? fids.size() : 1);
+        if (fids != null) lst.addAll(fids);
         Collections.sort(lst);
         return lst;
     }
 
     public List<Integer> getTids() {
-        List<Integer> lst = new ArrayList<>(tids.size());
-        lst.addAll(tids);
+        List<Integer> lst = new ArrayList<>(tids != null ? tids.size() : 1);
+        if (tids != null) lst.addAll(tids);
         Collections.sort(lst);
         return lst;
     }
 
     public void catchId(int id, int level) {
+        if (tids == null) tids = new HashSet<>();
+        if (fids == null) fids = new HashSet<>();
         if (level == zeroLevel) {
             this.tids.add(id);
         }
         this.fids.add(id);
+    }
+
+    public long getUuidLSB() {
+        return uuidLSB;
+    }
+
+    public void setUuidLSB(long uuidLSB) {
+        this.uuidLSB = uuidLSB;
+    }
+
+    public long getUuidMSB() {
+        return uuidMSB;
+    }
+
+    public void setUuidMSB(long uuidMSB) {
+        this.uuidMSB = uuidMSB;
     }
 }

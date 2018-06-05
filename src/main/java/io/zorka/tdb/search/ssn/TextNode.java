@@ -33,6 +33,10 @@ public class TextNode implements StringSearchNode {
         return new TextNode(s.getBytes(), true, true);
     }
 
+    public TextNode(String text, boolean matchStart, boolean matchEnd) {
+        this(text.getBytes(), matchStart, matchEnd);
+    }
+
     public TextNode(byte[] text, boolean matchStart, boolean matchEnd) {
         this.text = text;
         this.matchStart = matchStart;
