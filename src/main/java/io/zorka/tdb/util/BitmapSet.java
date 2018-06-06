@@ -37,13 +37,19 @@ public class BitmapSet {
         data = new long[16][];
     }
 
+    public BitmapSet(int...ids) {
+        for (int i : ids) {
+            set(i);
+        }
+    }
+
 
     private BitmapSet(long[][] data) {
         this.data = data;
     }
 
 
-    public void add(int idx) {
+    public void set(int idx) {
         count = -1;
         if (idx >= 0 && idx < IMAX) {
             int x0 = idx >>> LBITS, x1 = idx & LMASK, x2 = idx & 63;

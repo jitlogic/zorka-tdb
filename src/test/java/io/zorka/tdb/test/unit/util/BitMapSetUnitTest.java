@@ -24,11 +24,11 @@ import static org.junit.Assert.*;
 public class BitMapSetUnitTest {
 
     @Test
-    public void testAddDelWithoutResize() throws Exception {
+    public void testAddDelWithoutResize() {
         BitmapSet bs = new BitmapSet();
 
-        bs.add(100);
-        bs.add(10000);
+        bs.set(100);
+        bs.set(10000);
 
         assertEquals(2, bs.count());
 
@@ -40,8 +40,8 @@ public class BitMapSetUnitTest {
         assertTrue(bs.get(10000));
         assertFalse(bs.get(10001));
 
-        bs.add(99);
-        bs.add(101);
+        bs.set(99);
+        bs.set(101);
         bs.del(100);
 
         assertEquals(3, bs.count());
@@ -53,10 +53,44 @@ public class BitMapSetUnitTest {
 
     }
 
-    // TODO count() method (known to be buggy at the moment)
+    @Test
+    public void testAndOperator() {
+        BitmapSet b1 = new BitmapSet(), b2 = new BitmapSet();
 
-    // TODO and() method
+        b1.set(1); b1.set(2); b1.set(3);
+        b2.set(2); b2.set(3); b2.set(4);
 
-    // TODO or() method
+        BitmapSet ba = b1.and(b2);
+
+        assertFalse(ba.get(1));
+        assertTrue(ba.get(2));
+        assertTrue(ba.get(3));
+        assertFalse(ba.get(4));
+
+        assertEquals(2, ba.count());
+    }
+
+    @Test
+    public void testOrOperator() {
+        BitmapSet b1 = new BitmapSet(), b2 = new BitmapSet();
+
+        b1.set(1); b1.set(2); b1.set(3);
+        b2.set(2); b2.set(3); b2.set(4);
+
+        BitmapSet ba = b1.or(b2);
+
+        assertTrue(ba.get(1));
+        assertTrue(ba.get(2));
+        assertTrue(ba.get(3));
+        assertTrue(ba.get(4));
+
+        assertEquals(4, ba.count());
+    }
+
+    @Test
+    public void testSearchOperator() {
+        BitmapSet b = new BitmapSet();
+
+    }
 }
 

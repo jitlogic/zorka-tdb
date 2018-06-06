@@ -206,7 +206,7 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         md.setErrors((int)(w2 >> 8) & 0xff);
         md.setTypeId((int)(w2 >> 16) & 0xffff);
         md.setEnvId((int)(w2 >> 32) & 0xffff);
-        md.setAppId((int)(w2 >> 40) & 0xffff);
+        md.setAppId((int)(w2 >> 48) & 0xffff);
     }
 
     private static int parse_W2_dur(long w2) {

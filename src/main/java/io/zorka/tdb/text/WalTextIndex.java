@@ -23,10 +23,6 @@ import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.rslt.MappingSearchResult;
 import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.search.ssn.TextNode;
-import io.zorka.tdb.text.AbstractTextIndex;
-import io.zorka.tdb.text.RawDictCodec;
-import io.zorka.tdb.text.TextIndexUtils;
-import io.zorka.tdb.text.WritableTextIndex;
 import io.zorka.tdb.util.*;
 
 import java.io.*;
@@ -461,6 +457,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     }
 
     private void scan(byte[] text, BitmapSet matches, boolean fetchTids) {
+        System.out.println("SEARCH: " + new String(text));
         int rec = 0;
         int limit = fpos - text.length;  // TODO concurrency
         byte[] buf = new byte[8];
@@ -486,14 +483,14 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
                             byte b = buffer.get(pos-i-1);
                             if (b >= 0 && b < 32) {
                                 if (i > 1) ZicoUtil.reverse(buf, 0, i);
-                                matches.add((int)RawDictCodec.idDecode(buf, 0, i));
+                                matches.set((int)RawDictCodec.idDecode(buf, 0, i));
                                 break;
                             } else {
                                 buf[i] = b;
                             }
                         }
                     } else {
-                        matches.add(rec);
+                        matches.set(rec);
                     }
                     break;
                 } else {

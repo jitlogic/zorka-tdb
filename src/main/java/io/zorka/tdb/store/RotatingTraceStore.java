@@ -72,8 +72,6 @@ public class RotatingTraceStore implements TraceStore, SearchableStore {
 
     private Lock rdlock = rwlock.readLock(), wrlock = rwlock.writeLock();
 
-    private int sessionTimeout = 120000;
-
     private Map<String,TraceDataIndexer> indexerCache;
 
     private volatile ChunkMetadataProcessor postproc = null;
@@ -86,9 +84,6 @@ public class RotatingTraceStore implements TraceStore, SearchableStore {
         this.baseDir = baseDir;
 
         configure(props, indexerExecutor, cleanerExecutor);
-
-
-        this.sessionTimeout = sessionTimeout; // TODO
 
         this.indexerCache = indexerCache;
         this.traceTypeResolver = traceTypeResolver;
@@ -107,7 +102,7 @@ public class RotatingTraceStore implements TraceStore, SearchableStore {
         this.indexerExecutor = indexerExecutor;
         this.cleanerExecutor = cleanerExecutor;
 
-        this.storeSize = Integer.parseInt(props.getProperty(STORES_MAX_SIZE, "16")); // default 16GB
+        this.storeSize = Integer.parseInt(props.getProperty(STORES_MAX_SIZE, "16"));    // default 16GB
         this.storesMax = Integer.parseInt(props.getProperty(STORES_MAX_NUM, "16"));     // default 256GB
 
         for (Map.Entry<Integer,SimpleTraceStore> e : archived.entrySet()) {
@@ -358,6 +353,7 @@ public class RotatingTraceStore implements TraceStore, SearchableStore {
         return new StreamingSearchResult(results);
     }
 
-
-
+    public SimpleTraceStore getCurrent() {
+        return current;
+    }
 } // class RotatingTraceStore { .. }

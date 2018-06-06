@@ -44,7 +44,7 @@ public class ConjunctionSearchResult implements SearchResult {
         for (SearchResult sr : inputs) {
             BitmapSet b = new BitmapSet();
             for (long l = sr.nextResult(); l >= 0; l = sr.nextResult()) {
-                b.add((int)l);
+                b.set((int)l);
             }
             if (bmps == null) {
                 bmps = b;
