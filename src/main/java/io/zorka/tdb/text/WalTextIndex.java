@@ -41,8 +41,6 @@ import static io.zorka.tdb.meta.MetadataTextIndex.TID_MARKER;
  * is raw data ready to be BWT'd and compressed into FMI file. There might be a bunch of
  * zeros trailing data (as file is memory mapped)
  *
- * When opening file,
- *
  */
 public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex {
 
@@ -457,7 +455,6 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     }
 
     private void scan(byte[] text, BitmapSet matches, boolean fetchTids) {
-        System.out.println("SEARCH: " + new String(text));
         int rec = 0;
         int limit = fpos - text.length;  // TODO concurrency
         byte[] buf = new byte[8];

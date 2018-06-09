@@ -16,9 +16,15 @@
 
 package io.zorka.tdb.test.unit.util;
 
+import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.util.BitmapSet;
 
+import io.zorka.tdb.util.ZicoUtil;
 import org.junit.Test;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import static org.junit.Assert.*;
 
 public class BitMapSetUnitTest {
@@ -87,10 +93,20 @@ public class BitMapSetUnitTest {
         assertEquals(4, ba.count());
     }
 
-    @Test
-    public void testSearchOperator() {
-        BitmapSet b = new BitmapSet();
+    private Set<Long> drain(BitmapSet bs) {
+        Set<Long> rslt = new HashSet<>();
+        SearchResult sr = bs.searchAll();
+        for (long r = sr.nextResult(); r >= 0; r = sr.nextResult()) rslt.add(r);
+        return rslt;
+    }
 
+    @Test
+    public void testSearchWithAndOperator() {
+        BitmapSet b1 = new BitmapSet(1,2,3), b2 = new BitmapSet(2,3,4), b = b1.and(b2);
+
+        Set<Long> r1 = drain(b);
+
+        assertEquals(ZicoUtil.set(2L,3L), r1);
     }
 }
 

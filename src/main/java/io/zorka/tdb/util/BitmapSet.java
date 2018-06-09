@@ -38,13 +38,15 @@ public class BitmapSet {
     }
 
     public BitmapSet(int...ids) {
+        this();
         for (int i : ids) {
             set(i);
         }
     }
 
 
-    private BitmapSet(long[][] data) {
+    private BitmapSet(long[][] data, int imax) {
+        this.imax = imax;
         this.data = data;
     }
 
@@ -114,7 +116,7 @@ public class BitmapSet {
                 dt[i] = d;
             }
         }
-        return new BitmapSet(dt);
+        return new BitmapSet(dt, imax);
     }
 
 
@@ -132,7 +134,7 @@ public class BitmapSet {
                 dt[i] = Arrays.copyOf(d0 != null ? d0 : d1, L1LEN);
             }
         }
-        return new BitmapSet(dt);
+        return new BitmapSet(dt, imax);
     }
 
 
