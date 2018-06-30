@@ -74,7 +74,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * +--------+--------+--------+--------+--------+--------+--------+--------+
  * |                          dataOffs                   |     chunkNum    | W3
  * +--------+--------+--------+--------+--------+--------+--------+--------+
- * |              did                  |              duration             | W4
+ * |              did                  |    duration     |      hostId     | W4
  * +--------+--------+--------+--------+--------+--------+--------+--------+
  * |             ftid                  |               ttid                | W5
  * +--------+--------+--------+--------+--------+--------+--------+--------+
@@ -100,7 +100,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * chunkNum - chunk sequential number
  *
  * W4 - description and duration
- * did - description text ID;
+ * did - description text ID (either templated description or method desc);
  * duration - trace (chunk) duration (ticks);
  *
  * W5 - metadata index references

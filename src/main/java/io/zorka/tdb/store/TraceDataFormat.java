@@ -123,4 +123,5 @@ public class TraceDataFormat {
     public static final byte SIGN_TYPE    = 0x08; // Method signature  0x08|method_signature|0x08
     public static final byte TYPE_MAX     = 0x08;
 
+    public static int TICKS_IN_SECOND = 15259;    //
 }

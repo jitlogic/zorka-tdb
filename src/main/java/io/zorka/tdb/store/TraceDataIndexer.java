@@ -147,7 +147,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
             ChunkMetadata md = mrecs.get(mrecs.size()-1);
             md.markFlag(ChunkMetadata.TF_FINAL);
             md.setTstop(tstop);
-            md.setDuration(md.getTstop()-md.getTstart());
+            md.setDuration((md.getTstop()-md.getTstart())/TraceDataFormat.TICKS_IN_SECOND);
             mrslt.add(md);
             mrecs.remove(mrecs.size()-1);
             if (mrecs.size() > 0) {

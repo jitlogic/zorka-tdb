@@ -86,7 +86,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         store.handleAgentData(agentUUID, sessnUUID, agentData());
 
         store.handleTraceData(agentUUID, sessnUUID, traceUUID, str(
-            tr(true, mid(0, 0, 0), 100, 200, 42,
+            tr(true, mid(0, 0, 0), 100, 100+100*TraceDataFormat.TICKS_IN_SECOND, 42,
                 tb(1500, 1),
                 ta(ti(TraceDataFormat.TAG_STRING_REF, sid("URI")), "/my/app"),
                 ta("STATUS", "200"),

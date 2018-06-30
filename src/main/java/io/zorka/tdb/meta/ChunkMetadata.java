@@ -41,6 +41,7 @@ public class ChunkMetadata {
     private int typeId; // Trace type (eg.
     private int appId;
     private int envId;
+    private int hostId;
     private int tflags;
 
     private long tstamp;
@@ -337,5 +338,13 @@ public class ChunkMetadata {
 
     public void setUuidMSB(long uuidMSB) {
         this.uuidMSB = uuidMSB;
+    }
+
+    public int getHostId() {
+        return hostId;
+    }
+
+    public void setHostId(int hostId) {
+        this.hostId = hostId;
     }
 }
