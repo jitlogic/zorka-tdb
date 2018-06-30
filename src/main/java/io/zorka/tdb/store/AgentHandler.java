@@ -23,6 +23,7 @@ import io.zorka.tdb.util.CborDataWriter;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataTextIndex;
 import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.util.ZicoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,7 @@ public class AgentHandler implements AgentDataProcessor {
 
     private String agentUUID;
     private String sessionUUID;
+    private int hostId;
     private int agentId;
     private long storeId;
 
@@ -78,7 +80,7 @@ public class AgentHandler implements AgentDataProcessor {
         this.indexerCache = store.getIndexerCache();
         this.postproc = store.getPostproc();
         this.agentId = sindex.addTyped(StructuredTextIndex.UUID_TYPE, agentUUID);
-
+        this.hostId = ZicoUtil.extractUuidSeq(agentUUID);
         this.agentUUID = agentUUID;
         this.sessionUUID = sessionUUID;
         this.traceTypeResolver = traceTypeResolver;
@@ -139,6 +141,7 @@ public class AgentHandler implements AgentDataProcessor {
                 metadata.setDataOffs(dataOffs);
                 metadata.setAppId(md.getAppId());
                 metadata.setEnvId(md.getEnvId());
+                metadata.setHostId(hostId);
 
                 if (postproc != null) postproc.process(metadata, store);
 

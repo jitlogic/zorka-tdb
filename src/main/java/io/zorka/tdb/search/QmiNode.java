@@ -35,6 +35,9 @@ public class QmiNode implements SearchNode {
     /** Trace type */
     private int typeId;
 
+    /** Host ID */
+    private int hostId;
+
     /** Trace duration (milliseconds) */
     private long minDuration = 0, maxDuration = Long.MAX_VALUE;
 
@@ -185,6 +188,14 @@ public class QmiNode implements SearchNode {
 
     public void setDesc(StringSearchNode desc) {
         this.desc = desc;
+    }
+
+    public int getHostId() {
+        return hostId;
+    }
+
+    public void setHostId(int hostId) {
+        this.hostId = hostId;
     }
 
     @Override

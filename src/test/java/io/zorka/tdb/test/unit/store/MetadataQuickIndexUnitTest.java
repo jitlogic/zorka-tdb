@@ -16,6 +16,7 @@
 
 package io.zorka.tdb.test.unit.store;
 
+import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataQuickIndex;
 import io.zorka.tdb.search.QmiNode;
 import io.zorka.tdb.search.QueryBuilder;
@@ -93,6 +94,27 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
         q.setMinDuration(2); assertEquals(32, drain(idx.search(q)).size());
         q.setMinDuration(1); assertEquals(36, drain(idx.search(q)).size());
         q.setMinDuration(0); assertEquals(40, drain(idx.search(q)).size());
+    }
+
+    @Test
+    public void testFilterByHost() {
+        MetadataQuickIndex idx = new MetadataQuickIndex(new File(tmpDir, "test.mqi"), 128);
+
+        for (int i = 0; i < 40; i++) {
+            ChunkMetadata cm = md(i % 2, i % 2, i % 3, i % 2, 10000 * (i+10),
+                    i % 10, false, i * 100, 0);
+            cm.setHostId(i % 4);
+            idx.add(cm);
+        }
+
+        assertEquals(40, idx.size());
+
+        QmiNode q = (QmiNode)QueryBuilder.qmi().node();
+
+        q.setHostId(0); assertEquals(40, drain(idx.search(q)).size());
+        q.setHostId(1); assertEquals(10, drain(idx.search(q)).size());
+        q.setHostId(2); assertEquals(10, drain(idx.search(q)).size());
+        q.setHostId(3); assertEquals(10, drain(idx.search(q)).size());
     }
 
     @Test

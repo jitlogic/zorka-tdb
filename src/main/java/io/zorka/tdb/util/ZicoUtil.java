@@ -21,6 +21,7 @@ import org.objectweb.asm.Type;
 import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
@@ -588,4 +589,15 @@ public class ZicoUtil {
         return Integer.MAX_VALUE;
     }
 
+    public final static Pattern RE_UUID = Pattern.compile("(\\p{XDigit}{8})-(\\p{XDigit}{4})-(\\p{XDigit}{4})-(\\p{XDigit}{4})-(\\p{XDigit}{12})");
+
+    public static int extractUuidSeq(String uuid) {
+        if (uuid != null) {
+            Matcher m = RE_UUID.matcher(uuid);
+            if (m.matches()) {
+                return Integer.parseInt(m.group(4), 16);
+            }
+        }
+        return 0;
+    }
 }

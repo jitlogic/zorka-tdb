@@ -234,9 +234,9 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         md.setChunkNum((int)(w3 >>> 48) & 0xffff);
     }
 
-    public static long format_W4(int mid, int did, long duration) {
+    public static long format_W4(int mid, int did, long duration, long hostId) {
         long md = did > 0 ? ((long) did) | 0x80000000L : mid;
-        return md | duration << 32;
+        return md | (Math.min(duration, 0xffff) << 32) | (Math.min(hostId, 0xffff) << 48);
     }
 
     public static void parse_W4(long w4, ChunkMetadata md) {
@@ -246,8 +246,8 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
             md.setMethodId((int) (w4 & 0x7fffffff));
         }
 
-        md.setDuration(w4 >>> 32);
-
+        md.setDuration((w4 >>> 32) & 0xffff);
+        md.setHostId((int)((w4 >>> 48) & 0xffff));
     }
 
     public static int parse_W4_did(long w4) {
@@ -284,7 +284,7 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         long w1 = format_W1(md.getStartOffs(), md.getTstamp() / 1000);
         long w2 = format_W2(md);
         long w3 = format_W3(md.getChunkNum(), md.getDataOffs());
-        long w4 = format_W4(md.getMethodId(), md.getDescId(), md.getDuration());
+        long w4 = format_W4(md.getMethodId(), md.getDescId(), md.getDuration(), md.getHostId());
         long w6 = format_W6(md);
 
         if (fpos > flimit - RECORD_SIZE) {
@@ -444,7 +444,7 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
             return -1;
         }
 
-        return buffer.getLong(pos + 3 * WORD_SIZE) >>> 32;
+        return (buffer.getLong(pos + 3 * WORD_SIZE) >>> 32) & 0xffff;
     }
 
     public synchronized long getTstart() {
@@ -520,6 +520,7 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         private int pos;
         private long minDuration, maxDuration;
         private long w2v, w2m;
+        private long hostId;
 
         public MetadataSearchResult(QmiNode node) {
             this.node = node;
@@ -530,6 +531,7 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
             this.minDuration = node.getMinDuration();
             this.maxDuration = node.getMaxDuration();
             this.pos = fpos;
+            this.hostId = node.getHostId();
         }
 
         private long format_W2(QmiNode md) {
@@ -570,8 +572,10 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
                     lfu = 0;
                     long w2 = bb.getLong(pos + WORD_SIZE);
                     long w4 = bb.getLong(pos + WORD_SIZE * 3);
-                    long wd = w4 >>> 32;
-                    if (w2v == (w2 & w2m) && t <= tstop && wd >= minDuration && wd < maxDuration) {
+                    long wd = (w4 >>> 32) & 0xffff;
+                    long hd = (w4 >>> 48) & 0xffff;
+                    if (w2v == (w2 & w2m) && t <= tstop && wd >= minDuration && wd < maxDuration
+                            && (hostId == 0 || hostId == hd)) {
                         rslt = ((pos - HEADER_SIZE) / RECORD_SIZE);
                         break;
                     }
