@@ -140,7 +140,7 @@ public class QuickHashTab {
      */
     public int getById(int id) {
         if (id < 0) {
-            throw new ZicoException("Invalid parameters");
+            throw new ZicoException("Invalid ID parameter: " + id);
         }
         if (id < maxSize) {
             return byId[id];

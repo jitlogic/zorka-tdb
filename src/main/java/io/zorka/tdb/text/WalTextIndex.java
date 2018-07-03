@@ -247,6 +247,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
     @Override
     public byte[] get(int id) {
+        if (id < idBase) return null;
 
         int pos = qmap.getById(id-idBase);
 

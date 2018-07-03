@@ -125,4 +125,10 @@ public class WalTextIndexUnitTest extends ZicoTestFixture {
         idx.close();
     }
 
+    @Test
+    public void testAccessWalBeforeIdBase() throws Exception {
+        WalTextIndex idx = new WalTextIndex(TestUtil.path(tmpDir, "idx1.wal"), 1000, 64 * 1024, 4);
+        assertNull(idx.get(5));
+        assertNull(idx.get(1005));
+    }
 }
