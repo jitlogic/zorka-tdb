@@ -97,67 +97,25 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
     private final Object MAINTENANCE_LOCK = new Object();
 
+
     /**
      * This method performs all background maintenance tasks: compression, merges, removal.
      */
     public boolean runMaintenance() {
 
         synchronized (MAINTENANCE_LOCK) {
-
-            int tasksDone = 0;
-
-            boolean archived = this.archived;
+            int tasksDone;
+            boolean arch = this.archived;
 
             log.debug("Starting maintenance cycle ...");
 
-            for (TextIndex idx : findCompressIndexes(getCState().getAllIndexes(), archived)) {
-                try {
-                    log.debug("Compressing index: " + idx);
-                    changeState(store.compressIndex(idx), true);
-                    tasksDone++;
-                } catch (Exception e) {
-                    log.error("Error compressing index " + idx, e);
-                }
-            }
+            runRemovalCycle(arch);
 
-            List<TextIndex> midx = stagedMerge
-                    ? findMergeCandidate(getCState().getAllIndexes())
-                    : findMergeCoalescing(getCState().getAllIndexes());
+            tasksDone = runCompressCycle(archived);
 
-            if (midx != null) {
-                try {
-                    log.debug("Merging indexes (binary_merge = " + stagedMerge + "): " + midx);
-                    changeState(store.mergeIndex(midx), true);
-                    tasksDone++;
-                } catch (Exception e) {
-                    log.error("Error merging indexes " + midx, e);
-                }
-            }
+            tasksDone += runMergeCycle();
 
-            for (TextIndex idx : findRemoveFmIndexes(getCState().getAllIndexes())) {
-                log.debug("Marking index " + idx + " for removal.");
-                idx.markForRemoval(removalTimeout);
-            }
-
-            List<TextIndex> removeWals = findRemoveWalIndexes(getCState().getAllIndexes());
-            if (archived || removeWals.size() > maxWals) {
-                for (TextIndex idx : archived ? removeWals : removeWals.subList(0, removeWals.size() - maxWals)) {
-                    log.debug("Marking index " + idx + " for removal.");
-                    idx.markForRemoval(removalTimeout);
-                }
-            }
-
-            for (TextIndex idx : getCState().getAllIndexes()) {
-                if (idx.canRemove()) {
-                    try {
-                        log.debug("Removing index: " + idx);
-                        changeState(idx, false);
-                        store.removeIndex(idx);
-                    } catch (Exception e) {
-                        log.error("Error removing index " + idx);
-                    }
-                }
-            }
+            runRemovalCycle(arch);
 
             log.debug("Finishing maintenance cycle (tasksDone=" + tasksDone + ")");
 
@@ -168,6 +126,69 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
             return tasksDone > 0;
         }
     }
+
+    private int runMergeCycle() {
+        int tasksDone = 0;
+        List<TextIndex> midx = stagedMerge
+                ? findMergeCandidate(getCState().getAllIndexes())
+                : findMergeCoalescing(getCState().getAllIndexes());
+
+        if (midx != null) {
+            try {
+                log.debug("Merging indexes (binary_merge = " + stagedMerge + "): " + midx);
+                changeState(store.mergeIndex(midx), true);
+                tasksDone++;
+            } catch (Exception e) {
+                log.error("Error merging indexes " + midx, e);
+            }
+        }
+        return tasksDone;
+    }
+
+
+    private int runCompressCycle(boolean archived) {
+        int tasksDone = 0;
+        for (TextIndex idx : findCompressIndexes(getCState().getAllIndexes(), archived)) {
+            try {
+                log.debug("Compressing index: " + idx);
+                changeState(store.compressIndex(idx), true);
+                tasksDone++;
+            } catch (Exception e) {
+                log.error("Error compressing index " + idx, e);
+            }
+        }
+        return tasksDone;
+    }
+
+
+    private void runRemovalCycle(boolean archived) {
+
+        for (TextIndex idx : findRemoveFmIndexes(getCState().getAllIndexes())) {
+            log.debug("Marking index " + idx + " for removal.");
+            idx.markForRemoval(removalTimeout);
+        }
+
+        List<TextIndex> removeWals = findRemoveWalIndexes(getCState().getAllIndexes());
+        if (archived || removeWals.size() > maxWals) {
+            for (TextIndex idx : archived ? removeWals : removeWals.subList(0, removeWals.size() - maxWals)) {
+                log.debug("Marking index " + idx + " for removal.");
+                idx.markForRemoval(removalTimeout);
+            }
+        }
+
+        for (TextIndex idx : getCState().getAllIndexes()) {
+            if (idx.canRemove()) {
+                try {
+                    log.debug("Removing index: " + idx);
+                    changeState(idx, false);
+                    store.removeIndex(idx);
+                } catch (Exception e) {
+                    log.error("Error removing index " + idx);
+                }
+            }
+        }
+    }
+
 
     private void changeState(TextIndex index, boolean addIndex) {
         synchronized (this) {
