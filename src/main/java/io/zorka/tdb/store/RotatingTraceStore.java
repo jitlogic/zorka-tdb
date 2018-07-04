@@ -256,6 +256,23 @@ public class RotatingTraceStore implements TraceStore, SearchableStore {
         rotate();
     }
 
+    @Override
+    public synchronized boolean runMaintenance() {
+        boolean rslt = false;
+
+        TraceStore cur = current;
+
+        if (cur != null) {
+            rslt = cur.runMaintenance();
+        }
+
+        for (Map.Entry<Integer,SimpleTraceStore> e : archived.entrySet()) {
+            rslt = rslt || e.getValue().runMaintenance();
+        }
+
+        return rslt;
+    }
+
 
     @Override
     public String getSession(String agentUUID) {

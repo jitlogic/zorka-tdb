@@ -365,6 +365,15 @@ public class SimpleTraceStore implements TraceStore, SearchableStore {
     }
 
     @Override
+    public synchronized boolean runMaintenance() {
+        if (fdata == null) open();
+
+        cleanupSessions();
+
+        return ctext.runMaintenance() || cmeta.runMaintenance();
+    }
+
+    @Override
     public synchronized String getSession(String agentUUID) {
         AgentHandler handler = handlers.get(agentUUID);
         if (handler != null) {
@@ -394,7 +403,7 @@ public class SimpleTraceStore implements TraceStore, SearchableStore {
 
     // TODO implement session timeout & cleanup functionality
 
-    public void cleanupSessions() {
+    private void cleanupSessions() {
 
         long tst = System.currentTimeMillis();
 
