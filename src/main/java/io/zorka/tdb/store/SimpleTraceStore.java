@@ -418,7 +418,7 @@ public class SimpleTraceStore implements TraceStore, SearchableStore {
     public static int SEARCH_QR_THRESHOLD = 512;
     public static int SEARCH_TX_THRESHOLD = 512;
 
-    long toChunkId(int slot) {
+    public long toChunkId(int slot) {
         return slot >= 0 ? (((long)storeId) << 32) | slot : -1;
     }
 
@@ -432,13 +432,16 @@ public class SimpleTraceStore implements TraceStore, SearchableStore {
 
     @Override
     public SearchResult search(SearchNode expr) {
-        SearchResult sr;
+        SearchResult sr = null;
 
-        SearchQuery q = SearchQuery.DEFAULT;
+        TraceSearchQuery q = TraceSearchQuery.DEFAULT;
 
-        if (expr instanceof SearchQuery) {
-            q = (SearchQuery)expr;
+        if (expr instanceof TraceSearchQuery) {
+            q = (TraceSearchQuery)expr;
             expr = q.getNode();
+            if (q.getQmi() != null) {
+                expr = new AndExprNode(Arrays.asList(q.getQmi(), expr));
+            }
         }
 
         if (expr instanceof QmiNode) {
@@ -456,7 +459,7 @@ public class SimpleTraceStore implements TraceStore, SearchableStore {
             for (int i = 0; i < tsr.size(); i++) {
                 tsr.set(i, tidTranslatingResult(tsr.get(i), q.isDeepSearch()));
             }
-            if (tsr.size() == 0) {
+            if (tsr.isEmpty()) {
                 sr = qsr;
             } else  {
                 sr = tsr.size() == 1 ? tsr.get(0) : new ConjunctionSearchResult(tsr);
@@ -470,6 +473,13 @@ public class SimpleTraceStore implements TraceStore, SearchableStore {
 
         return sr != null ? new MappingSearchResult(sr, x -> (x | (storeId << 32))) : EmptySearchResult.INSTANCE;
     }
+
+
+    @Override
+    public TraceSearchResult searchTraces(TraceSearchQuery query) {
+        return new SimpleTraceStoreSearchResult(query, this);
+    }
+
 
 } // class SimpleTraceStore { .. }
 

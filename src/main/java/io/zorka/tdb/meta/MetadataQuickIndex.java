@@ -17,11 +17,10 @@
 package io.zorka.tdb.meta;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.search.EmptySearchResult;
-import io.zorka.tdb.search.QmiNode;
-import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.SearchableStore;
+import io.zorka.tdb.search.*;
 import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.store.TraceSearchResult;
+import io.zorka.tdb.store.TraceSearchResultItem;
 import io.zorka.tdb.util.ZicoUtil;
 
 import java.io.Closeable;
@@ -224,6 +223,22 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
             | (md.getTypeId() != 0 ? 0x00000000ffff0000L : 0L)
             | (md.getFlags()  != 0 ? 0x0000000000000001L : 0L);
     }
+
+    private long format_W2(QmiNode md) {
+        return (((long)md.getAppId()) << 48)
+                | (((long)md.getEnvId()) << 32)
+                | (((long)md.getTypeId()) << 16)
+                | (md.isErrorFlag() ? 1 : 0);
+    }
+
+    private long format_W2M(QmiNode md) {
+        return
+                (md.getAppId()  != 0 ? 0xffff000000000000L : 0L)
+                        | (md.getEnvId()  != 0 ? 0x0000ffff00000000L : 0L)
+                        | (md.getTypeId() != 0 ? 0x00000000ffff0000L : 0L)
+                        | (md.isErrorFlag() ? 0x0000000000000001L : 0L);
+    }
+
 
     private static long format_W3(int chunkNum, long dataOffs) {
         return (((long)chunkNum) << 48) | dataOffs;
@@ -493,6 +508,10 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         buffer.force();
     }
 
+    public boolean findNext(QmiNode qmi, TraceSearchResultItem rslt) {
+        return false;
+    }
+
     @Override
     public void close() throws IOException {
         flush();
@@ -532,21 +551,6 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
             this.maxDuration = node.getMaxDuration();
             this.pos = fpos;
             this.hostId = node.getHostId();
-        }
-
-        private long format_W2(QmiNode md) {
-            return (((long)md.getAppId()) << 48)
-                    | (((long)md.getEnvId()) << 32)
-                    | (((long)md.getTypeId()) << 16)
-                    | (md.isErrorFlag() ? 1 : 0);
-        }
-
-        private long format_W2M(QmiNode md) {
-            return
-                    (md.getAppId()  != 0 ? 0xffff000000000000L : 0L)
-                            | (md.getEnvId()  != 0 ? 0x0000ffff00000000L : 0L)
-                            | (md.getTypeId() != 0 ? 0x00000000ffff0000L : 0L)
-                            | (md.isErrorFlag() ? 0x0000000000000001L : 0L);
         }
 
         @Override
@@ -591,6 +595,64 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         public int estimateSize(int limit) {
             return 0;
         }
+    }
+
+    public int searchBlock(QmiNode query, SortOrder sortOrder, int blkFrom, int blkTo, int[] ids, int[] vals) {
+        int idx = 0;
+        int pos = HEADER_SIZE + blkFrom * RECORD_SIZE;
+        int lim = HEADER_SIZE + blkTo * RECORD_SIZE;
+        int blk = blkFrom;
+        long t0 = query.getTstart() / 1000;
+        long t1 = query.getTstop() / 1000;
+        long w2v = format_W2(query);
+        long w2m = format_W2M(query);
+        long d0 = query.getMinDuration();
+        long d1 = query.getMaxDuration();
+        long hostId = query.getHostId();
+
+        ByteBuffer bb = buffer;
+        rwlock.readLock().lock();
+
+        try {
+            while (pos < lim  && blk < ids.length) {
+                long w1 = bb.getLong(pos);
+                long w2 = bb.getLong(pos + WORD_SIZE);
+                long w4 = bb.getLong(pos + WORD_SIZE * 3);
+                long wd = (w4 >>> 32) & 0xffff;
+                long hd = (w4 >>> 48) & 0xffff;
+                long t = w1 & 0xffffffffL;
+                if (w2v == (w2 & w2m) && t >= t0 && t <= t1 && wd >= d0 && wd < d1
+                        && (hostId == 0 || hostId == hd)) {
+                    ids[idx] = blk;
+                    switch (sortOrder) {
+                        case NONE:
+                            vals[idx] = blk;
+                            break;
+                        case DURATION:
+                            vals[idx] = (int)wd;
+                            break;
+                        case CALLS:
+                            vals[idx] = (int) bb.getLong(pos + WORD_SIZE * 5);
+                            break;
+                        case RECS:
+                            vals[idx] = (int) (bb.getLong(pos + WORD_SIZE * 5) >>> 40);
+                            break;
+                        case ERRORS:
+                            vals[idx] = (int)(((w2 >>> 8) & 0xff) | ((bb.getLong(pos + WORD_SIZE * 5) >>> 32) & 0xff));
+                            break;
+                        default:
+                            vals[idx] = blk;
+                    }
+                    idx++;
+                }
+
+                pos += RECORD_SIZE; blk++;
+            }
+        } finally  {
+            rwlock.readLock().unlock();
+        }
+
+        return idx;
     }
 
 }

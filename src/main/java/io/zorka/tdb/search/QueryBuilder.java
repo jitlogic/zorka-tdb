@@ -84,8 +84,8 @@ public class QueryBuilder {
                 rslt.add((SearchNode)arg);
             } else if (arg instanceof QueryBuilder) {
                 rslt.add(((QueryBuilder)arg).node);
-            } else if (arg instanceof SearchQuery) {
-                rslt.add(((SearchQuery)arg).getNode());
+            } else if (arg instanceof TraceSearchQuery) {
+                rslt.add(((TraceSearchQuery)arg).getNode());
             } else if (arg instanceof String) {
                 rslt.add(new TextNode(((String)arg).getBytes(), false, false));
             } else {
@@ -164,9 +164,13 @@ public class QueryBuilder {
         return this;
     }
 
+    public TraceSearchQuery query() {
+        return query(new QmiNode());
+    }
+
     /** Return built search query */
-    public SearchQuery query() {
-        SearchQuery q = new SearchQuery(node);
+    public TraceSearchQuery query(QmiNode qmi) {
+        TraceSearchQuery q = new TraceSearchQuery(qmi, node);
 
         q.setLimit(limit);
         q.setOffset(offset);

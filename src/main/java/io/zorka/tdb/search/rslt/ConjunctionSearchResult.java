@@ -27,6 +27,7 @@ public class ConjunctionSearchResult implements SearchResult {
 
     private List<SearchResult> inputs;
     private SearchResult result;
+    private BitmapSet bmps;
 
     public ConjunctionSearchResult(SearchResult sr1, SearchResult sr2) {
         inputs = Arrays.asList(sr1, sr2);
@@ -39,7 +40,6 @@ public class ConjunctionSearchResult implements SearchResult {
     }
 
     private void initSearch() {
-        BitmapSet bmps = null;
 
         for (SearchResult sr : inputs) {
             BitmapSet b = new BitmapSet();
@@ -64,5 +64,10 @@ public class ConjunctionSearchResult implements SearchResult {
     @Override
     public int estimateSize(int limit) {
         return result.estimateSize(limit);
+    }
+
+    @Override
+    public BitmapSet getResultSet() {
+        return bmps;
     }
 }

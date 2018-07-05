@@ -31,12 +31,12 @@ public class SearchApiBuilderUnitTest {
 
     @Test
     public void testSearchTextIndexPhrase() {
-        assertTrue(QueryBuilder.xtext("abc").query().getNode() instanceof TextNode);
-        assertEquals(100, QueryBuilder.xtext("a").limit(100).query().getLimit());
-        assertEquals(50, QueryBuilder.xtext("a").offset(50).query().getOffset());
-        assertEquals(20L, QueryBuilder.xtext("a").after(20L).query().getAfter());
-        assertEquals(999, QueryBuilder.xtext("a").window(999).query().getWindow());
-        assertEquals(SortOrder.CALLS, QueryBuilder.xtext("a").sort(SortOrder.CALLS).query().getSortOrder());
+        assertTrue(QueryBuilder.xtext("abc").query(null).getNode() instanceof TextNode);
+        assertEquals(100, QueryBuilder.xtext("a").limit(100).query(null).getLimit());
+        assertEquals(50, QueryBuilder.xtext("a").offset(50).query(null).getOffset());
+        assertEquals(20L, QueryBuilder.xtext("a").after(20L).query(null).getAfter());
+        assertEquals(999, QueryBuilder.xtext("a").window(999).query(null).getWindow());
+        assertEquals(SortOrder.CALLS, QueryBuilder.xtext("a").sort(SortOrder.CALLS).query(null).getSortOrder());
     }
 
 

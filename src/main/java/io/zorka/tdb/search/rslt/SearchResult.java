@@ -16,10 +16,19 @@
 
 package io.zorka.tdb.search.rslt;
 
+import io.zorka.tdb.util.BitmapSet;
+
 public interface SearchResult {
 
     long nextResult();
 
     int estimateSize(int limit);
 
+    default BitmapSet getResultSet() {
+        BitmapSet bmps = new BitmapSet();
+        for (long l = nextResult(); l != -1; l = nextResult()) {
+            bmps.set((int)l);
+        }
+        return bmps;
+    }
 }

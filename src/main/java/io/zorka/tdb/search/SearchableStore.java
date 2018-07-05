@@ -23,7 +23,6 @@ import io.zorka.tdb.search.rslt.SearchResult;
  */
 public interface SearchableStore {
 
-
     SearchResult search(SearchNode expr);
 
     default int estimate(SearchNode expr, int limit) {

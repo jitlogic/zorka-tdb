@@ -17,12 +17,10 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.ChunkMetadata;
+import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.search.SearchableStore;
 
 import java.io.Closeable;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -93,5 +91,12 @@ public interface TraceStore extends Closeable, SearchableStore {
     long getTstart();
 
     long getTstop();
+
+    /**
+     * High-level search API.
+     * @param query search query
+     * @return search result
+     */
+    TraceSearchResult searchTraces(TraceSearchQuery query);
 }
 

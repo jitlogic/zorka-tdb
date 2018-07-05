@@ -16,20 +16,49 @@
 
 package io.zorka.tdb.search;
 
-public class SearchQuery implements SearchNode {
+public class TraceSearchQuery implements SearchNode {
 
-    public static final SearchQuery DEFAULT = new SearchQuery(null);
+    public static final TraceSearchQuery DEFAULT = new TraceSearchQuery(new QmiNode(), null);
+
+    // TODO uwzględnić w searchu flagi
+
+    /** Fetch description text */
+    public static final int FETCH_DESC = 0x0001;
+
+    /** Fetch trace UUIDs */
+    public static final int FETCH_UUID = 0x0002;
+
+    /** Chunk-level search, do not */
+    public static final int FETCH_CHNK = 0x0004;
+
+    public static final int FETCH_ALL = 0xffff;
+
+    /**
+     * Determines which parts of results should be returned.
+     */
+    private int resultFlags = FETCH_ALL;
+
+    /**
+     * Optimization. Block size for QMI index scans.
+     */
+    private int blkSize = 16384;
 
     private SearchNode node;
-    private int limit = Integer.MAX_VALUE, offset = 0, window = 1048576;
+    private QmiNode qmi;
+    private int limit = Integer.MAX_VALUE, offset = 0, window = 1024;
     private long after = -1;
     private boolean deepSearch = true;
 
     private SortOrder sortOrder = SortOrder.NONE;
     private boolean sortReverse = false;
 
-    public SearchQuery(SearchNode node) {
+    public TraceSearchQuery(QmiNode qmi, SearchNode node) {
+        this.qmi = qmi;
         this.node = node;
+    }
+
+    public QmiNode getQmi() {
+        return qmi;
     }
 
     public SearchNode getNode() {
@@ -90,5 +119,13 @@ public class SearchQuery implements SearchNode {
 
     public void setDeepSearch(boolean deepSearch) {
         this.deepSearch = deepSearch;
+    }
+
+    public int getBlkSize() {
+        return blkSize;
+    }
+
+    public void setBlkSize(int blkSize) {
+        this.blkSize = blkSize;
     }
 }

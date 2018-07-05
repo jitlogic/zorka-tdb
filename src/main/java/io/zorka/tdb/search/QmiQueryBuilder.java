@@ -128,4 +128,8 @@ public class QmiQueryBuilder extends QueryBuilder {
         qmi.setDesc(node);
         return this;
     }
+
+    public QmiNode qmiNode() {
+        return (QmiNode)node();
+    }
 }

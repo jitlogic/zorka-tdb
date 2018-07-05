@@ -19,6 +19,7 @@ package io.zorka.tdb.store;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.search.SearchableStore;
 import io.zorka.tdb.search.rslt.ListSearchResultsMapper;
 import io.zorka.tdb.search.rslt.StreamingSearchResult;
@@ -128,6 +129,12 @@ public class RotatingTraceStore implements TraceStore, SearchableStore {
     @Override
     public long getTstop() {
         return current.getTstop();
+    }
+
+    @Override
+    public TraceSearchResult searchTraces(TraceSearchQuery query) {
+        // TODO implement full search over all archived stores
+        return current.searchTraces(query);
     }
 
     public Map<String, TraceDataIndexer> getIndexerCache() {
