@@ -35,7 +35,7 @@ public class StreamingSearchResult implements SearchResult {
     }
 
     private SearchResult nextSR() {
-        if (cache.size() > 0) {
+        if (!cache.isEmpty()) {
             SearchResult rslt = cache.get(0);
             cache.remove(0);
             return rslt;

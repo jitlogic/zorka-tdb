@@ -133,8 +133,17 @@ public class RotatingTraceStore implements TraceStore, SearchableStore {
 
     @Override
     public TraceSearchResult searchTraces(TraceSearchQuery query) {
-        // TODO implement full search over all archived stores
-        return current.searchTraces(query);
+
+        List<SimpleTraceStore> stores = new ArrayList<>(archived.size() + 2);
+
+        synchronized (this) {
+            stores.add(current);
+            stores.addAll(archived.values());
+        }
+
+        stores.sort( (a,b) -> (int)(a.getStoreId() - b.getStoreId()));
+
+        return new RotatingTraceStoreSearchResult(query, stores);
     }
 
     public Map<String, TraceDataIndexer> getIndexerCache() {

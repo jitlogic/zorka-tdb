@@ -442,7 +442,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
     @Override
     public String toString() {
-        return "WalTextIndex(" + file + ", dlen=" + getDatalen() + ", nwords=" + getNWords() + ")";
+        return "WAL(" + file + ", dlen=" + getDatalen() + ", nwords=" + getNWords() + ")";
     }
 
 
@@ -455,8 +455,9 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         return jump(pos, RawDictCodec.MARK_ID1);
     }
 
-    private void scan(byte[] text, BitmapSet matches, boolean fetchTids) {
+    private int scan(byte[] text, BitmapSet matches, boolean fetchTids) {
         int rec = 0;
+        int cnt = 0;
         int limit = fpos - text.length;  // TODO concurrency
         byte[] buf = new byte[8];
 
@@ -482,6 +483,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
                             if (b >= 0 && b < 32) {
                                 if (i > 1) ZicoUtil.reverse(buf, 0, i);
                                 matches.set((int)RawDictCodec.idDecode(buf, 0, i));
+                                cnt++;
                                 break;
                             } else {
                                 buf[i] = b;
@@ -489,6 +491,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
                         }
                     } else {
                         matches.set(rec);
+                        cnt++;
                     }
                     break;
                 } else {
@@ -497,6 +500,8 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
             } // while (pos < limit)
             rec++;
         } // for ()
+
+        return cnt;
     }
 
     @Override
@@ -521,6 +526,12 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         scan(text, matches, true);
 
         return new MappingSearchResult(matches.searchAll(), Function.identity());
+    }
+
+    @Override
+    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
+        byte[] text = MetaIndexUtils.encodeMetaInt(TID_MARKER, (int)tid, deep ? FIDS_MARKER : TIDS_MARKER);
+        return scan(text, rslt, true);
     }
 }
 

@@ -30,6 +30,7 @@ import io.zorka.tdb.store.StackData;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.RawDictCodec;
 import io.zorka.tdb.text.WritableTextIndex;
+import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -483,6 +484,11 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
 
     @Override
     public SearchResult searchIds(long tid, boolean deep) {
+        throw new ZicoException("Not implemented.");
+    }
+
+    @Override
+    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
         throw new ZicoException("Not implemented.");
     }
 

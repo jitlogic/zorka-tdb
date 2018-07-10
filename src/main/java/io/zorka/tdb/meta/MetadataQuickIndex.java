@@ -614,7 +614,7 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         rwlock.readLock().lock();
 
         try {
-            while (pos < lim  && blk < ids.length) {
+            while (pos < lim  && blk-blkFrom < ids.length) {
                 long w1 = bb.getLong(pos);
                 long w2 = bb.getLong(pos + WORD_SIZE);
                 long w4 = bb.getLong(pos + WORD_SIZE * 3);

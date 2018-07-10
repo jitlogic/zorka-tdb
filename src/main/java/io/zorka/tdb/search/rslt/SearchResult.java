@@ -20,7 +20,7 @@ import io.zorka.tdb.util.BitmapSet;
 
 public interface SearchResult {
 
-    long nextResult();
+    long nextResult();  // TODO long -> int (po odpięciu od TraceStores)
 
     int estimateSize(int limit);
 

@@ -20,6 +20,7 @@ import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.TextIndex;
+import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
 
 import java.nio.charset.Charset;
@@ -90,6 +91,11 @@ public class TextIndexR extends AbstractTextIndex implements TextIndex {
     @Override
     public SearchResult searchIds(long tid, boolean deep) {
         return null;
+    }
+
+    @Override
+    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
+        return 0;
     }
 
     @Override

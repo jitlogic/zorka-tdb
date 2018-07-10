@@ -17,6 +17,7 @@
 package io.zorka.tdb.search;
 
 import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.util.BitmapSet;
 
 /**
  * Searchable index or data store.
@@ -24,6 +25,18 @@ import io.zorka.tdb.search.rslt.SearchResult;
 public interface SearchableStore {
 
     SearchResult search(SearchNode expr);
+
+    default int search(SearchNode expr, BitmapSet rslt) {
+        SearchResult sr = search(expr);
+        int cnt = 0;
+
+        for (long r = sr.nextResult(); r >= 0; r = sr.nextResult()) {
+            rslt.set((int)r);
+            cnt++;
+        }
+
+        return cnt;
+    }
 
     default int estimate(SearchNode expr, int limit) {
         return search(expr).estimateSize(limit);

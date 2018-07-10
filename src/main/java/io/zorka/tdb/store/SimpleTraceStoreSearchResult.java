@@ -14,10 +14,14 @@ import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.search.rslt.StreamingSearchResult;
 import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.KVSortingHeap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class SimpleTraceStoreSearchResult implements TraceSearchResult, Iterable<TraceSearchResultItem> {
+public class SimpleTraceStoreSearchResult implements TraceSearchResult {
+
+    private final static Logger log = LoggerFactory.getLogger(SimpleTraceStoreSearchResult.class);
 
     private SimpleTraceStore store;
 
@@ -58,6 +62,9 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult, Iterable
         SearchNode expr = query.getNode();
 
         BitmapSet bmps = fullTextSearch(expr);
+        if (bmps != null && log.isTraceEnabled()) {
+            log.trace("bmps.count() = {}", bmps.count());
+        }
 
         do {
             int start = Math.max(0, pos - query.getBlkSize());
@@ -150,23 +157,4 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult, Iterable
         return results.size();
     }
 
-    @Override
-    public Iterator<TraceSearchResultItem> iterator() {
-        return new Iterator<TraceSearchResultItem>() {
-
-            private TraceSearchResultItem itm = nextItem();
-
-            @Override
-            public boolean hasNext() {
-                return nextItem() != null;
-            }
-
-            @Override
-            public TraceSearchResultItem next() {
-                TraceSearchResultItem rslt = itm;
-                itm = nextItem();
-                return rslt;
-            }
-        };
-    }
 }

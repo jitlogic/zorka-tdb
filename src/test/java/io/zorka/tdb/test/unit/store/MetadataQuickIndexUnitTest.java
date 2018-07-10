@@ -21,6 +21,7 @@ import io.zorka.tdb.meta.MetadataQuickIndex;
 import io.zorka.tdb.search.QmiNode;
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.SortOrder;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
 import java.io.File;
@@ -142,4 +143,32 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
         assertTrue(parseEndFlag(chunkId));
     }
 
+    @Test
+    public void testSearchBlockByBlock() {
+        MetadataQuickIndex idx = new MetadataQuickIndex(new File(tmpDir, "test.mqi"), 128);
+
+        for (int i = 0; i < 40; i++) {
+            ChunkMetadata cm = md(i % 2, i % 2, i % 3, i % 2, 10000 * (i+10),
+                    i % 10, false, i * 100, 0);
+            cm.setHostId(i % 4);
+            idx.add(cm);
+        }
+
+        assertEquals(40, idx.size());
+
+        int[] ids = new int[4], vals = new int[4];
+
+        QmiNode qmi = QueryBuilder.qmi().qmiNode();
+
+        int cnt1 = idx.searchBlock(qmi, SortOrder.NONE, 0, 4, ids, vals);
+        assertEquals(4, cnt1);
+
+        int cnt2 = idx.searchBlock(qmi, SortOrder.NONE, 4, 8, ids, vals);
+        assertEquals(4, cnt2);
+
+        int cnt3 = idx.searchBlock(qmi, SortOrder.NONE, 0, 8, ids, vals);
+        assertEquals(4, cnt3);
+    }
+
 }
+

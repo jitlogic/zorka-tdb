@@ -26,6 +26,7 @@ import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WritableTextIndex;
+import io.zorka.tdb.util.BitmapSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -602,7 +603,8 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     public SearchResult search(SearchNode expr) {
         if (expr instanceof TextNode) {
             ListSearchResultsMapper<TextIndex> results = new ListSearchResultsMapper<>(
-                    getCState().getSearchIndexes(), x -> x.search(expr));
+                    getCState().getSearchIndexes(),
+                    x -> x.search(expr));
             return new StreamingSearchResult(results);
         } else {
             return EmptySearchResult.INSTANCE;
@@ -615,6 +617,17 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         ListSearchResultsMapper<TextIndex> results = new ListSearchResultsMapper<>(
                 getCState().getSearchIndexes(), x -> x.searchIds(tid, deep));
         return new StreamingSearchResult(results);
+    }
+
+    @Override
+    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
+        int cnt = 0;
+
+        for (TextIndex idx : getCState().getSearchIndexes()) {
+            cnt += idx.searchIds(tid, deep, rslt);
+        }
+
+        return cnt;
     }
 
 }

@@ -21,6 +21,7 @@ import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.TextIndexState;
 import io.zorka.tdb.text.WritableTextIndex;
+import io.zorka.tdb.util.BitmapSet;
 
 import java.io.IOException;
 
@@ -85,6 +86,11 @@ public class WritableIndexWrapper implements WritableTextIndex {
     @Override
     public SearchResult searchIds(long tid, boolean deep) {
         return index.searchIds(tid, deep);
+    }
+
+    @Override
+    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
+        return index.searchIds(tid, deep, rslt);
     }
 
     @Override

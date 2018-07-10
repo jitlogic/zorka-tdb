@@ -19,6 +19,7 @@ package io.zorka.tdb.meta;
 import io.zorka.tdb.search.rslt.SearchResult;
 import io.zorka.tdb.text.RawDictCodec;
 import io.zorka.tdb.text.WritableTextIndex;
+import io.zorka.tdb.util.BitmapSet;
 
 import static io.zorka.tdb.text.RawDictCodec.*;
 
@@ -148,6 +149,10 @@ public class MetadataTextIndex {
 
     public SearchResult searchIds(long tid, boolean deep) {
         return tidx.searchIds(tid, deep);
+    }
+
+    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
+        return tidx.searchIds(tid, deep, rslt);
     }
 
     public void close() throws IOException {

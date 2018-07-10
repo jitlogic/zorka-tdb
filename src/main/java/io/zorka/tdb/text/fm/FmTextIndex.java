@@ -16,6 +16,7 @@
 
 package io.zorka.tdb.text.fm;
 
+import io.zorka.tdb.meta.MetaIndexUtils;
 import io.zorka.tdb.search.EmptySearchResult;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.rslt.SearchResult;
@@ -24,9 +25,14 @@ import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.RawDictCodec;
 
 import io.zorka.tdb.text.TextIndexUtils;
+import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
 
 import java.io.*;
+
+import static io.zorka.tdb.meta.MetadataTextIndex.FIDS_MARKER;
+import static io.zorka.tdb.meta.MetadataTextIndex.TIDS_MARKER;
+import static io.zorka.tdb.meta.MetadataTextIndex.TID_MARKER;
 
 
 /**
@@ -293,6 +299,32 @@ public class FmTextIndex extends AbstractTextIndex {
         return new FmTextSearchIdsResult(this, (int)tid, deep);
     }
 
+    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
+        int sptr;
+        int eptr;
+        int cnt = 0;
+        byte[] buf = MetaIndexUtils.encodeMetaInt(TID_MARKER, (int)tid, deep ? FIDS_MARKER : TIDS_MARKER);
+        ZicoUtil.reverse(buf);
+
+        long range = locateL(buf);
+        if (range != -1L) {
+            sptr = sp(range);
+            eptr = ep(range);
+        } else {
+            sptr = eptr = -1;
+        }
+
+        while (sptr >= 0 && sptr <= eptr) {
+            int pos = sptr++;
+            int id = extractId(pos);
+            if (id >= 0) {
+                rslt.set(id);
+                cnt++;
+            }
+        }
+
+        return cnt;
+    }
 
     @Override
     public SearchResult search(SearchNode expr) {
@@ -301,6 +333,11 @@ public class FmTextIndex extends AbstractTextIndex {
         } else {
             return EmptySearchResult.INSTANCE;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "FMI(" + fif.getFile() + ")";
     }
 
 }
