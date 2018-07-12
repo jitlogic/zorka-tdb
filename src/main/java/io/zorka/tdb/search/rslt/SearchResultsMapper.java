@@ -18,7 +18,7 @@ package io.zorka.tdb.search.rslt;
 
 public interface SearchResultsMapper {
 
-    SearchResult next();
+    TextSearchResult next();
 
 
     int size(int limit);

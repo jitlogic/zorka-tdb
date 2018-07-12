@@ -23,18 +23,18 @@ import java.util.function.Function;
 public class ListSearchResultsMapper<T> implements SearchResultsMapper {
 
     private List<T> cached;
-    private Function<T,SearchResult> mapFn;
+    private Function<T,TextSearchResult> mapFn;
 
-    public ListSearchResultsMapper(List<T> data, Function<T,SearchResult> mapFn) {
+    public ListSearchResultsMapper(List<T> data, Function<T,TextSearchResult> mapFn) {
         cached = new ArrayList<>(data);
         this.mapFn = mapFn;
 
     }
 
     @Override
-    public SearchResult next() {
+    public TextSearchResult next() {
         if (cached.size() > 0) {
-            SearchResult rslt = mapFn.apply(cached.get(0));
+            TextSearchResult rslt = mapFn.apply(cached.get(0));
             cached.remove(0);
             return rslt;
         } else {

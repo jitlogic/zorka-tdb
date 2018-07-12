@@ -20,16 +20,16 @@ import java.util.function.Function;
 
 public class CascadingSearchResultsMapper implements SearchResultsMapper {
 
-    private SearchResult sr;
-    private Function<Long,SearchResult> mapFn;
+    private TextSearchResult sr;
+    private Function<Long,TextSearchResult> mapFn;
 
-    public CascadingSearchResultsMapper(SearchResult sr, Function<Long,SearchResult> mapFn) {
+    public CascadingSearchResultsMapper(TextSearchResult sr, Function<Long,TextSearchResult> mapFn) {
         this.sr = sr;
         this.mapFn = mapFn;
     }
 
     @Override
-    public SearchResult next() {
+    public TextSearchResult next() {
         long r = sr.nextResult();
         return r >= 0 ? mapFn.apply(r) : null;
     }

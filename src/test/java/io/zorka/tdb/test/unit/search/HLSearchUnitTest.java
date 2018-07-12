@@ -1,5 +1,6 @@
 package io.zorka.tdb.test.unit.search;
 
+import io.zorka.tdb.search.QmiQueryBuilder;
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.store.SimpleTraceStore;
@@ -84,7 +85,7 @@ public class HLSearchUnitTest extends ZicoTestFixture {
 
     @Test
     public void testSimpleHlSearchAll() {
-        TraceSearchQuery query = QueryBuilder.qmi().query();
+        TraceSearchQuery query = QueryBuilder.all().query();
         TraceSearchResult rslt = store.searchTraces(query);
 
         TraceSearchResultItem itm1 = rslt.nextItem();
@@ -98,7 +99,7 @@ public class HLSearchUnitTest extends ZicoTestFixture {
 
     @Test
     public void testSimpleHlSearchWithKV() {
-        TraceSearchQuery query = QueryBuilder.kv("AAA", "UVW5").query(QueryBuilder.qmi().qmiNode());
+        TraceSearchQuery query = QueryBuilder.kv("AAA", "UVW5").query(QmiQueryBuilder.all().qmiNode());
         TraceSearchResult rslt = store.searchTraces(query);
 
         assertEquals(2, rslt.size());
@@ -116,7 +117,7 @@ public class HLSearchUnitTest extends ZicoTestFixture {
 
     @Test
     public void testSimpleHLSearchWithOffset() {
-        TraceSearchQuery query = QueryBuilder.qmi().query();
+        TraceSearchQuery query = QueryBuilder.all().query();
         query.setLimit(3); query.setOffset(0);
 
         TraceSearchResult r1 = store.searchTraces(query);

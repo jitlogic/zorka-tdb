@@ -16,7 +16,7 @@
 
 package io.zorka.tdb.test.unit.util;
 
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.util.BitmapSet;
 
 import io.zorka.tdb.util.ZicoUtil;
@@ -95,7 +95,7 @@ public class BitMapSetUnitTest {
 
     private Set<Long> drain(BitmapSet bs) {
         Set<Long> rslt = new HashSet<>();
-        SearchResult sr = bs.searchAll();
+        TextSearchResult sr = bs.searchAll();
         for (long r = sr.nextResult(); r >= 0; r = sr.nextResult()) rslt.add(r);
         return rslt;
     }

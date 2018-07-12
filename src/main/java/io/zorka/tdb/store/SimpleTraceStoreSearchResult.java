@@ -4,13 +4,12 @@ import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataQuickIndex;
 import io.zorka.tdb.meta.MetadataTextIndex;
 import io.zorka.tdb.meta.StructuredTextIndex;
-import io.zorka.tdb.search.QmiNode;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.search.lsn.AndExprNode;
 import io.zorka.tdb.search.rslt.CascadingSearchResultsMapper;
 import io.zorka.tdb.search.rslt.ConjunctionSearchResult;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.search.rslt.StreamingSearchResult;
 import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.KVSortingHeap;
@@ -104,18 +103,18 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
         BitmapSet bmps = null;
 
         if (expr instanceof AndExprNode) {
-            List<SearchResult> tsr = new ArrayList<>();
+            List<TextSearchResult> tsr = new ArrayList<>();
             for (SearchNode node : ((AndExprNode)expr).getArgs()) {
                 tsr.add(tidTranslatingResult(itext.search(node), query.isDeepSearch()));
             }
             bmps = new ConjunctionSearchResult(tsr).getResultSet();
-        } else if (expr != null && expr.getClass() != QmiNode.class) {
+        } else if (expr != null) {
             bmps = tidTranslatingResult(itext.search(expr), query.isDeepSearch()).getResultSet();
         }
         return bmps;
     }
 
-    private SearchResult tidTranslatingResult(SearchResult rslt, boolean deep) {
+    private TextSearchResult tidTranslatingResult(TextSearchResult rslt, boolean deep) {
         CascadingSearchResultsMapper mapper = new CascadingSearchResultsMapper(rslt,
                 tid -> imeta.searchIds(tid, deep));
         return new StreamingSearchResult(mapper);

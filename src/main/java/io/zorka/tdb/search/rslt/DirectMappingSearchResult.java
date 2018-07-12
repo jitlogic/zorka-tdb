@@ -24,23 +24,23 @@ import java.util.function.Function;
  * Generalized search result wrapper for cases where input data item is transformed
  * to at most 1 output data item.
  */
-public class DirectMappingSearchResult implements SearchResult {
+public class DirectMappingSearchResult implements TextSearchResult {
 
-    private SearchResult result;
-    private Function<Long,Long> mapFn;
-    private Set<Long> visited = new HashSet<>();
+    private TextSearchResult result;
+    private Function<Integer,Integer> mapFn;
+    private Set<Integer> visited = new HashSet<>(); // TODO przejść na BitmapSet
 
-    public DirectMappingSearchResult(SearchResult result, Function<Long,Long> mapFn) {
+    public DirectMappingSearchResult(TextSearchResult result, Function<Integer,Integer> mapFn) {
         this.result = result;
         this.mapFn = mapFn;
     }
 
     @Override
-    public long nextResult() {
+    public int nextResult() {
 
-        for (long r = result.nextResult(); r >= 0; r = result.nextResult()) {
+        for (int r = result.nextResult(); r >= 0; r = result.nextResult()) {
 
-            long rslt = mapFn.apply(r);
+            int rslt = mapFn.apply(r);
 
             if (visited.contains(r)) {
                 continue;

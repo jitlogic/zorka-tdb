@@ -21,7 +21,7 @@ import io.zorka.tdb.meta.MetaIndexUtils;
 import io.zorka.tdb.search.EmptySearchResult;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.rslt.MappingSearchResult;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.util.*;
 
@@ -505,7 +505,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     }
 
     @Override
-    public SearchResult search(SearchNode expr) {
+    public TextSearchResult search(SearchNode expr) {
         if (expr instanceof TextNode) {
             byte[] text = ((TextNode)expr).getText();
             BitmapSet matches = new BitmapSet();
@@ -519,7 +519,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     }
 
     @Override
-    public SearchResult searchIds(long tid, boolean deep) {
+    public TextSearchResult searchIds(long tid, boolean deep) {
         byte[] text = MetaIndexUtils.encodeMetaInt(TID_MARKER, (int)tid, deep ? FIDS_MARKER : TIDS_MARKER);
         BitmapSet matches = new BitmapSet();
 

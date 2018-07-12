@@ -21,12 +21,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class StreamingSearchResult implements SearchResult {
+public class StreamingSearchResult implements TextSearchResult {
 
     private SearchResultsMapper results;
-    private List<SearchResult> cache;
-    private SearchResult result;
-    private Set<Long> visited = new HashSet<>();
+    private List<TextSearchResult> cache;
+    private TextSearchResult result;
+    private Set<Integer> visited = new HashSet<>(); // TODO przejśc na BitmapSet
 
     public StreamingSearchResult(SearchResultsMapper results) {
         this.results = results;
@@ -34,9 +34,9 @@ public class StreamingSearchResult implements SearchResult {
         result = nextSR();
     }
 
-    private SearchResult nextSR() {
+    private TextSearchResult nextSR() {
         if (!cache.isEmpty()) {
-            SearchResult rslt = cache.get(0);
+            TextSearchResult rslt = cache.get(0);
             cache.remove(0);
             return rslt;
         }
@@ -44,9 +44,9 @@ public class StreamingSearchResult implements SearchResult {
     }
 
     @Override
-    public long nextResult() {
+    public int nextResult() {
         while (result != null) {
-            long r = result.nextResult();
+            int r = result.nextResult();
             if (r >= 0 && visited.contains(r)) continue;
             if (r >= 0) {
                 visited.add(r);
@@ -63,13 +63,13 @@ public class StreamingSearchResult implements SearchResult {
 
         if (rslt >= limit) return rslt;
 
-        for (SearchResult sr : cache) {
+        for (TextSearchResult sr : cache) {
             rslt += sr.estimateSize(limit-rslt);
             if (rslt >= limit) return rslt;
         }
 
         while (rslt < limit) {
-            SearchResult sr = results.next();
+            TextSearchResult sr = results.next();
             if (sr != null) {
                 cache.add(sr);
                 rslt += sr.estimateSize(limit);

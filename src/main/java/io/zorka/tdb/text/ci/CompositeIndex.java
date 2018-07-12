@@ -20,7 +20,7 @@ package io.zorka.tdb.text.ci;
 import io.zorka.tdb.search.EmptySearchResult;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.rslt.ListSearchResultsMapper;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.search.rslt.StreamingSearchResult;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.text.AbstractTextIndex;
@@ -600,7 +600,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
 
     @Override
-    public SearchResult search(SearchNode expr) {
+    public TextSearchResult search(SearchNode expr) {
         if (expr instanceof TextNode) {
             ListSearchResultsMapper<TextIndex> results = new ListSearchResultsMapper<>(
                     getCState().getSearchIndexes(),
@@ -613,7 +613,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
 
     @Override
-    public SearchResult searchIds(long tid, boolean deep) {
+    public TextSearchResult searchIds(long tid, boolean deep) {
         ListSearchResultsMapper<TextIndex> results = new ListSearchResultsMapper<>(
                 getCState().getSearchIndexes(), x -> x.searchIds(tid, deep));
         return new StreamingSearchResult(results);

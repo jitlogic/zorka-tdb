@@ -18,9 +18,9 @@ package io.zorka.tdb.search.rslt;
 
 import io.zorka.tdb.util.BitmapSet;
 
-public interface SearchResult {
+public interface TextSearchResult {
 
-    long nextResult();  // TODO long -> int (po odpięciu od TraceStores)
+    int nextResult();
 
     int estimateSize(int limit);
 

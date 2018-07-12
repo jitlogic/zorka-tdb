@@ -16,7 +16,7 @@
 
 package io.zorka.tdb.text.fm;
 
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.text.RawDictCodec;
 import io.zorka.tdb.util.ZicoUtil;
@@ -24,7 +24,7 @@ import io.zorka.tdb.util.ZicoUtil;
 import java.util.HashSet;
 import java.util.Set;
 
-public class FmTextSearchResult implements SearchResult {
+public class FmTextSearchResult implements TextSearchResult {
 
     private FmTextIndex index;
     private TextNode node;
@@ -65,7 +65,7 @@ public class FmTextSearchResult implements SearchResult {
 
 
     @Override
-    public long nextResult() {
+    public int nextResult() {
         boolean bskip = !node.isMatchStart();
         while (sptr >= 0 && sptr <= eptr) {
             int pos = bskip ? index.skipUntil(sptr++, RawDictCodec.MARK_ID1, true) : sptr++;

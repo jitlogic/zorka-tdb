@@ -16,14 +16,14 @@
 
 package io.zorka.tdb.search;
 
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 
-public class EmptySearchResult implements SearchResult {
+public class EmptySearchResult implements TextSearchResult {
 
     public final static EmptySearchResult INSTANCE = new EmptySearchResult();
 
     @Override
-    public long nextResult() {
+    public int nextResult() {
         return -1;
     }
 

@@ -17,14 +17,14 @@
 package io.zorka.tdb.text.fm;
 
 import io.zorka.tdb.meta.MetaIndexUtils;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.util.ZicoUtil;
 
 import static io.zorka.tdb.meta.MetadataTextIndex.FIDS_MARKER;
 import static io.zorka.tdb.meta.MetadataTextIndex.TIDS_MARKER;
 import static io.zorka.tdb.meta.MetadataTextIndex.TID_MARKER;
 
-public class FmTextSearchIdsResult implements SearchResult {
+public class FmTextSearchIdsResult implements TextSearchResult {
 
     private FmTextIndex index;
     private int sptr, eptr;
@@ -49,7 +49,7 @@ public class FmTextSearchIdsResult implements SearchResult {
     }
 
     @Override
-    public long nextResult() {
+    public int nextResult() {
         while (sptr >= 0 && sptr <= eptr) {
             int pos = sptr++;
             int id = index.extractId(pos);

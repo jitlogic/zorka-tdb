@@ -18,25 +18,25 @@ package io.zorka.tdb.search.rslt;
 
 import java.util.Collection;
 
-public class CachedItemsSearchResult implements SearchResult {
+public class CachedItemsSearchResult implements TextSearchResult {
 
-    private long[] results;
+    private int[] results;
     private int idx;
 
-    public CachedItemsSearchResult(Collection<Long> coll) {
-        results = new long[coll.size()];
+    public CachedItemsSearchResult(Collection<Integer> coll) {
+        results = new int[coll.size()];
         int x = 0;
-        for (Long l : coll) {
-            results[x++] = l;
+        for (Integer i : coll) {
+            results[x++] = i;
         }
     }
 
-    public CachedItemsSearchResult(long result) {
-        this.results = new long[] { result };
+    public CachedItemsSearchResult(int result) {
+        this.results = new int[] { result };
     }
 
     @Override
-    public long nextResult() {
+    public int nextResult() {
         return idx < results.length ? results[idx++] : -1;
     }
 

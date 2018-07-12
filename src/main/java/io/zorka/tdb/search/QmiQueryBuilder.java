@@ -19,13 +19,12 @@ package io.zorka.tdb.search;
 import io.zorka.tdb.search.ssn.StringSearchNode;
 import io.zorka.tdb.search.ssn.TextNode;
 
-public class QmiQueryBuilder extends QueryBuilder {
+public class QmiQueryBuilder {
 
-    private QmiNode qmi;
+    private QmiNode qmi = new QmiNode();
 
-    QmiQueryBuilder() {
-        super(new QmiNode());
-        this.qmi = (QmiNode)node;
+    public static QmiQueryBuilder all() {
+        return new QmiQueryBuilder();
     }
 
     public QmiQueryBuilder env(int envId) {
@@ -130,6 +129,10 @@ public class QmiQueryBuilder extends QueryBuilder {
     }
 
     public QmiNode qmiNode() {
-        return (QmiNode)node();
+        return qmi;
+    }
+
+    public TraceSearchQuery query() {
+        return QueryBuilder.all().query(qmi);
     }
 }

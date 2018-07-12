@@ -18,16 +18,16 @@ package io.zorka.tdb.test.unit.store;
 
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataQuickIndex;
-import io.zorka.tdb.search.QmiNode;
-import io.zorka.tdb.search.QueryBuilder;
-import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.SortOrder;
+import io.zorka.tdb.search.*;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import static io.zorka.tdb.store.TraceStoreUtil.*;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -36,6 +36,20 @@ import static org.junit.Assert.*;
  *
  */
 public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
+
+    private List<Integer> search(MetadataQuickIndex idx, QmiNode query) {
+        int[] ids = new int[128], vals = new int[128];
+
+        int cnt = idx.searchBlock(query, SortOrder.NONE, 0, idx.size(), ids, vals);
+
+        List<Integer> rslt = new ArrayList<>(cnt+1);
+
+        for (int i = 0; i < cnt; i++) {
+            rslt.add(ids[i]);
+        }
+
+        return rslt;
+    }
 
     @Test
     public void testSimpleAddAndCheck() {
@@ -51,11 +65,11 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
 
         assertEquals(3, idx.size());
 
-        QmiNode q = (QmiNode)QueryBuilder.qmi().tstart(100000).tstop(120000).node();
-        assertEquals(3, drain(idx.search(q)).size());
+        QmiNode q = QmiQueryBuilder.all().tstart(100000).tstop(120000).qmiNode();
+        assertEquals(3, search(idx, q).size());
 
-        q.setAppId(3); assertEquals(2, drain(idx.search(q)).size());
-        q.setAppId(2); assertEquals(1, drain(idx.search(q)).size());
+        q.setAppId(3); assertEquals(2, search(idx, q).size());
+        q.setAppId(2); assertEquals(1, search(idx, q).size());
     }
 
     @Test
@@ -69,8 +83,8 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
 
         assertEquals(8, idx.size());
 
-        SearchNode q2 = QueryBuilder.qmi().tstart(100000).tstop(180000).node();
-        assertEquals(8, drain(idx.search(q2)).size());
+        QmiNode q2 = QmiQueryBuilder.all().tstart(100000).tstop(180000).qmiNode();
+        assertEquals(8, search(idx, q2).size());
     }
 
 
@@ -84,17 +98,17 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
 
         assertEquals(40, idx.size());
 
-        QmiNode q = (QmiNode)QueryBuilder.qmi().node();
-        q.setMinDuration(9); assertEquals(4, drain(idx.search(q)).size());
-        q.setMinDuration(8); assertEquals(8, drain(idx.search(q)).size());
-        q.setMinDuration(7); assertEquals(12, drain(idx.search(q)).size());
-        q.setMinDuration(6); assertEquals(16, drain(idx.search(q)).size());
-        q.setMinDuration(5); assertEquals(20, drain(idx.search(q)).size());
-        q.setMinDuration(4); assertEquals(24, drain(idx.search(q)).size());
-        q.setMinDuration(3); assertEquals(28, drain(idx.search(q)).size());
-        q.setMinDuration(2); assertEquals(32, drain(idx.search(q)).size());
-        q.setMinDuration(1); assertEquals(36, drain(idx.search(q)).size());
-        q.setMinDuration(0); assertEquals(40, drain(idx.search(q)).size());
+        QmiNode q = QmiQueryBuilder.all().qmiNode();
+        q.setMinDuration(9); assertEquals(4, search(idx, q).size());
+        q.setMinDuration(8); assertEquals(8, search(idx, q).size());
+        q.setMinDuration(7); assertEquals(12, search(idx, q).size());
+        q.setMinDuration(6); assertEquals(16, search(idx, q).size());
+        q.setMinDuration(5); assertEquals(20, search(idx, q).size());
+        q.setMinDuration(4); assertEquals(24, search(idx, q).size());
+        q.setMinDuration(3); assertEquals(28, search(idx, q).size());
+        q.setMinDuration(2); assertEquals(32, search(idx, q).size());
+        q.setMinDuration(1); assertEquals(36, search(idx, q).size());
+        q.setMinDuration(0); assertEquals(40, search(idx, q).size());
     }
 
     @Test
@@ -110,28 +124,12 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
 
         assertEquals(40, idx.size());
 
-        QmiNode q = (QmiNode)QueryBuilder.qmi().node();
+        QmiNode q = QmiQueryBuilder.all().qmiNode();
 
-        q.setHostId(0); assertEquals(40, drain(idx.search(q)).size());
-        q.setHostId(1); assertEquals(10, drain(idx.search(q)).size());
-        q.setHostId(2); assertEquals(10, drain(idx.search(q)).size());
-        q.setHostId(3); assertEquals(10, drain(idx.search(q)).size());
-    }
-
-    @Test
-    public void testIndexTstampFuzzTolerance() {
-        MetadataQuickIndex idx = new MetadataQuickIndex(new File(tmpDir, "test.mqi"), 128, 3);
-
-        long[] TS = { 100, 200, 1002, 300, 400, 500, 600, 2003, 700, 800, 1001, 900, 1000, 1100, 1200 };
-
-        for (int i = 0; i < TS.length; i++) {
-            idx.add
-                (md(i, 1, 1, 1, TS[i],
-                    1, false, 1, 0));
-        }
-
-        SearchNode q = QueryBuilder.qmi().tstart(1000).node();
-        assertEquals(5, drain(idx.search(q)).size());
+        q.setHostId(0); assertEquals(40, search(idx, q).size());
+        q.setHostId(1); assertEquals(10, search(idx, q).size());
+        q.setHostId(2); assertEquals(10, search(idx, q).size());
+        q.setHostId(3); assertEquals(10, search(idx, q).size());
     }
 
     @Test
@@ -158,7 +156,7 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
 
         int[] ids = new int[4], vals = new int[4];
 
-        QmiNode qmi = QueryBuilder.qmi().qmiNode();
+        QmiNode qmi = QmiQueryBuilder.all().qmiNode();
 
         int cnt1 = idx.searchBlock(qmi, SortOrder.NONE, 0, 4, ids, vals);
         assertEquals(4, cnt1);

@@ -19,7 +19,7 @@ package io.zorka.tdb.test.unit.search;
 import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.WalTextIndex;
@@ -58,7 +58,7 @@ public class StructuredTextIndexUnitTest extends ZicoTestFixture {
     @Test
     public void testSearchExactKVPhrases() {
         SearchNode q = QueryBuilder.kv("A", "ZYX").node();
-        SearchResult sr = idx.search(q);
+        TextSearchResult sr = idx.search(q);
         assertEquals(1, sr.estimateSize(100));
         long rslt = sr.nextResult();
         assertNotNull(idx.get((int)rslt));
@@ -68,7 +68,7 @@ public class StructuredTextIndexUnitTest extends ZicoTestFixture {
     public void testSearchPartialKVPhrases() {
         SearchNode y = QueryBuilder.stext("Y").node();
         SearchNode q = QueryBuilder.kv("A", (TextNode)y).node();
-        SearchResult sr = idx.search(q);
+        TextSearchResult sr = idx.search(q);
         assertEquals(2, sr.estimateSize(100));
     }
 }

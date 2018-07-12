@@ -17,7 +17,7 @@
 package io.zorka.tdb.test.unit.text.ci;
 
 import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.util.BitmapSet;
@@ -89,7 +89,7 @@ public class TextIndexR extends AbstractTextIndex implements TextIndex {
     }
 
     @Override
-    public SearchResult searchIds(long tid, boolean deep) {
+    public TextSearchResult searchIds(long tid, boolean deep) {
         return null;
     }
 
@@ -122,7 +122,7 @@ public class TextIndexR extends AbstractTextIndex implements TextIndex {
     }
 
     @Override
-    public SearchResult search(SearchNode expr) {
+    public TextSearchResult search(SearchNode expr) {
         return null;
     }
 

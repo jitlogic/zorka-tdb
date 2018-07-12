@@ -17,7 +17,7 @@
 package io.zorka.tdb.test.unit.search;
 
 import io.zorka.tdb.search.QueryBuilder;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.TextIndexType;
@@ -100,7 +100,7 @@ public class SingleTextIndexSearchUnitTest extends ZicoTestFixture {
 
     @Test
     public void testBasicSearch() {
-        SearchResult rslt = index.search(QueryBuilder.stext("BA").node());
+        TextSearchResult rslt = index.search(QueryBuilder.stext("BA").node());
         assertEquals(2, rslt.estimateSize(100));
         Set<Long> ids = drain(rslt);
         assertEquals(2, ids.size());

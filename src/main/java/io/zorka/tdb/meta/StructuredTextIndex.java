@@ -21,7 +21,7 @@ import io.zorka.tdb.search.EmptySearchResult;
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.rslt.DirectMappingSearchResult;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.search.rslt.CachedItemsSearchResult;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.search.tsn.KeyValSearchNode;
@@ -117,7 +117,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
 
         Map<String,String> rslt = new HashMap<>();
         QueryBuilder query = QueryBuilder.text("\u000f" + RawDictCodec.idEncodeStr(agentId), true, false);
-        SearchResult sr = tidx.search(query.node());
+        TextSearchResult sr = tidx.search(query.node());
         for (long id = sr.nextResult(); id != -1; id = sr.nextResult()) {
 
             byte[] b = tidx.get((int)id);
@@ -151,7 +151,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
 
         Map<Integer,String> tmp = new HashMap<>();
         QueryBuilder query = QueryBuilder.text("\u000f", true, false);
-        SearchResult sr = tidx.search(query.node());
+        TextSearchResult sr = tidx.search(query.node());
         for (long id = sr.nextResult(); id != -1; id = sr.nextResult()) {
             byte[] b = tidx.get((int)id);
 
@@ -487,7 +487,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
 
 
     @Override
-    public SearchResult searchIds(long tid, boolean deep) {
+    public TextSearchResult searchIds(long tid, boolean deep) {
         throw new ZicoException("Not implemented.");
     }
 
@@ -593,7 +593,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
     }
 
 
-    private SearchResult searchKeyVal(KeyValSearchNode expr) {
+    private TextSearchResult searchKeyVal(KeyValSearchNode expr) {
 
         int idk = tidx.get(expr.getKey());
 
@@ -614,18 +614,18 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
             int rslt = tidx.get(buf);
             return rslt >= 0 ? new CachedItemsSearchResult(rslt) : EmptySearchResult.INSTANCE;
         } else {
-            SearchResult sr = tidx.search(tsn);
+            TextSearchResult sr = tidx.search(tsn);
             int sz = sr.estimateSize(100);
             if (sz == 0) return EmptySearchResult.INSTANCE;
             return new DirectMappingSearchResult(sr, r -> {
                 byte[] buf = encTuple2(KR_PAIR, idk, (int)(long)r);
-                return (long)tidx.get(buf); });
+                return tidx.get(buf); });
         }
     }
 
 
     @Override
-    public SearchResult search(SearchNode expr) {
+    public TextSearchResult search(SearchNode expr) {
         if (expr instanceof TextNode) {
             return tidx.search(expr);
         } else if (expr instanceof KeyValSearchNode) {

@@ -18,19 +18,19 @@ package io.zorka.tdb.search.rslt;
 
 import java.util.function.Function;
 
-public class MappingSearchResult implements SearchResult {
+public class MappingSearchResult implements TextSearchResult {
 
-    private SearchResult result;
-    private Function<Long,Long> mapFn;
+    private TextSearchResult result;
+    private Function<Integer,Integer> mapFn;
 
-    public MappingSearchResult(SearchResult result, Function<Long,Long> mapFn) {
+    public MappingSearchResult(TextSearchResult result, Function<Integer,Integer> mapFn) {
         this.result = result;
         this.mapFn = mapFn;
     }
 
     @Override
-    public long nextResult() {
-        long r = result.nextResult();
+    public int nextResult() {
+        int r = result.nextResult();
         if (r >= 0) {
             return mapFn.apply(r);
         } else {

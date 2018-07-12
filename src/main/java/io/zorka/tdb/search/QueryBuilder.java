@@ -108,8 +108,8 @@ public class QueryBuilder {
         return new QueryBuilder(new SeqExprNode(continous, toNodes(args)));
     }
 
-    public static QmiQueryBuilder qmi() {
-        return new QmiQueryBuilder();
+    public static QueryBuilder all() {
+        return new QueryBuilder(null);
     }
 
     public static QueryBuilder kv(String k, String v) {

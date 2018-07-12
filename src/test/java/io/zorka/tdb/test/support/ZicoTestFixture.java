@@ -19,7 +19,7 @@ package io.zorka.tdb.test.support;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.StructuredTextIndex;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.store.*;
 import io.zorka.tdb.text.*;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
@@ -224,7 +224,7 @@ public class ZicoTestFixture {
     }
 
 
-    public static Set<Long> drain(SearchResult rslt) {
+    public static Set<Long> drain(TextSearchResult rslt) {
         Set<Long> set = new HashSet<>();
 
         for (long l = rslt.nextResult(); l >= 0; l = rslt.nextResult()) {

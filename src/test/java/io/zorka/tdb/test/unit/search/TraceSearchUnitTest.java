@@ -101,7 +101,7 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
 
     @Test
     public void testListAllTracesInArchivedStore() {
-        TraceSearchQuery q = QueryBuilder.qmi().query();
+        TraceSearchQuery q = QueryBuilder.all().query();
         assertEquals(2, drain(store.searchTraces(q)).size());
     }
 

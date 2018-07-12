@@ -24,7 +24,7 @@ import java.util.Objects;
  * Contains arguments for quick index search. This is general purpose variant,
  * some specific implementations can have subset of below attributes
  */
-public class QmiNode implements SearchNode {
+public class QmiNode {
 
     /** Application ID (0 to skip search by appId) */
     private int appId;

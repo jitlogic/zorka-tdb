@@ -19,7 +19,7 @@ package io.zorka.tdb.text.fm;
 import io.zorka.tdb.meta.MetaIndexUtils;
 import io.zorka.tdb.search.EmptySearchResult;
 import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.RawDictCodec;
@@ -295,7 +295,7 @@ public class FmTextIndex extends AbstractTextIndex {
 
 
     @Override
-    public SearchResult searchIds(long tid, boolean deep) {
+    public TextSearchResult searchIds(long tid, boolean deep) {
         return new FmTextSearchIdsResult(this, (int)tid, deep);
     }
 
@@ -327,7 +327,7 @@ public class FmTextIndex extends AbstractTextIndex {
     }
 
     @Override
-    public SearchResult search(SearchNode expr) {
+    public TextSearchResult search(SearchNode expr) {
         if (expr instanceof TextNode) {
             return new FmTextSearchResult(this, (TextNode)expr);
         } else {

@@ -23,25 +23,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ConjunctionSearchResult implements SearchResult {
+public class ConjunctionSearchResult implements TextSearchResult {
 
-    private List<SearchResult> inputs;
-    private SearchResult result;
+    private List<TextSearchResult> inputs;
+    private TextSearchResult result;
     private BitmapSet bmps;
 
-    public ConjunctionSearchResult(SearchResult sr1, SearchResult sr2) {
+    public ConjunctionSearchResult(TextSearchResult sr1, TextSearchResult sr2) {
         inputs = Arrays.asList(sr1, sr2);
         initSearch();
     }
 
-    public ConjunctionSearchResult(List<SearchResult> inputs) {
+    public ConjunctionSearchResult(List<TextSearchResult> inputs) {
         this.inputs = new ArrayList<>(inputs);
         initSearch();
     }
 
     private void initSearch() {
 
-        for (SearchResult sr : inputs) {
+        for (TextSearchResult sr : inputs) {
             BitmapSet b = new BitmapSet();
             for (long l = sr.nextResult(); l >= 0; l = sr.nextResult()) {
                 b.set((int)l);
@@ -57,7 +57,7 @@ public class ConjunctionSearchResult implements SearchResult {
     }
 
     @Override
-    public long nextResult() {
+    public int nextResult() {
         return result.nextResult();
     }
 

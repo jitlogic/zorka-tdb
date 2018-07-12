@@ -18,8 +18,6 @@ package io.zorka.tdb.meta;
 
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.search.*;
-import io.zorka.tdb.search.rslt.SearchResult;
-import io.zorka.tdb.store.TraceSearchResult;
 import io.zorka.tdb.store.TraceSearchResultItem;
 import io.zorka.tdb.util.ZicoUtil;
 
@@ -114,7 +112,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * W7, W8 - trace UUID (encoded)
  *
  */
-public class MetadataQuickIndex implements Closeable, SearchableStore {
+public class MetadataQuickIndex implements Closeable {
 
     private final static int DEFAULT_DELTA = 16 * 1024 * 1024;
     private final static int DEFAULT_FUZZ  = 1024;
@@ -521,80 +519,6 @@ public class MetadataQuickIndex implements Closeable, SearchableStore {
         channel = null;
         raf = null;
         buffer = null;
-    }
-
-    @Override
-    public SearchResult search(SearchNode expr) {
-        if (expr instanceof QmiNode) {
-            return new MetadataSearchResult((QmiNode)expr);
-        } else {
-            return EmptySearchResult.INSTANCE;
-        }
-    }
-
-    public class MetadataSearchResult implements SearchResult {
-        private QmiNode node;
-
-        private long tstart, tstop;
-        private int pos;
-        private long minDuration, maxDuration;
-        private long w2v, w2m;
-        private long hostId;
-
-        public MetadataSearchResult(QmiNode node) {
-            this.node = node;
-            this.tstart = node.getTstart() / 1000;
-            this.tstop = node.getTstop() / 1000;
-            this.w2v = format_W2(node);
-            this.w2m = format_W2M(node);
-            this.minDuration = node.getMinDuration();
-            this.maxDuration = node.getMaxDuration();
-            this.pos = fpos;
-            this.hostId = node.getHostId();
-        }
-
-        @Override
-        public long nextResult() {
-            ByteBuffer bb = buffer;
-
-            int rslt = -1;
-            int lfu = 0;
-
-            rwlock.readLock().lock();
-
-            try {
-                while (pos >= HEADER_SIZE + RECORD_SIZE) {
-                    pos -= RECORD_SIZE;
-                    long w1 = bb.getLong(pos), t = w1 & 0xffffffffL;
-                    if (t < tstart) {
-                        if (lfu < fuzz) {
-                            lfu++; continue;
-                        } else {
-                            break;
-                        }
-                    }
-                    lfu = 0;
-                    long w2 = bb.getLong(pos + WORD_SIZE);
-                    long w4 = bb.getLong(pos + WORD_SIZE * 3);
-                    long wd = (w4 >>> 32) & 0xffff;
-                    long hd = (w4 >>> 48) & 0xffff;
-                    if (w2v == (w2 & w2m) && t <= tstop && wd >= minDuration && wd < maxDuration
-                            && (hostId == 0 || hostId == hd)) {
-                        rslt = ((pos - HEADER_SIZE) / RECORD_SIZE);
-                        break;
-                    }
-                }
-            } finally {
-                rwlock.readLock().unlock();
-            }
-
-            return rslt;
-        }
-
-        @Override
-        public int estimateSize(int limit) {
-            return 0;
-        }
     }
 
     public int searchBlock(QmiNode query, SortOrder sortOrder, int blkFrom, int blkTo, int[] ids, int[] vals) {

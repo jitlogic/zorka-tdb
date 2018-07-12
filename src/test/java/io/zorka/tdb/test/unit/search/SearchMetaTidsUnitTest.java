@@ -17,7 +17,7 @@
 package io.zorka.tdb.test.unit.search;
 
 import io.zorka.tdb.meta.MetadataTextIndex;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.test.support.WritableIndexWrapper;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.TextIndex;
@@ -92,7 +92,7 @@ public class SearchMetaTidsUnitTest extends ZicoTestFixture {
 
     @Test
     public void testSearchIds() {
-        SearchResult sr = index.searchIds(2, false);
+        TextSearchResult sr = index.searchIds(2, false);
         Set<Long> r1 = drain(sr);
         assertEquals(ZicoUtil.set(11L,12L),r1);
     }

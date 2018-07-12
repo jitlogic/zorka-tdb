@@ -17,8 +17,7 @@
 package io.zorka.tdb.test.unit.store;
 
 import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.search.QueryBuilder;
-import io.zorka.tdb.search.rslt.SearchResult;
+import io.zorka.tdb.search.QmiQueryBuilder;
 import io.zorka.tdb.store.RotatingTraceStore;
 import io.zorka.tdb.store.TraceSearchResult;
 import io.zorka.tdb.test.support.ZicoTestFixture;
@@ -62,7 +61,7 @@ public class SubmitSampledTracesUnitTest extends ZicoTestFixture {
         store.handleAgentData(agentUUID, sessnUUID, AGD_PACKETS[0]);
         store.handleTraceData(agentUUID, sessnUUID, trc01UUID, TRC_PACKETS[0], cm(1, 1));
 
-        TraceSearchResult sr0 = store.searchTraces(QueryBuilder.qmi().query());
+        TraceSearchResult sr0 = store.searchTraces(QmiQueryBuilder.all().query());
         Set sl0 = drain(sr0);
         assertEquals("Should store exactly one record.", 1, sl0.size());
     }
