@@ -18,6 +18,7 @@ package io.zorka.tdb.test.unit.search;
 
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.store.*;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
@@ -100,46 +101,46 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
 
     @Test
     public void testListAllTracesInArchivedStore() {
-        SearchNode q = QueryBuilder.qmi().node();
-        assertEquals(2, drain(store.search(q)).size());
+        TraceSearchQuery q = QueryBuilder.qmi().query();
+        assertEquals(2, drain(store.searchTraces(q)).size());
     }
 
 
     @Test
     public void searchByFreeFormStrings() {
-        SearchNode q = QueryBuilder.stext("XYZ").node();
-        assertEquals(1, drain(store.search(q)).size());
+        TraceSearchQuery q = QueryBuilder.stext("XYZ").query();
+        assertEquals(1, drain(store.searchTraces(q)).size());
     }
 
 
     @Test
     public void searchByFreeFormStringsShallow() {
-        SearchNode q = QueryBuilder.stext("UVW").shallow().query();
-        assertEquals(0, drain(store.search(q)).size());
+        TraceSearchQuery q = QueryBuilder.stext("UVW").shallow().query();
+        assertEquals(0, drain(store.searchTraces(q)).size());
     }
 
     @Test
     public void searchByFreeFormStringsDeep() {
-        SearchNode q = QueryBuilder.stext("UVW").node();
-        assertEquals(2, drain(store.search(q)).size());
+        TraceSearchQuery q = QueryBuilder.stext("UVW").deep().query();
+        assertEquals(2, drain(store.searchTraces(q)).size());
     }
 
     @Test
     public void searchByFreeFormStringsPartial() {
-        SearchNode q = QueryBuilder.stext("YZ").node();
-        assertEquals(1, drain(store.search(q)).size());
+        TraceSearchQuery q = QueryBuilder.stext("YZ").query();
+        assertEquals(1, drain(store.searchTraces(q)).size());
     }
 
     @Test
     public void searchByKeyValShallow() {
-        SearchNode q = QueryBuilder.kv("AAA", "UVW").node();
-        assertEquals(1, drain(store.search(q)).size());
+        TraceSearchQuery q = QueryBuilder.kv("AAA", "UVW").query();  // TODO .shallow()
+        assertEquals(1, drain(store.searchTraces(q)).size());
     }
 
     @Test
     public void searchByKeyValDeep() {
-        SearchNode q = QueryBuilder.kv("AAA", "UVW").node();
-        assertEquals(1, drain(store.search(q)).size());
+        TraceSearchQuery q = QueryBuilder.kv("AAA", "UVW").query();
+        assertEquals(1, drain(store.searchTraces(q)).size());
     }
 
     // TODO search for exceptions, exception stack traces, stack trace elements

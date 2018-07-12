@@ -224,7 +224,7 @@ public class ZicoTestFixture {
     }
 
 
-    public Set<Long> drain(SearchResult rslt) {
+    public static Set<Long> drain(SearchResult rslt) {
         Set<Long> set = new HashSet<>();
 
         for (long l = rslt.nextResult(); l >= 0; l = rslt.nextResult()) {
@@ -232,5 +232,11 @@ public class ZicoTestFixture {
         }
 
         return set;
+    }
+
+    public static <T> Set<T> drain(Iterable<T> coll) {
+        Set<T> rslt = new HashSet<>();
+        for (T itm : coll) rslt.add(itm);
+        return rslt;
     }
 }

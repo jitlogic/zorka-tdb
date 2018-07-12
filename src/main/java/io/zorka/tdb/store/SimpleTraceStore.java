@@ -43,7 +43,7 @@ import static io.zorka.tdb.store.TraceStoreUtil.*;
 /**
  *
  */
-public class SimpleTraceStore implements TraceStore, SearchableStore {
+public class SimpleTraceStore implements TraceStore {
 
     private static final Logger log = LoggerFactory.getLogger(SimpleTraceStore.class);
 
@@ -420,58 +420,6 @@ public class SimpleTraceStore implements TraceStore, SearchableStore {
 
     public long toChunkId(int slot) {
         return slot >= 0 ? (((long)storeId) << 32) | slot : -1;
-    }
-
-
-    private SearchResult tidTranslatingResult(SearchResult rslt, boolean deep) {
-        CascadingSearchResultsMapper mapper = new CascadingSearchResultsMapper(rslt,
-                tid -> imeta.searchIds(tid, deep));
-        return new StreamingSearchResult(mapper);
-    }
-
-
-    @Override
-    public SearchResult search(SearchNode expr) {
-        SearchResult sr = null;
-
-        TraceSearchQuery q = TraceSearchQuery.DEFAULT;
-
-        if (expr instanceof TraceSearchQuery) {
-            q = (TraceSearchQuery)expr;
-            expr = q.getNode();
-            if (q.getQmi() != null) {
-                expr = new AndExprNode(Arrays.asList(q.getQmi(), expr));
-            }
-        }
-
-        if (expr instanceof QmiNode) {
-            sr = qindex.search(expr);
-        } else if (expr instanceof AndExprNode) {
-            List<SearchResult> tsr = new ArrayList<>();
-            SearchResult qsr = null;
-            for (SearchNode node : ((AndExprNode)expr).getArgs()) {
-                if (node instanceof QmiNode) {
-                    qsr = qindex.search(node);
-                } else {
-                    tsr.add(itext.search(node));
-                }
-            }
-            for (int i = 0; i < tsr.size(); i++) {
-                tsr.set(i, tidTranslatingResult(tsr.get(i), q.isDeepSearch()));
-            }
-            if (tsr.isEmpty()) {
-                sr = qsr;
-            } else  {
-                sr = tsr.size() == 1 ? tsr.get(0) : new ConjunctionSearchResult(tsr);
-                if (qsr != null) {
-                    sr = new ConjunctionSearchResult(qsr, sr);
-                }
-            }
-        } else {
-            sr = tidTranslatingResult(itext.search(expr), q.isDeepSearch());
-        }
-
-        return sr != null ? new MappingSearchResult(sr, x -> (x | (storeId << 32))) : EmptySearchResult.INSTANCE;
     }
 
 

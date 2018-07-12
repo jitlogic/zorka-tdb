@@ -75,6 +75,10 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         this.tidx = tidx;
     }
 
+    public WritableTextIndex getParentIndex() {
+        return tidx;
+    }
+
     public int addAgentAttr(String agentUUID, String key, String val) {
         return addAgentAttr(addTyped(UUID_TYPE, agentUUID), add(key), val);
     }

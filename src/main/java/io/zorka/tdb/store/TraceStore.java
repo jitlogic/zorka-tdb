@@ -28,7 +28,7 @@ import java.util.concurrent.Executor;
 /**
  * API do trace storage.
  */
-public interface TraceStore extends Closeable, SearchableStore {
+public interface TraceStore extends Closeable {
 
     /**
      * Handles trace data coming from agents.

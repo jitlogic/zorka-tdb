@@ -45,7 +45,7 @@ import static io.zorka.tdb.store.TraceStoreUtil.*;
 /**
  *
  */
-public class RotatingTraceStore implements TraceStore, SearchableStore {
+public class RotatingTraceStore implements TraceStore {
 
     private static final Logger log = LoggerFactory.getLogger(RotatingTraceStore.class);
 
@@ -378,13 +378,6 @@ public class RotatingTraceStore implements TraceStore, SearchableStore {
         return lst;
     }
 
-
-    @Override
-    public io.zorka.tdb.search.rslt.SearchResult search(SearchNode expr) {
-        ListSearchResultsMapper<TraceStore> results = new ListSearchResultsMapper<>(
-                listStores(), store -> store.search(expr));
-        return new StreamingSearchResult(results);
-    }
 
     public SimpleTraceStore getCurrent() {
         return current;
