@@ -7,10 +7,7 @@ import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.search.lsn.AndExprNode;
-import io.zorka.tdb.search.rslt.CascadingSearchResultsMapper;
-import io.zorka.tdb.search.rslt.ConjunctionSearchResult;
 import io.zorka.tdb.search.rslt.TextSearchResult;
-import io.zorka.tdb.search.rslt.StreamingSearchResult;
 import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.KVSortingHeap;
 import org.slf4j.Logger;
@@ -99,26 +96,35 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
         }
     }
 
+
     private BitmapSet fullTextSearch(SearchNode expr) {
         BitmapSet bmps = null;
+        List<SearchNode> args;
 
         if (expr instanceof AndExprNode) {
-            List<TextSearchResult> tsr = new ArrayList<>();
-            for (SearchNode node : ((AndExprNode)expr).getArgs()) {
-                tsr.add(tidTranslatingResult(itext.search(node), query.isDeepSearch()));
-            }
-            bmps = new ConjunctionSearchResult(tsr).getResultSet();
+            args = ((AndExprNode) expr).getArgs();
         } else if (expr != null) {
-            bmps = tidTranslatingResult(itext.search(expr), query.isDeepSearch()).getResultSet();
+            args = Collections.singletonList(expr);
+        } else {
+            args = Collections.emptyList();
         }
+
+        for (SearchNode node : args) {
+            TextSearchResult tsr = itext.search(node);
+            BitmapSet bps = new BitmapSet();
+
+            // TODO further optimizations here: switch to matching mode (full scan) if there are too many TID results;
+
+            for (int tid = tsr.nextResult(); tid >= 0; tid = tsr.nextResult()) {
+                imeta.searchIds(tid, query.isDeepSearch(), bps);
+            }
+
+            bmps = (bmps == null) ? bps : bmps.and(bps);
+        }
+
         return bmps;
     }
 
-    private TextSearchResult tidTranslatingResult(TextSearchResult rslt, boolean deep) {
-        CascadingSearchResultsMapper mapper = new CascadingSearchResultsMapper(rslt,
-                tid -> imeta.searchIds(tid, deep));
-        return new StreamingSearchResult(mapper);
-    }
 
     private TraceSearchResultItem extractChunkMetadata(int slot) {
         long chunkId = store.toChunkId(slot);
