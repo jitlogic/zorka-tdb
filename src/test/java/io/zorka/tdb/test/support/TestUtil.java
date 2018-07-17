@@ -218,4 +218,26 @@ public class TestUtil {
     }
 
 
+    private final static String[] W1 =
+            { "pork", "bromba", "composite", "some",  "media",  "()V", "zorka", "server",
+                    "microservices", "watch", "this", "method", "class", "parameters", "arguments", "array",
+                    "gitea", "painless", "self-hosted", "project", "architecture", "amd64", "PowerPC", "organization"};
+    private final static String[] W2 =
+            { "soda",       "ajwaj",  "index",     "Object", "watch", "(II)I", "zico", "agent",
+                    "serverless", "gong", "setting", "properties", "java", "java.lang.String", "java.util.List", "java.util.Tuple",
+                    "context", "switcher", "repositories", "updated", "dashboard", "comments", "mirror", "migrated"};
+
+    public final static int WB = W1.length, WL = 1 << WB, WM = WL -1;
+
+    public static String genStr(int id) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int b = 0; b < WL; b++) {
+            if (sb.length() != 0) sb.append(' ');
+            sb.append(0 == ((id >>> b) & 1) ? W1[b] : W2[b]);
+        }
+
+        return sb.toString();
+    }
+
 }

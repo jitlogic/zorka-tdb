@@ -22,6 +22,7 @@ import io.zorka.tdb.meta.*;
 import io.zorka.tdb.search.*;
 import io.zorka.tdb.search.lsn.AndExprNode;
 import io.zorka.tdb.search.rslt.*;
+import io.zorka.tdb.text.CachingTextIndex;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
 import io.zorka.tdb.util.CborDataReader;
@@ -57,7 +58,7 @@ public class SimpleTraceStore implements TraceStore {
     private long storeId;
 
     private CompositeIndex ctext, cmeta;
-    private StructuredTextIndex itext;
+    private volatile StructuredTextIndex itext;
     private MetadataTextIndex imeta;
     private MetadataQuickIndex qindex;
 
@@ -84,6 +85,8 @@ public class SimpleTraceStore implements TraceStore {
     private int dFlags = 0;
 
     private int sessionTimeout = 90000;
+
+    private int textCacheSize = 16384;
 
     private Map<String,TraceDataIndexer> indexerCache;
 
@@ -190,12 +193,15 @@ public class SimpleTraceStore implements TraceStore {
             return;
         }
 
-
         Properties ptext = ZicoUtil.props(); // TODO configure properties here
         CompositeIndexFileStore ftext = new CompositeIndexFileStore(root.getPath(), "text", ptext);
         ctext = new CompositeIndex(ftext, ptext, indexerExecutor);
 
-        itext = new StructuredTextIndex(ctext);
+        if (0 == (iFlags & CTF_ARCHIVED)) {
+            itext = new StructuredTextIndex(new CachingTextIndex(ctext, textCacheSize));
+        } else {
+            itext = new StructuredTextIndex(ctext);
+        }
 
         Properties pmeta = ZicoUtil.props(); // TODO configure properties here
         CompositeIndexFileStore fmeta = new CompositeIndexFileStore(root.getPath(), "meta", pmeta);
@@ -361,6 +367,7 @@ public class SimpleTraceStore implements TraceStore {
             ctext.archive();
             cmeta.archive();
             qindex.archive();
+            itext = new StructuredTextIndex(ctext);
         }
     }
 
