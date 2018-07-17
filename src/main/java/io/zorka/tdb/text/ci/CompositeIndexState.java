@@ -18,7 +18,6 @@ package io.zorka.tdb.text.ci;
 
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WritableTextIndex;
-import io.zorka.tdb.text.WritableTextIndex;
 
 import java.util.Collections;
 import java.util.List;
@@ -63,5 +62,13 @@ public class CompositeIndexState {
 
     public List<TextIndex> getSearchIndexes() {
         return searchIndexes;
+    }
+
+    @Override
+    public String toString() {
+        return "CompositeIndexState(current=" + currentIndex
+                + ", search=" + searchIndexes
+                + ", lookup=" + lookupIndexes
+                + ", all=" + allIndexes + ")";
     }
 }

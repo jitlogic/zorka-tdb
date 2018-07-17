@@ -442,7 +442,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
     @Override
     public String toString() {
-        return "WAL(" + file + ", dlen=" + getDatalen() + ", nwords=" + getNWords() + ")";
+        return "WAL(" + isOpen() + ", " + file + ", dlen=" + getDatalen() + ", nwords=" + getNWords() + ")";
     }
 
 

@@ -162,32 +162,34 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     }
 
 
-    private void runRemovalCycle(boolean archived) {
+    public void runRemovalCycle(boolean archived) {
 
-        for (TextIndex idx : findRemoveFmIndexes(getCState().getAllIndexes())) {
-            log.debug("Marking index " + idx + " for removal.");
-            idx.markForRemoval(removalTimeout);
-        }
-
-        List<TextIndex> removeWals = findRemoveWalIndexes(getCState().getAllIndexes());
-        if (archived || removeWals.size() > maxWals) {
-            for (TextIndex idx : archived ? removeWals : removeWals.subList(0, removeWals.size() - maxWals)) {
+        synchronized (MAINTENANCE_LOCK) {
+            for (TextIndex idx : findRemoveFmIndexes(getCState().getAllIndexes())) {
                 log.debug("Marking index " + idx + " for removal.");
                 idx.markForRemoval(removalTimeout);
             }
-        }
 
-        for (TextIndex idx : getCState().getAllIndexes()) {
-            if (idx.canRemove()) {
-                try {
-                    log.debug("Removing index: " + idx);
-                    changeState(idx, false);
-                    store.removeIndex(idx);
-                } catch (Exception e) {
-                    log.error("Error removing index " + idx);
+            List<TextIndex> removeWals = findRemoveWalIndexes(getCState().getAllIndexes());
+            if (archived || removeWals.size() > maxWals) {
+                for (TextIndex idx : archived ? removeWals : removeWals.subList(0, removeWals.size() - maxWals)) {
+                    log.debug("Marking index " + idx + " for removal.");
+                    idx.markForRemoval(removalTimeout);
                 }
             }
-        }
+
+            for (TextIndex idx : getCState().getAllIndexes()) {
+                if (idx.canRemove()) {
+                    try {
+                        log.debug("Removing index: " + idx);
+                        changeState(idx, false);
+                        store.removeIndex(idx);
+                    } catch (Exception e) {
+                        log.error("Error removing index " + idx);
+                    }
+                }
+            }
+        } // synchronized
     }
 
 
@@ -352,6 +354,9 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         return x1.getIdBase() == x2.getIdBase() ? x2.getNWords() - x1.getNWords() : x1.getIdBase() - x2.getIdBase();
     }
 
+    private static boolean isIndexOpen(TextIndex idx) {
+        return idx != null && idx.isOpen() && !idx.canRemove();
+    }
 
     /**
      * Filters out overlapping indexes (unnecessary for searches or lookups).
@@ -392,9 +397,9 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
      *         in normal order, excluding ones fully overlapping with either WAL or other FM indexes;
      */
     public List<TextIndex> findLookupIndexes(List<TextIndex> idxs) {
-        List<TextIndex> wx = filterIndexes(idxs, TextIndex::isWritable, TextIndex::isOpen);
+        List<TextIndex> wx = filterIndexes(idxs, TextIndex::isWritable, CompositeIndex::isIndexOpen);
         int idbw = wx.size() > 0 ? wx.get(0).getIdBase() : Integer.MAX_VALUE;
-        List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, TextIndex::isOpen, x -> x.getIdBase() < idbw);
+        List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, CompositeIndex::isIndexOpen, x -> x.getIdBase() < idbw);
 
         Collections.reverse(wx);
         filterOverlaps(rx);
@@ -411,8 +416,8 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     }
 
     public List<TextIndex> findLookupIndexesArchived(List<TextIndex> ax) {
-        List<TextIndex> wx = filterIndexes(ax, TextIndex::isWritable, TextIndex::isOpen);
-        List<TextIndex> rx = filterIndexes(ax, TextIndex::isReadOnly, TextIndex::isOpen);
+        List<TextIndex> wx = filterIndexes(ax, TextIndex::isWritable, CompositeIndex::isIndexOpen);
+        List<TextIndex> rx = filterIndexes(ax, TextIndex::isReadOnly, CompositeIndex::isIndexOpen);
 
         if (rx.size() == 0) return wx;
 
@@ -435,8 +440,8 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
      * FMI indexes are preferred to WAL indexes with exception of most recent WAL index if it is still writable.
      */
     public List<TextIndex> findSearchIndexes(List<TextIndex> idxs) {
-        List<TextIndex> wx = filterIndexes(idxs, TextIndex::isWritable, TextIndex::isOpen);
-        List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, TextIndex::isOpen);
+        List<TextIndex> wx = filterIndexes(idxs, TextIndex::isWritable, CompositeIndex::isIndexOpen);
+        List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, CompositeIndex::isIndexOpen);
 
         filterOverlaps(rx);
         Collections.reverse(rx);
@@ -466,8 +471,8 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
      * first time.
      */
     public List<TextIndex> findCompressIndexes(List<TextIndex> idxs, boolean archived) {
-        List<TextIndex> wx = filterIndexes(idxs, TextIndex::isWritable, TextIndex::isOpen);
-        List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, TextIndex::isOpen);
+        List<TextIndex> wx = filterIndexes(idxs, TextIndex::isWritable, CompositeIndex::isIndexOpen);
+        List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, CompositeIndex::isIndexOpen);
 
         if (!archived && wx.size() > 0) {
             wx.remove(wx.size()-1);
@@ -496,7 +501,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
      * Locates all archived index files suitable for removal.
      */
     public List<TextIndex> findRemoveFmIndexes(List<TextIndex> idxs) {
-        List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, TextIndex::isOpen);
+        List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, CompositeIndex::isIndexOpen);
         List<TextIndex> rslt = new ArrayList<>();
 
         for (int i = 0; i < rx.size()-1; i++) {
@@ -517,8 +522,8 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
 
     public List<TextIndex> findRemoveWalIndexes(List<TextIndex> idxs) {
-        List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, TextIndex::isOpen);
-        List<TextIndex> wx = filterIndexes(idxs, TextIndex::isWritable, TextIndex::isOpen);
+        List<TextIndex> rx = filterIndexes(idxs, TextIndex::isReadOnly, CompositeIndex::isIndexOpen);
+        List<TextIndex> wx = filterIndexes(idxs, TextIndex::isWritable, CompositeIndex::isIndexOpen);
 
         List<TextIndex> rslt = new ArrayList<>();
 
@@ -551,7 +556,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
      * Looks for candidate for merge in normal working condition.
      */
     public List<TextIndex> findMergeCandidate(List<TextIndex> idxs) {
-        List<TextIndex> xs = filterIndexes(idxs, TextIndex::isReadOnly, TextIndex::isOpen);
+        List<TextIndex> xs = filterIndexes(idxs, TextIndex::isReadOnly, CompositeIndex::isIndexOpen);
 
         while (xs.size() > 1) {
             TextIndex x1 = xs.get(xs.size()-2), x2 = xs.get(xs.size()-1);
@@ -578,7 +583,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
     public List<TextIndex> findMergeCoalescing(List<TextIndex> idxs) {
         List<TextIndex> xs = filterIndexes(idxs,
-                TextIndex::isReadOnly, TextIndex::isOpen,
+                TextIndex::isReadOnly, CompositeIndex::isIndexOpen,
                 x -> x.getDatalen() < maxSize-baseSize);
 
         int size = 0;

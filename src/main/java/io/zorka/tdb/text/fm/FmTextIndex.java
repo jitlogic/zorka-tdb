@@ -337,7 +337,7 @@ public class FmTextIndex extends AbstractTextIndex {
 
     @Override
     public String toString() {
-        return "FMI(" + fif.getFile() + ")";
+        return "FMI(" + isOpen() + ", " + fif.getFile() + ")";
     }
 
 }
