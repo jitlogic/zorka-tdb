@@ -71,6 +71,38 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
     }
 
     @Test
+    public void testSubmitTraceWithDtraceAttributes() throws Exception {
+        SimpleTraceStore store = createSimpleStore(1);
+        store.open();
+
+        String agentUUID = UUID.randomUUID().toString();
+        String sessnUUID = store.getSession(agentUUID);
+        String traceUUID = UUID.randomUUID().toString();
+
+        store.handleAgentData(agentUUID, sessnUUID, agentData());
+
+        store.handleTraceData(agentUUID, sessnUUID, traceUUID, str(
+                tr(true, mid(0, 0, 0), 100, 200, 1,
+                        tb(1500, 0),
+                        ta("DTRACE_UUID", "1234-5678-9012"),
+                        ta("DTRACE_IN", "1234-5678-9012/22/33")
+                )).get(0),
+                md(1, 2));
+
+
+        RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
+        store.retrieveChunk(0, rtr);
+        assertNotNull(rtr.getResult());
+
+        ChunkMetadata md = store.getChunkMetadata(0);
+        assertTrue(md.getMethodId() != 0);
+        assertTrue("Distributed trace UUID ref should be recorded in quick index.", md.getDtraceUUID() != 0);
+        assertEquals("1234-5678-9012", store.getTextIndex().gets(md.getDtraceUUID()));
+        assertTrue("Distributed trace TID ref should be recorded in quick index.", md.getDtraceTID() != 0);
+        assertEquals("1234-5678-9012/22/33", store.getTextIndex().gets(md.getDtraceTID()));
+    }
+
+    @Test
     public void testSubmitSimpleTraceAndCheckForFormatting() throws Exception {
         SimpleTraceStore store = createSimpleStore(1);
         store.open();

@@ -62,6 +62,38 @@ public class QmiNode {
     /** Trace UUID */
     private String uuid;
 
+    private String dtraceUuid, dtraceTid;
+
+    private int dtraceUuidId, dtraceTidId;
+
+    public QmiNode() {
+
+    }
+
+    public QmiNode(QmiNode other) {
+        this.appId = other.appId;
+        this.envId = other.envId;
+        this.typeId = other.typeId;
+        this.hostId = other.hostId;
+        this.minDuration = other.minDuration;
+        this.maxDuration = other.maxDuration;
+        this.tstart = other.tstart;
+        this.tstop = other.tstop;
+        this.errorFlag = other.errorFlag;
+        this.desc = other.desc;
+        this.minCalls = other.minCalls;
+        this.maxCalls = other.maxCalls;
+        this.minRecs = other.minRecs;
+        this.maxRecs = other.maxRecs;
+        this.minErrs = other.minErrs;
+        this.maxErrs = other.maxErrs;
+        this.uuid = other.uuid;
+        this.dtraceUuid = other.dtraceUuid;
+        this.dtraceTid = other.dtraceTid;
+        this.dtraceUuidId = other.dtraceUuidId;
+        this.dtraceTidId = other.dtraceTidId;
+    }
+
     public int getAppId() {
         return appId;
     }
@@ -198,6 +230,38 @@ public class QmiNode {
         this.hostId = hostId;
     }
 
+    public String getDtraceUuid() {
+        return dtraceUuid;
+    }
+
+    public void setDtraceUuid(String dtraceUuid) {
+        this.dtraceUuid = dtraceUuid;
+    }
+
+    public String getDtraceTid() {
+        return dtraceTid;
+    }
+
+    public void setDtraceTid(String dtraceTid) {
+        this.dtraceTid = dtraceTid;
+    }
+
+    public int getDtraceUuidId() {
+        return dtraceUuidId;
+    }
+
+    public void setDtraceUuidId(int dtraceUuidId) {
+        this.dtraceUuidId = dtraceUuidId;
+    }
+
+    public int getDtraceTidId() {
+        return dtraceTidId;
+    }
+
+    public void setDtraceTidId(int dtraceTidId) {
+        this.dtraceTidId = dtraceTidId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -218,7 +282,9 @@ public class QmiNode {
                 minErrs == that.minErrs &&
                 maxErrs == that.maxErrs &&
                 Objects.equals(desc, that.desc) &&
-                Objects.equals(uuid, that.uuid);
+                Objects.equals(uuid, that.uuid) &&
+                Objects.equals(dtraceTid, that.dtraceUuid) &&
+                Objects.equals(dtraceUuid, that.dtraceUuid);
     }
 
     @Override

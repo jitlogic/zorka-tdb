@@ -34,6 +34,12 @@ public class TraceSearchResultItem {
 
     private String uuid;
 
+    private String dtraceUuid;
+
+    private String dtraceTid;
+
+    private boolean dtraceOut;
+
     public TraceSearchResultItem(long chunkId, ChunkMetadata cm) {
         this.tstamp = cm.getTstamp();
         this.duration = cm.getDuration();
@@ -49,6 +55,8 @@ public class TraceSearchResultItem {
         this.errors = cm.getErrors();
         this.dataOffs = cm.getDataOffs();
         this.startOffs = cm.getStartOffs();
+
+        this.dtraceOut = 0 != (cm.getDtraceTID() & ChunkMetadata.TID_FLAG);
     }
 
     public long getChunkId() {
@@ -169,5 +177,29 @@ public class TraceSearchResultItem {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public String getDtraceUuid() {
+        return dtraceUuid;
+    }
+
+    public void setDtraceUuid(String dtraceUuid) {
+        this.dtraceUuid = dtraceUuid;
+    }
+
+    public String getDtraceTid() {
+        return dtraceTid;
+    }
+
+    public void setDtraceTid(String dtraceTid) {
+        this.dtraceTid = dtraceTid;
+    }
+
+    public boolean isDtraceOut() {
+        return dtraceOut;
+    }
+
+    public void setDtraceOut(boolean dtraceOut) {
+        this.dtraceOut = dtraceOut;
     }
 }

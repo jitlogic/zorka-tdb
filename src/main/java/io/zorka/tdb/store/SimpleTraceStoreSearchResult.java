@@ -4,6 +4,7 @@ import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataQuickIndex;
 import io.zorka.tdb.meta.MetadataTextIndex;
 import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.search.QmiNode;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.search.lsn.AndExprNode;
@@ -22,6 +23,7 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
     private SimpleTraceStore store;
 
     private TraceSearchQuery query;
+    private QmiNode qmi;
     private MetadataQuickIndex qindex;
 
     private MetadataTextIndex imeta;
@@ -36,6 +38,24 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
         this.qindex = store.getQuickIndex();
         this.imeta = store.getMetaIndex();
         this.itext = store.getTextIndex();
+
+        this.qmi =  query.getQmi();
+
+        if (qmi == null) {
+            qmi = new QmiNode();
+        }
+
+        if (qmi.getDtraceUuid() != null || qmi.getDtraceTid() != null) {
+            qmi = new QmiNode(qmi);
+        }
+
+        if (qmi.getDtraceUuid() != null) {
+            qmi.setDtraceUuidId(itext.get(qmi.getDtraceUuid()));
+        }
+
+        if (qmi.getDtraceTid() != null) {
+            qmi.setDtraceTidId(itext.get(qmi.getDtraceTid()));
+        }
 
         int limit = Integer.max(256, query.getLimit() * 4 + query.getOffset());
 
@@ -64,7 +84,7 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
 
         do {
             int start = Math.max(0, pos - query.getBlkSize());
-            cnt = qindex.searchBlock(query.getQmi(), query.getSortOrder(), start, pos, ids, vals);
+            cnt = qindex.searchBlock(qmi, query.getSortOrder(), start, pos, ids, vals);
             for (int i = cnt - 1; i >= 0; i--) {
                 if (bmps == null || bmps.get(ids[i])) {
                     results.add(ids[i], vals[i]);
@@ -134,6 +154,14 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
 
         itm.setChunkId(chunkId);
         itm.setDescription(store.getDesc(chunkId));
+
+        if (md.getDtraceUUID() > 0) {
+            itm.setDtraceUuid(itext.resolve(md.getDtraceUUID()));
+        }
+
+        if (md.getDtraceTID() > 0) {
+            itm.setDtraceTid(itext.resolve(md.getDtraceTID() & ChunkMetadata.TID_MASK));
+        }
 
         return itm;
     }

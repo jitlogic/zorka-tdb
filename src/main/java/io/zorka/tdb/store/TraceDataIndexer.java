@@ -55,6 +55,8 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
 
     private TraceTypeResolver traceTypeResolver;
 
+    private int dtraceUuidKey, dtraceInKey, dtraceOutKey;
+
     // TODO indeksowanie methodId na 'czubku' trace'a
 
     // TODO aktualizacja duration po uwzględnieniu kolejnych fragmentów trace'a
@@ -85,6 +87,9 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 md.clearFlag(ChunkMetadata.TF_INITIAL);
             }
         }
+        this.dtraceUuidKey = index.add(TraceDataFormat.STRING_TYPE, "DTRACE_UUID");
+        this.dtraceInKey = index.add(TraceDataFormat.STRING_TYPE, "DTRACE_IN");
+        this.dtraceOutKey = index.add(TraceDataFormat.STRING_TYPE, "DTRACE_OUT");
     }
 
 
@@ -268,6 +273,17 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 Object v = translate(e.getValue());
                 if (k instanceof ObjectRef) {
                     if (v instanceof ObjectRef) {
+                        if (mtop != null) {
+                            int idk = ((ObjectRef)k).id;
+                            int idv = ((ObjectRef)v).id;
+                            if (idk == dtraceUuidKey) {
+                                mtop.setDtraceUUID(idv);
+                            } else if (idk == dtraceInKey) {
+                                mtop.setDtraceTID(idv);
+                            } else if (idk == dtraceOutKey) {
+                                mtop.setDtraceTID(idv | ChunkMetadata.TID_FLAG);
+                            }
+                        }
                         catchId(index.addKRPair(((ObjectRef) k).id, ((ObjectRef) v).id));
                     } else if (v instanceof Integer || v instanceof Long || v instanceof Boolean) {
                         catchId(index.addKVPair(((ObjectRef) k).id, ""+v));

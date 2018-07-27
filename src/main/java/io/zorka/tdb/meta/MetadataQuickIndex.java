@@ -80,6 +80,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * |                                 UUID (high word)                      | W7
  * |                                 UUID (low word)                       | W8
  * +--------+--------+--------+--------+--------+--------+--------+--------+
+ * |            dtraceUUID             |             dtraceTID             | W9
+ * +--------+--------+--------+--------+--------+--------+--------+--------+
+ * |                                reserved                               | W10...W12
+ * +--------+--------+--------+--------+--------+--------+--------+--------+
  *
  * W1 - timestamp and offset
  * tstamp - timestamp (seconds since Epoch);
@@ -123,8 +127,20 @@ public class MetadataQuickIndex implements Closeable {
     private final static int OFFS_TSTOP = 12;
 
     private final static int WORD_SIZE     = 8;
-    private final static int RECORD_SIZE   = 8 * WORD_SIZE;
+    private final static int RECORD_SIZE   = 12 * WORD_SIZE;
     private final static int HEADER_SIZE   = 8 * WORD_SIZE;
+
+
+    private final static int W1_OFFS = 0;
+    private final static int W2_OFFS = WORD_SIZE;
+    private final static int W3_OFFS = 2 * WORD_SIZE;
+    private final static int W4_OFFS = 3 * WORD_SIZE;
+    private final static int W5_OFFS = 4 * WORD_SIZE;
+    private final static int W6_OFFS = 5 * WORD_SIZE;
+    private final static int W7_OFFS = 6 * WORD_SIZE;
+    private final static int W8_OFFS = 7 * WORD_SIZE;
+    private final static int W9_OFFS = 8 * WORD_SIZE;
+
 
     private int flimit, delta;
     private volatile int fpos;
@@ -192,10 +208,10 @@ public class MetadataQuickIndex implements Closeable {
     private static long format_W2(ChunkMetadata md) {
         int errL = md.getErrors() > 0x10000 ? 0xff : (md.getErrors() & 0xff);
         return (((long)md.getAppId()) << 48)
-            | (((long)md.getEnvId()) << 32)
-            | (((long)md.getTypeId()) << 16)
-            | errL << 8
-            | md.getFlags();
+                | (((long)md.getEnvId()) << 32)
+                | (((long)md.getTypeId()) << 16)
+                | errL << 8
+                | md.getFlags();
     }
 
     private static void parse_W2(long w2, ChunkMetadata md) {
@@ -216,10 +232,10 @@ public class MetadataQuickIndex implements Closeable {
 
     private static long format_W2M(ChunkMetadata md) {
         return
-              (md.getAppId()  != 0 ? 0xffff000000000000L : 0L)
-            | (md.getEnvId()  != 0 ? 0x0000ffff00000000L : 0L)
-            | (md.getTypeId() != 0 ? 0x00000000ffff0000L : 0L)
-            | (md.getFlags()  != 0 ? 0x0000000000000001L : 0L);
+                (md.getAppId()  != 0 ? 0xffff000000000000L : 0L)
+                        | (md.getEnvId()  != 0 ? 0x0000ffff00000000L : 0L)
+                        | (md.getTypeId() != 0 ? 0x00000000ffff0000L : 0L)
+                        | (md.getFlags()  != 0 ? 0x0000000000000001L : 0L);
     }
 
     private long format_W2(QmiNode md) {
@@ -292,30 +308,46 @@ public class MetadataQuickIndex implements Closeable {
         md.setRecs((int)(w6 >>> 40));
     }
 
+    public static long format_W9(int traceUUID, int traceTID) {
+        return ((long)traceUUID) | (((long)traceTID) << 32);
+    }
+
+    public static long format_W9M(int dtraceUuid, int dtraceTid) {
+        return (dtraceUuid != 0 ? 0xffffffffL : 0)
+                | (dtraceTid != 0 ? 0x7fffffff00000000L : 0);
+    }
+
+    public static void parse_W9(long w9, ChunkMetadata md) {
+        md.setDtraceUUID((int)w9);
+        md.setDtraceTID((int)(w9 >>> 32));
+    }
+
     public synchronized int add(ChunkMetadata md) {
-        // TODO traceID is of no use, can be reclaimed and reused by something else; np. offset wewnątrz danych trace'owych dla zagnieżdżonych trace'ów
         long w1 = format_W1(md.getStartOffs(), md.getTstamp() / 1000);
         long w2 = format_W2(md);
         long w3 = format_W3(md.getChunkNum(), md.getDataOffs());
         long w4 = format_W4(md.getMethodId(), md.getDescId(), md.getDuration(), md.getHostId());
         long w6 = format_W6(md);
+        long w9 = format_W9(md.getDtraceUUID(), md.getDtraceTID());
 
         if (fpos > flimit - RECORD_SIZE) {
             extend();
         }
 
-        buffer.putLong(fpos, w1);
-        buffer.putLong(fpos + WORD_SIZE, w2);
-        buffer.putLong(fpos + 2 * WORD_SIZE, w3);
-        buffer.putLong(fpos + 3 * WORD_SIZE, w4);
-        // w5 will be filled later
-        buffer.putLong(fpos + 5 * WORD_SIZE, w6);
+        buffer.putLong(fpos + W1_OFFS, w1);
+        buffer.putLong(fpos + W2_OFFS, w2);
+        buffer.putLong(fpos + W3_OFFS, w3);
+        buffer.putLong(fpos + W4_OFFS, w4);
+        // w5 will be filled separately
+        buffer.putLong(fpos + W6_OFFS, w6);
 
         if (md.getTraceUUID() != null) {
             UUID uuid = UUID.fromString(md.getTraceUUID());
-            buffer.putLong(fpos + 6 * WORD_SIZE, uuid.getMostSignificantBits());
-            buffer.putLong(fpos + 7 * WORD_SIZE, uuid.getLeastSignificantBits());
+            buffer.putLong(fpos + W7_OFFS, uuid.getMostSignificantBits());
+            buffer.putLong(fpos + W8_OFFS, uuid.getLeastSignificantBits());
         }
+
+        buffer.putLong(fpos + W9_OFFS, w9);
 
         int rslt = (fpos - HEADER_SIZE) / RECORD_SIZE;
         fpos += RECORD_SIZE;
@@ -415,6 +447,7 @@ public class MetadataQuickIndex implements Closeable {
         parse_W4(buffer.getLong(pos+3*WORD_SIZE), md);
         // TODO where is w5 ?
         parse_W6(buffer.getLong(pos+5*WORD_SIZE), md);
+        parse_W9(buffer.getLong(pos+W9_OFFS), md);
         md.setUuidMSB(buffer.getLong(pos + 6 * WORD_SIZE));
         md.setUuidLSB(buffer.getLong(pos + 7 * WORD_SIZE));
 
@@ -534,6 +567,9 @@ public class MetadataQuickIndex implements Closeable {
         long d1 = query.getMaxDuration();
         long hostId = query.getHostId();
 
+        long w9v = format_W9(query.getDtraceUuidId(), query.getDtraceTidId());
+        long w9m = format_W9M(query.getDtraceUuidId(), query.getDtraceTidId());
+
         ByteBuffer bb = buffer;
         rwlock.readLock().lock();
 
@@ -542,11 +578,12 @@ public class MetadataQuickIndex implements Closeable {
                 long w1 = bb.getLong(pos);
                 long w2 = bb.getLong(pos + WORD_SIZE);
                 long w4 = bb.getLong(pos + WORD_SIZE * 3);
+                long w9 = bb.getLong(pos + W9_OFFS);
                 long wd = (w4 >>> 32) & 0xffff;
                 long hd = (w4 >>> 48) & 0xffff;
                 long t = w1 & 0xffffffffL;
                 if (w2v == (w2 & w2m) && t >= t0 && t <= t1 && wd >= d0 && wd < d1
-                        && (hostId == 0 || hostId == hd)) {
+                        && (hostId == 0 || hostId == hd) && w9v == (w9 & w9m)) {
                     ids[idx] = blk;
                     switch (sortOrder) {
                         case NONE:

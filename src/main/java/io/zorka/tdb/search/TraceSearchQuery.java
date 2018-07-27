@@ -47,10 +47,14 @@ public class TraceSearchQuery implements SearchNode {
     private QmiNode qmi;
     private int limit = Integer.MAX_VALUE, offset = 0, window = 1024;
     private long after = -1;
+
+    /** If true, whole trace will be searched. If false, only  */
     private boolean deepSearch = true;
+    private boolean fullInfo = false;
 
     private SortOrder sortOrder = SortOrder.NONE;
     private boolean sortReverse = false;
+
 
     public TraceSearchQuery(QmiNode qmi, SearchNode node) {
         this.qmi = qmi;
@@ -127,5 +131,13 @@ public class TraceSearchQuery implements SearchNode {
 
     public void setBlkSize(int blkSize) {
         this.blkSize = blkSize;
+    }
+
+    public boolean isFullInfo() {
+        return fullInfo;
+    }
+
+    public void setFullInfo(boolean fullInfo) {
+        this.fullInfo = fullInfo;
     }
 }

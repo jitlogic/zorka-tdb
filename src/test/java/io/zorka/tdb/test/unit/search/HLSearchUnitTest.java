@@ -1,5 +1,6 @@
 package io.zorka.tdb.test.unit.search;
 
+import io.zorka.tdb.search.QmiNode;
 import io.zorka.tdb.search.QmiQueryBuilder;
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.TraceSearchQuery;
@@ -57,10 +58,6 @@ public class HLSearchUnitTest extends ZicoTestFixture {
         SimpleTraceStore.SEARCH_TX_THRESHOLD = 512;
     }
 
-    @Before
-    public void setupTraceStore() throws Exception {
-        store = createAndPopulateStore();
-    }
 
     private SimpleTraceStore createAndPopulateStore() throws Exception {
         SimpleTraceStore store = createSimpleStore(1);
@@ -83,8 +80,95 @@ public class HLSearchUnitTest extends ZicoTestFixture {
         return store;
     }
 
+    private SimpleTraceStore createAndPopulateDTraceStore(boolean dtraceOut) throws Exception {
+        SimpleTraceStore store = createSimpleStore(1);
+        store.open();
+
+        String agentUUID = UUID.randomUUID().toString();
+        String sessnUUID = store.getSession(agentUUID);
+
+        store.handleAgentData(agentUUID, sessnUUID, TraceTestDataBuilder.agentData());
+
+        String k2 = dtraceOut ? "DTRACE_OUT" : "DTRACE_IN";
+
+        for (int i = 0; i < 16; i++) {
+            String uuid = "deadbeef-cafebab"+ (i >> 2);
+            store.handleTraceData(agentUUID, sessnUUID, UUID.randomUUID().toString(),
+                    TraceTestDataBuilder.trc(100+i*50, 100 + (i*200) % 5000,
+                            "DTRACE_UUID", uuid,
+                            k2, uuid + ( i == 0 ? "" : "/" + (i & 3))),
+                    md(i%4+1, i%2+1));
+        }
+
+
+        return store;
+    }
+
+
     @Test
-    public void testSimpleHlSearchAll() {
+    public void testSimpleHlSearchDtraceIn() throws Exception {
+        store = createAndPopulateDTraceStore(false);
+
+        QmiNode qmi = new QmiNode();
+
+        qmi.setDtraceUuid("deadbeef-cafebab0");
+        TraceSearchResult tr1 = store.searchTraces(QueryBuilder.all().query(qmi));
+        assertEquals(4, tr1.size());
+        assertFalse(tr1.nextItem().isDtraceOut());
+
+        qmi.setDtraceUuid("deadbeef-cafebab5");
+        assertEquals(0, store.searchTraces(QueryBuilder.all().query(qmi)).size());
+
+        qmi.setDtraceUuid(null);
+        qmi.setDtraceTid("deadbeef-cafebab0");
+        TraceSearchResult tr2 = store.searchTraces(QueryBuilder.all().query(qmi));
+        assertEquals(1, tr2.size());
+        assertFalse(tr2.nextItem().isDtraceOut());
+
+        qmi.setDtraceTid("deadbeef-cafebab0/1");
+        TraceSearchResult tr3 = store.searchTraces(QueryBuilder.all().query(qmi));
+        assertEquals(1, tr3.size());
+        assertFalse(tr3.nextItem().isDtraceOut());
+
+
+        qmi.setDtraceTid("deadbeef-cafebab0/4");
+        assertEquals(0, store.searchTraces(QueryBuilder.all().query(qmi)).size());
+    }
+
+    @Test
+    public void testSimpleHlSearchDtraceOut() throws Exception {
+        store = createAndPopulateDTraceStore(true);
+
+        QmiNode qmi = new QmiNode();
+
+        qmi.setDtraceUuid("deadbeef-cafebab0");
+        TraceSearchResult tr1 = store.searchTraces(QueryBuilder.all().query(qmi));
+        assertEquals(4, tr1.size());
+        assertTrue(tr1.nextItem().isDtraceOut());
+
+        qmi.setDtraceUuid("deadbeef-cafebab5");
+        assertEquals(0, store.searchTraces(QueryBuilder.all().query(qmi)).size());
+
+        qmi.setDtraceUuid(null);
+        qmi.setDtraceTid("deadbeef-cafebab0");
+        TraceSearchResult tr2 = store.searchTraces(QueryBuilder.all().query(qmi));
+        assertEquals(1, tr2.size());
+        assertTrue(tr2.nextItem().isDtraceOut());
+
+        qmi.setDtraceTid("deadbeef-cafebab0/1");
+        TraceSearchResult tr3 = store.searchTraces(QueryBuilder.all().query(qmi));
+        assertEquals(1, tr3.size());
+        assertTrue(tr3.nextItem().isDtraceOut());
+
+
+        qmi.setDtraceTid("deadbeef-cafebab0/4");
+        assertEquals(0, store.searchTraces(QueryBuilder.all().query(qmi)).size());
+    }
+
+    @Test
+    public void testSimpleHlSearchAll() throws Exception {
+        store = createAndPopulateStore();
+
         TraceSearchQuery query = QueryBuilder.all().query();
         TraceSearchResult rslt = store.searchTraces(query);
 
@@ -98,7 +182,9 @@ public class HLSearchUnitTest extends ZicoTestFixture {
     }
 
     @Test
-    public void testSimpleHlSearchWithKV() {
+    public void testSimpleHlSearchWithKV() throws Exception {
+        store = createAndPopulateStore();
+
         TraceSearchQuery query = QueryBuilder.kv("AAA", "UVW5").query(QmiQueryBuilder.all().qmiNode());
         TraceSearchResult rslt = store.searchTraces(query);
 
@@ -116,7 +202,9 @@ public class HLSearchUnitTest extends ZicoTestFixture {
 
 
     @Test
-    public void testSimpleHLSearchWithOffset() {
+    public void testSimpleHLSearchWithOffset() throws Exception {
+        store = createAndPopulateStore();
+
         TraceSearchQuery query = QueryBuilder.all().query();
         query.setLimit(3); query.setOffset(0);
 

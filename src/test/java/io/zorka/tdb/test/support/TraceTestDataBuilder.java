@@ -336,8 +336,8 @@ public class TraceTestDataBuilder {
     public static String trc(int tst, int dur, String k1, String v1, String k2, String v2) {
         return str(
             tr(true, mid(0,0,0), tst, tst + dur, 2,
-                ta(k1, v1),
                 tb(1500, 0),
+                ta(k1, v1),
                 tr(true, mid(1, 1, 1), tst, tst+dur/2, 1,
                     ta(k2, v2))
             )).get(0);

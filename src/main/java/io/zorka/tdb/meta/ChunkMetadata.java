@@ -38,6 +38,9 @@ public class ChunkMetadata {
     /** Marks final chunk of trace. */
     public static final int TF_FINAL = 0x08;
 
+    public static final int TID_FLAG = 0x80000000;
+    public static final int TID_MASK = 0x7fffffff;
+
     private int typeId; // Trace type (eg.
     private int appId;
     private int envId;
@@ -65,6 +68,8 @@ public class ChunkMetadata {
     private long tstart, tstop;
 
     private long uuidLSB, uuidMSB;
+
+    private int dtraceUUID, dtraceTID;
 
     private Set<Integer> fids = null;
 
@@ -346,5 +351,21 @@ public class ChunkMetadata {
 
     public void setHostId(int hostId) {
         this.hostId = hostId;
+    }
+
+    public int getDtraceUUID() {
+        return dtraceUUID;
+    }
+
+    public void setDtraceUUID(int dtraceUUID) {
+        this.dtraceUUID = dtraceUUID;
+    }
+
+    public int getDtraceTID() {
+        return dtraceTID;
+    }
+
+    public void setDtraceTID(int dtraceTID) {
+        this.dtraceTID = dtraceTID;
     }
 }
