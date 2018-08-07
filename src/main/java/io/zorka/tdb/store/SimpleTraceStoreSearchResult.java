@@ -159,9 +159,13 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
             itm.setDtraceUuid(itext.resolve(md.getDtraceUUID()));
         }
 
-        if (md.getDtraceTID() > 0) {
-            itm.setDtraceTid(itext.resolve(md.getDtraceTID() & ChunkMetadata.TID_MASK));
+        int tid = md.getDtraceTID() & ChunkMetadata.TID_MASK;
+
+        if (tid > 0) {
+            itm.setDtraceTid(itext.resolve(tid));
         }
+
+        itm.setDtraceOut(0 != (md.getDtraceTID() & ChunkMetadata.TID_FLAG));
 
         return itm;
     }
