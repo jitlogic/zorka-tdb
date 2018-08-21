@@ -16,28 +16,43 @@
 
 package io.zorka.tdb.store;
 
+import io.zorka.tdb.meta.ChunkMetadata;
+
 import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Intermediate representation of retrieved trace record.
  */
 public class TraceRecord {
+
+    /** Start timestamp (ticks since VM start) */
     private long tstart;
+
+    /** End timestamp (ticks since VM start) */
     private long tstop;
+
+    /** Timestamp (wall clock time) */
     private long tstamp;
+
+    /** Duration (ticks) */
     private long duration;
 
+    /** Method descriptor ID (to be retrieved from  */
     private int mid;
 
+    /** Logical position (across multiple chunks) */
     private int pos;
 
+    /** Method descriptor (as string) */
     private String method;
 
     private int tid;
     private int eid;
 
     private int flags;
+
+    /** Trace type ID */
     private int type;
 
     private int level;
@@ -214,5 +229,9 @@ public class TraceRecord {
 
     public void setPos(int pos) {
         this.pos = pos;
+    }
+
+    public boolean hasError() {
+        return 0 != (flags & ChunkMetadata.TF_ERROR);
     }
 }
