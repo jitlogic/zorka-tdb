@@ -24,7 +24,7 @@ public class TraceStatsRecordFilter implements TraceRecordFilter<Object> {
             stats.put(tr.getMid(), itm);
         }
 
-        return null;
+        return this;
     }
 
     public Collection<TraceStatsResultItem> getStats() {
