@@ -15,7 +15,7 @@ agent overhead but in doing so it requires some post processing in collector.
 Each trace is encoded as variable-length array containing information on current method call:
 
 ```
-(TAG=0x0a/0x0b)[prolog,begin?attr1?,attr2?,...,sub1,sub2...,attrn?,attrn+1?,...,exception?,epilog]
+(TAG=0x0a/0x0b)[prolog,begin?,attr1?,attr2?,...,sub1,sub2...,attrn?,attrn+1?,...,exception?,epilog]
 ```
 
 Both prolog and epilog contain data in architecture dependent byte order. If `TAG=6` this is big endian, for `TAG=7`
@@ -64,12 +64,25 @@ TraceBegin structure marks beginning of a trace.
 
 ## Attributes
 
+Normal attributes are attached to current method:
+
 ```
-(TAG=0x0c){key1,val1,key2,val2,...keyN,valN}
+(TAG=0x09){key1,val1,key2,val2,...keyN,valN}
 ```
 
 Where both keys and values can be of arbitrary (possibly recursive) type. Note that both keys or value can be or 
 contain string-refs and similar types.
+
+Upward attributes can be attached to upward method that marks start of a trace:
+
+```
+(TAG=0x26)[traceId,{key1,val1,key2,val2,...keyN,valN}]
+```
+
+If `traceId` = 0, attributes will be attached to any upwards record in the stack. If traceID != 0, appropriate trace
+top will be selected. 
+
+Note that upward attributes 
 
 
 ## Exceptions
