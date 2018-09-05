@@ -59,6 +59,11 @@ public class TraceSearchResultItem {
         this.dtraceOut = 0 != (cm.getDtraceTID() & ChunkMetadata.TID_FLAG);
     }
 
+    @Override
+    public String toString() {
+        return "T[" + description + "]";
+    }
+
     public long getChunkId() {
         return chunkId;
     }
