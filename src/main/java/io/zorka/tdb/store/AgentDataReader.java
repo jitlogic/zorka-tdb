@@ -20,15 +20,10 @@ import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.util.CborDataReader;
 import io.zorka.tdb.meta.StructuredTextIndex;
 
-import static io.zorka.tdb.meta.StructuredTextIndex.STRING_TYPE;
-import static io.zorka.tdb.meta.StructuredTextIndex.TYPE_MAX;
-import static io.zorka.tdb.meta.StructuredTextIndex.TYPE_MIN;
-import static io.zorka.tdb.store.TraceDataFormat.TAG_AGENT_ATTR;
-import static io.zorka.tdb.store.TraceDataFormat.TAG_METHOD_DEF;
-import static io.zorka.tdb.store.TraceDataFormat.TAG_STRING_DEF;
-import static io.zorka.tdb.util.CBOR.ARR_BASE;
-import static io.zorka.tdb.util.CBOR.TAG_BASE;
-import static io.zorka.tdb.util.CBOR.TYPE_MASK;
+import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+
+import static com.jitlogic.zorka.cbor.CBOR.*;
+
 
 /**
  *

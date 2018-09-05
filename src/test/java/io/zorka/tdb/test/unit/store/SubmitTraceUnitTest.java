@@ -16,20 +16,20 @@
 
 package io.zorka.tdb.test.unit.store;
 
+import static com.jitlogic.zorka.cbor.CBOR.*;
+import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.store.*;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
-import io.zorka.tdb.util.CBOR;
 
 import java.util.List;
 import java.util.UUID;
 
 import static io.zorka.tdb.test.support.TraceTestDataBuilder.*;
 
-import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.store.RecursiveTraceDataRetriever;
 import io.zorka.tdb.store.RotatingTraceStore;
 import org.junit.Test;
@@ -118,11 +118,11 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         store.handleAgentData(agentUUID, sessnUUID, agentData());
 
         store.handleTraceData(agentUUID, sessnUUID, traceUUID, str(
-            tr(true, mid(0, 0, 0), 100, 100+100*TraceDataFormat.TICKS_IN_SECOND, 42,
+            tr(true, mid(0, 0, 0), 100, 100+100*TICKS_IN_SECOND, 42,
                 tb(1500, 1),
-                ta(ti(TraceDataFormat.TAG_STRING_REF, sid("URI")), "/my/app"),
+                ta(ti(TAG_STRING_REF, sid("URI")), "/my/app"),
                 ta("STATUS", "200"),
-                tf(TraceDataFormat.FLAG_ERROR)
+                tf(FLAG_ERROR)
             )).get(0),
             md(1, 2));
 
@@ -134,7 +134,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         assertEquals(42, md.getCalls());
         assertEquals(100, md.getDuration());
         assertEquals(100, store.getTraceDuration(0));
-        assertTrue(md.hasFlag(TraceDataFormat.TF_ERROR));
+        assertTrue(md.hasFlag(TF_ERROR));
     }
 
     @Test
@@ -240,17 +240,17 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         assertNotNull(tr0.getChildren());
         assertEquals(0, tr0.getPos());
-        assertEquals(CBOR.TAG_BASE | TraceDataFormat.TAG_TRACE_START, tb0[tr0.getPos()] & 0xff);
+        assertEquals(TAG_BASE|TAG_TRACE_START, tb0[tr0.getPos()] & 0xff);
 
         assertEquals(2, tr0.getChildren().size());
 
         TraceRecord tr1 = (TraceRecord)(tr0.getChildren().get(0));
         assertNotEquals(0, tr1.getPos());
-        assertEquals(CBOR.TAG_BASE | TraceDataFormat.TAG_TRACE_START, tb0[tr1.getPos()] & 0xff);
+        assertEquals(TAG_BASE|TAG_TRACE_START, tb0[tr1.getPos()] & 0xff);
 
         TraceRecord tr2 = (TraceRecord)(tr0.getChildren().get(1));
         assertNotEquals(0, tr2.getPos());
-        assertEquals(CBOR.TAG_BASE | TraceDataFormat.TAG_TRACE_START, tb0[tr2.getPos()] & 0xff);
+        assertEquals(TAG_BASE|TAG_TRACE_START, tb0[tr2.getPos()] & 0xff);
     }
 
 

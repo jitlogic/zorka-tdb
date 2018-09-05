@@ -18,10 +18,9 @@ package io.zorka.tdb.store;
 
 import io.zorka.tdb.util.CborDataWriter;
 import io.zorka.tdb.util.CborObject;
-import io.zorka.tdb.util.CborDataWriter;
-import io.zorka.tdb.util.CborObject;
 
-import static io.zorka.tdb.store.TraceDataFormat.TAG_STRING_REF;
+import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+
 
 /**
  *
@@ -55,7 +54,7 @@ public class ObjectRef implements CborObject {
 
     @Override
     public void write(CborDataWriter writer) {
-        writer.writeTag(TraceDataFormat.TAG_STRING_REF);
+        writer.writeTag(TAG_STRING_REF);
         writer.writeInt(id);
     }
 

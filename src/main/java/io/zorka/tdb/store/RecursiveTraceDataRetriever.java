@@ -18,15 +18,13 @@ package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.StructuredTextIndex;
-import io.zorka.tdb.meta.StructuredTextIndex;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
-import java.util.function.Function;
 
-import static io.zorka.tdb.store.TraceDataFormat.*;
+import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
 
 /**
  * Stateful trace data builder that reconstructs trace call tree and transforms

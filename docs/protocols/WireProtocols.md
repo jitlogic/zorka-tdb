@@ -99,7 +99,7 @@ Full exception info is encoded as tagged 5-element array:
 
 * `message` - exception message (string);
 
-* `cause` - cause ID;
+* `cause` - cause ID (encoded as uint, `id` of exception marked as cause);
 
 * `stack` - array of stack trace elements;
 

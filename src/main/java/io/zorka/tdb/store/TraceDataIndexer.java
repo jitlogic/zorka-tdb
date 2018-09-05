@@ -24,6 +24,8 @@ import io.zorka.tdb.util.CborDataWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+
 /**
  * Normalizes all strings and translates IDs. Extract
  */
@@ -87,9 +89,9 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 md.clearFlag(ChunkMetadata.TF_INITIAL);
             }
         }
-        this.dtraceUuidKey = index.add(TraceDataFormat.STRING_TYPE, "DTRACE_UUID");
-        this.dtraceInKey = index.add(TraceDataFormat.STRING_TYPE, "DTRACE_IN");
-        this.dtraceOutKey = index.add(TraceDataFormat.STRING_TYPE, "DTRACE_OUT");
+        this.dtraceUuidKey = index.add(STRING_TYPE, "DTRACE_UUID");
+        this.dtraceInKey = index.add(STRING_TYPE, "DTRACE_IN");
+        this.dtraceOutKey = index.add(STRING_TYPE, "DTRACE_OUT");
     }
 
 
@@ -152,7 +154,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
             ChunkMetadata md = mrecs.get(mrecs.size()-1);
             md.markFlag(ChunkMetadata.TF_FINAL);
             md.setTstop(tstop);
-            md.setDuration((md.getTstop()-md.getTstart())/TraceDataFormat.TICKS_IN_SECOND);
+            md.setDuration((md.getTstop()-md.getTstart())/TICKS_IN_SECOND);
             mrslt.add(md);
             mrecs.remove(mrecs.size()-1);
             if (mrecs.size() > 0) {
@@ -213,32 +215,32 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     public void traceInfo(int k, long v) {
 
         switch (k) {
-            case TraceDataFormat.TI_TSTAMP:
+            case TI_TSTAMP:
                 if (mtop != null) mtop.catchTstamp(v);
                 lastTstamp = v;
                 break;
-            case TraceDataFormat.TI_DURATION:
+            case TI_DURATION:
                 if (mtop != null) mtop.catchDuration(v);
                 break;
-            case TraceDataFormat.TI_TSTART:
+            case TI_TSTART:
                 tstart = v;
                 break;
-            case TraceDataFormat.TI_TSTOP:
+            case TI_TSTOP:
                 tstop = v;
                 break;
-            case TraceDataFormat.TI_TYPE:
+            case TI_TYPE:
                 v = traceBegin((int)v);
                 break;
-            case TraceDataFormat.TI_FLAGS:
-                if (0 != (v & TraceDataFormat.TF_ERROR)) {
+            case TI_FLAGS:
+                if (0 != (v & TF_ERROR)) {
                     if (mtop != null) mtop.setErrorFlag(true);
                 }
                 break;
-            case TraceDataFormat.TI_METHOD:
+            case TI_METHOD:
                 v = methodRef((int)v);
                 lastMethod = (int)v;
                 break;
-            case TraceDataFormat.TI_CALLS:
+            case TI_CALLS:
                 if (mtop != null) {
                     mtop.addCalls((int)v);
                 }
