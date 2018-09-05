@@ -19,16 +19,14 @@ package io.zorka.tdb.test.support;
 import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
-import io.zorka.tdb.store.TraceDataFormat;
-import io.zorka.tdb.util.CBOR;
 import io.zorka.tdb.util.CborDataWriter;
-import io.zorka.tdb.meta.StructuredTextIndex;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.zorka.tdb.util.CBOR.ARR_BASE;
-import static io.zorka.tdb.util.CBOR.MAP_BASE;
+import static com.jitlogic.zorka.cbor.CBOR.*;
+import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+
 
 /**
  * Trace building utilities used by
@@ -129,28 +127,28 @@ public class TraceTestDataBuilder {
 
         @Override
         public void serialize(CborTestWriter w) {
-            w.writeTag(TraceDataFormat.TAG_TRACE_START);
-            w.write(CBOR.ARR_VCODE);
-            w.writeTag(le ? TraceDataFormat.TAG_PROLOG_LE : TraceDataFormat.TAG_PROLOG_BE);
-            w.writeUInt(CBOR.BYTES_BASE, 8);
+            w.writeTag(TAG_TRACE_START);
+            w.write(ARR_VCODE);
+            w.writeTag(le ? TAG_PROLOG_LE : TAG_PROLOG_BE);
+            w.writeUInt(BYTES_BASE, 8);
             w.writeRawLong((tstart & 0x000000ffffffffffL) | (mid << 40), le);
 
             for (WireObj obj : objs) {
                 obj.serialize(w);
             }
 
-            w.writeTag(le ? TraceDataFormat.TAG_EPILOG_LE : TraceDataFormat.TAG_EPILOG_BE);
+            w.writeTag(le ? TAG_EPILOG_LE : TAG_EPILOG_BE);
 
             if (calls <= 0x00ffffff) {
-                w.writeUInt(CBOR.BYTES_BASE, 8);
+                w.writeUInt(BYTES_BASE, 8);
                 w.writeRawLong((tstop & 0x000000ffffffffffL) | (calls << 40), le);
             } else {
-                w.writeUInt(CBOR.BYTES_BASE, 16);
+                w.writeUInt(BYTES_BASE, 16);
                 w.writeRawLong(tstop & 0x000000ffffffffffL, le);
                 w.writeRawLong(calls, le);
             }
 
-            w.write(CBOR.BREAK_CODE);
+            w.write(BREAK_CODE);
 
         }
     }
@@ -165,16 +163,16 @@ public class TraceTestDataBuilder {
 
         @Override
         public void serialize(CborTestWriter w) {
-            w.writeTag(TraceDataFormat.TAG_EXCEPTION);
-            w.writeUInt(CBOR.ARR_BASE, 5);
+            w.writeTag(TAG_EXCEPTION);
+            w.writeUInt(ARR_BASE, 5);
             w.writeInt(e.getId());
-            w.writeTag(TraceDataFormat.TAG_STRING_REF);
+            w.writeTag(TAG_STRING_REF);
             w.writeInt(e.getClassId());
             w.writeString(e.getMsg());
             w.writeInt(0); // Cause is empty (?)
-            w.writeUInt(CBOR.ARR_BASE, e.getStackTrace().size());
+            w.writeUInt(ARR_BASE, e.getStackTrace().size());
             for (StackData sd : e.getStackTrace()) {
-                w.writeUInt(CBOR.ARR_BASE, 4);
+                w.writeUInt(ARR_BASE, 4);
                 w.writeInt(sd.getClassId());
                 w.writeInt(sd.getMethodId());
                 w.writeInt(sd.getFileId());
@@ -194,29 +192,29 @@ public class TraceTestDataBuilder {
 
     /** Generates agent attributes. */
     public static WireObj aa(Object k, Object v) {
-        return new TaggedObjs(ARR_BASE, TraceDataFormat.TAG_AGENT_ATTR, k, v);
+        return new TaggedObjs(ARR_BASE, TAG_AGENT_ATTR, k, v);
     }
 
 
     public static WireObj sr(int id, String s, int type) {
-        return new TaggedObjs(ARR_BASE, TraceDataFormat.TAG_STRING_DEF, id, s, type);
+        return new TaggedObjs(ARR_BASE, TAG_STRING_DEF, id, s, type);
     }
 
 
     public static WireObj mr(int id, int cid, int mid, int sid) {
-        return new TaggedObjs(ARR_BASE, TraceDataFormat.TAG_METHOD_DEF, id, cid, mid, sid);
+        return new TaggedObjs(ARR_BASE, TAG_METHOD_DEF, id, cid, mid, sid);
     }
 
 
     /** Generates trace begin marker. */
     public static WireObj tb(long clock, int tid) {
-        return new TaggedObjs(ARR_BASE, TraceDataFormat.TAG_TRACE_BEGIN, clock, tid);
+        return new TaggedObjs(ARR_BASE, TAG_TRACE_BEGIN, clock, tid);
     }
 
 
     /** Generates trace record attributes. */
     public static WireObj ta(Object...attrs) {
-        return new TaggedObjs(MAP_BASE, TraceDataFormat.TAG_TRACE_ATTR, attrs);
+        return new TaggedObjs(MAP_BASE, TAG_TRACE_ATTR, attrs);
     }
 
     public static WireObj ti(int tag, int val) {
@@ -229,7 +227,7 @@ public class TraceTestDataBuilder {
     }
 
     public static WireObj tf(int flag) {
-        return new TaggedInt(TraceDataFormat.TAG_FLAG_TOKEN, flag);
+        return new TaggedInt(TAG_FLAG_TOKEN, flag);
     }
 
     public static WireObj brk() {

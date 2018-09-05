@@ -17,11 +17,8 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.util.CBOR;
 import io.zorka.tdb.util.CborDataReader;
 import io.zorka.tdb.util.Debug;
-import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.util.CborDataReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +27,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.zorka.tdb.util.CBOR.*;
-import static io.zorka.tdb.store.TraceDataFormat.*;
+import static com.jitlogic.zorka.cbor.CBOR.*;
+import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+
 import static io.zorka.tdb.util.Debug.*;
+
 
 /**
  *
@@ -131,7 +130,7 @@ public class TraceDataReader implements Runnable {
             }
             case TAG_BASE: {
                 switch (peek) {
-                    case TAG_BASE+ TraceDataFormat.TAG_STRING_REF:
+                    case TAG_BASE+TAG_STRING_REF:
                         reader.readInt();
                         return new ObjectRef(reader.readInt());
                     default:
@@ -161,75 +160,75 @@ public class TraceDataReader implements Runnable {
         int tag = reader.readInt();
         if (TRACE_ENABLED) Debug.trace("TraceDataReader","process(): TAG=" + tag);
         switch (tag) {
-            case TraceDataFormat.TAG_TRACE_START: {
-                checked(reader.peek() == CBOR.ARR_VCODE,
+            case TAG_TRACE_START: {
+                checked(reader.peek() == ARR_VCODE,
                     "Trace record should be encoded as unbounded array.");
                 int pos = reader.position();
                 reader.read();
                 output.traceStart(pos - 1);
                 break;
             }
-            case TraceDataFormat.TAG_PROLOG_BE:
-            case TraceDataFormat.TAG_PROLOG_LE: {
-                checked(reader.peek() == (CBOR.BYTES_BASE + 8),
+            case TAG_PROLOG_BE:
+            case TAG_PROLOG_LE: {
+                checked(reader.peek() == (BYTES_BASE + 8),
                     "Invalid trace record prolog.|");
                 reader.read();
-                long v = reader.readRawLong(tag == TraceDataFormat.TAG_PROLOG_LE);
+                long v = reader.readRawLong(tag == TAG_PROLOG_LE);
 
                 long tstart = v & 0x000000FFFFFFFFFFL;
                 int methodId = (int) (v >>> 40);
-                output.traceInfo(TraceDataFormat.TI_TSTART, tstart);
-                output.traceInfo(TraceDataFormat.TI_METHOD, methodId);
+                output.traceInfo(TI_TSTART, tstart);
+                output.traceInfo(TI_METHOD, methodId);
                 // TODO immediately check for TRACE_BEGIN tag here
                 // TODO ewentualnie przejść na bardziej efektywny TRACE_PROLOG i TRACE_EPILOG aby nie było 2xTRACE_INFO
                 break;
             }
-            case TraceDataFormat.TAG_EPILOG_BE:
-            case TraceDataFormat.TAG_EPILOG_LE: {
+            case TAG_EPILOG_BE:
+            case TAG_EPILOG_LE: {
                 int xf = reader.peek();
-                checked(xf == (CBOR.BYTES_BASE + 8) || xf == (CBOR.BYTES_BASE + 16),
+                checked(xf == (BYTES_BASE + 8) || xf == (BYTES_BASE + 16),
                     "Invalid trace epilog.");
                 reader.read();
-                long v = reader.readRawLong(tag == TraceDataFormat.TAG_EPILOG_LE);
+                long v = reader.readRawLong(tag == TAG_EPILOG_LE);
                 long tstop = v & 0x000000FFFFFFFFFFL;
                 if (xf == 0x48) {
                     int calls = (int) (v >>> 40);
-                    output.traceInfo(TraceDataFormat.TI_TSTOP, tstop);
-                    output.traceInfo(TraceDataFormat.TI_CALLS, calls);
+                    output.traceInfo(TI_TSTOP, tstop);
+                    output.traceInfo(TI_CALLS, calls);
                 } else {
-                    long calls = reader.readRawLong(tag == TraceDataFormat.TAG_EPILOG_LE);
-                    output.traceInfo(TraceDataFormat.TI_TSTOP, tstop);
-                    output.traceInfo(TraceDataFormat.TI_CALLS, calls);
+                    long calls = reader.readRawLong(tag == TAG_EPILOG_LE);
+                    output.traceInfo(TI_TSTOP, tstop);
+                    output.traceInfo(TI_CALLS, calls);
                 }
                 output.traceEnd();
-                if (reader.peek() != CBOR.BREAK_CODE) {
+                if (reader.peek() != BREAK_CODE) {
                     throw new ZicoException("Epilog should be last element of trace record.");
                 }
                 reader.read();
                 break;
             }
-            case TraceDataFormat.TAG_TRACE_ATTR: {
+            case TAG_TRACE_ATTR: {
                 Object attrs = read();
                 output.attr((Map)attrs);
                 break;
             }
-            case TraceDataFormat.TAG_TRACE_BEGIN: {
+            case TAG_TRACE_BEGIN: {
                 checked(reader.peek() == 0x82,
                     "Trace begin marker should be 2-element array.");
                 reader.read();
                 long tstamp = reader.readLong();
                 int tid = reader.readInt();
-                output.traceInfo(TraceDataFormat.TI_TSTAMP, tstamp);
-                output.traceInfo(TraceDataFormat.TI_TYPE, tid);
+                output.traceInfo(TI_TSTAMP, tstamp);
+                output.traceInfo(TI_TYPE, tid);
                 break;
             }
-            case TraceDataFormat.TAG_EXCEPTION: {
+            case TAG_EXCEPTION: {
                 // TODO handle also stored exception format (with refs), not only wire format
                 checked(reader.peek() == 0x85,
                     "Exception description should be 5-element array.");
                 reader.read();
                 int excId = reader.readInt();
-                checked(reader.peek() == TAG_BASE + TraceDataFormat.TAG_STRING_REF,
+                checked(reader.peek() == TAG_BASE+TAG_STRING_REF,
                     "Expected exception class (as string ref).");
                 reader.read();
                 int excClass = reader.readInt();
@@ -267,10 +266,10 @@ public class TraceDataReader implements Runnable {
                 output.exception(ex);
                 break;
             }
-            case TraceDataFormat.TAG_EXCEPTION_REF:
+            case TAG_EXCEPTION_REF:
                 output.exceptionRef(reader.readInt());
                 break;
-            case TraceDataFormat.TAG_TRACE_INFO: {
+            case TAG_TRACE_INFO: {
                 checked(reader.peekType() == MAP_BASE,
                     "Expected map element as TRACE_INFO.");
                 int sz = reader.readInt();
@@ -281,12 +280,12 @@ public class TraceDataReader implements Runnable {
                 }
                 break;
             }
-            case TraceDataFormat.TAG_FLAG_TOKEN:
+            case TAG_FLAG_TOKEN:
                 int flag = reader.readInt();
-                if (flag == TraceDataFormat.FLAG_ERROR) {
-                    output.traceInfo(TraceDataFormat.TI_FLAGS, TraceDataFormat.TF_ERROR);
-                } else if (flag == TraceDataFormat.FLAG_NO_ERROR) {
-                    output.traceInfo(TraceDataFormat.TI_FLAGS_C, TraceDataFormat.TF_ERROR);
+                if (flag == FLAG_ERROR) {
+                    output.traceInfo(TI_FLAGS, TF_ERROR);
+                } else if (flag == FLAG_NO_ERROR) {
+                    output.traceInfo(TI_FLAGS_C, TF_ERROR);
                 }
                 break;
             default:

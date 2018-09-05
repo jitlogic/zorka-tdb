@@ -21,8 +21,7 @@ import io.zorka.tdb.ZicoException;
 import static io.zorka.tdb.util.BitUtils.UNSAFE;
 import static io.zorka.tdb.util.BitUtils.BYTE_ARRAY_OFFS;
 
-import static io.zorka.tdb.util.CBOR.*;
-
+import static com.jitlogic.zorka.cbor.CBOR.*;
 /**
  *
  */

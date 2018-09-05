@@ -17,15 +17,13 @@
 package io.zorka.tdb.util;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.ZicoException;
 
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static io.zorka.tdb.util.CBOR.*;
-
+import static com.jitlogic.zorka.cbor.CBOR.*;
 /**
  *
  */
@@ -174,7 +172,7 @@ public class CborDataWriter {
 
 
     public void writeSimpleToken(int token) {
-        writeUInt(CBOR.SIMPLE_BASE, token);
+        writeUInt(SIMPLE_BASE, token);
     }
 
 
