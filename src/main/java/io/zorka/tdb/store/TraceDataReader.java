@@ -138,6 +138,24 @@ public class TraceDataReader implements Runnable {
 
                 }
             }
+            case SIMPLE_BASE: {
+                switch (peek) {
+                    case FALSE_CODE:
+                        reader.read();
+                        return false;
+                    case TRUE_CODE:
+                        reader.read();
+                        return true;
+                    case NULL_CODE:
+                        reader.read();
+                        return null;
+                    case UNKNOWN_CODE:
+                        reader.read();
+                        return null;
+                    default:
+                        throw new ZicoException("Invalid value: " + peek);
+                }
+            }
         }
         throw new ZicoException("Type " + type + " not allowed in custom data.");
     }
