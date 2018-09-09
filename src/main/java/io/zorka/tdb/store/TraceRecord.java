@@ -21,6 +21,8 @@ import io.zorka.tdb.meta.ChunkMetadata;
 import java.util.List;
 import java.util.Map;
 
+import static com.jitlogic.zorka.cbor.TraceRecordFlags.TF_ERROR_MARK;
+
 /**
  * Intermediate representation of retrieved trace record.
  */
@@ -232,6 +234,6 @@ public class TraceRecord {
     }
 
     public boolean hasError() {
-        return 0 != (flags & ChunkMetadata.TF_ERROR);
+        return 0 != (flags & TF_ERROR_MARK);
     }
 }

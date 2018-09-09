@@ -90,6 +90,8 @@ public class SimpleTraceStore implements TraceStore {
 
     private TraceTypeResolver traceTypeResolver;
 
+    private Properties props;
+
 
     public SimpleTraceStore(File root, Properties props, Executor indexerExecutor, Executor cleanerExecutor,
                             Map<String,TraceDataIndexer> indexerCache, TraceTypeResolver traceTypeResolver) {
@@ -108,9 +110,12 @@ public class SimpleTraceStore implements TraceStore {
 
 
         // TODO this is too complicated, get rid of all variants except for
-        if (props != null) {
-            configure(props, indexerExecutor, cleanerExecutor);
+
+        if (props == null) {
+            props = new Properties();
         }
+
+        configure(props, indexerExecutor, cleanerExecutor);
         configure(loadProps(), indexerExecutor, cleanerExecutor);
 
 
@@ -119,9 +124,11 @@ public class SimpleTraceStore implements TraceStore {
         }
     }
 
+    public Properties getProps() {
+        return props;
+    }
 
     private Properties loadProps() {
-        Properties props = new Properties();
 
         File f = new File(root, PROPS_FILE);
 
@@ -158,6 +165,7 @@ public class SimpleTraceStore implements TraceStore {
 
     @Override
     public void configure(Properties props, Executor indexerExecutor, Executor cleanerExecutor) {
+        this.props = props;
         this.indexerExecutor = indexerExecutor;
         this.cleanerExecutor = cleanerExecutor;
         for (Map.Entry<Object,Object> e : props.entrySet()) {

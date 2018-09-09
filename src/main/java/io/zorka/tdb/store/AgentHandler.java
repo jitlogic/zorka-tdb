@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
+
 /**
  * Handles all data passed to
  */
@@ -67,6 +69,8 @@ public class AgentHandler implements AgentDataProcessor {
 
     private long lastTstamp;
 
+    private int minDuration;
+
     private TraceTypeResolver traceTypeResolver;
 
     public AgentHandler(SimpleTraceStore store, String agentUUID, String sessionUUID, TraceTypeResolver traceTypeResolver) {
@@ -84,6 +88,7 @@ public class AgentHandler implements AgentDataProcessor {
         this.agentUUID = agentUUID;
         this.sessionUUID = sessionUUID;
         this.traceTypeResolver = traceTypeResolver;
+        this.minDuration = Integer.parseInt(store.getProps().getProperty("ingest.min.duration", "1"));
 
         cborWriter = new CborDataWriter(1024 * 1024, 1024 * 1024);
     }
@@ -135,7 +140,12 @@ public class AgentHandler implements AgentDataProcessor {
             for (ChunkMetadata metadata : tmd) {
 
                 if (stackSize > 0 || md.getChunkNum() > 0) {
-                    metadata.markFlag(ChunkMetadata.TF_CHUNKED);
+                    metadata.markFlag(TF_CHUNK_ENABLED);
+                }
+
+                if (!metadata.hasFlag(TF_SUBMIT_TRACE) && (metadata.hasFlag(TF_DROP_TRACE)
+                        || (md.getDuration() < minDuration && metadata.getStartOffs() != 0))) {
+                    continue;
                 }
 
                 metadata.setDataOffs(dataOffs);

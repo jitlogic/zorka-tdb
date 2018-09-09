@@ -90,7 +90,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         mrslt.clear();
         if (mrecs.size() > 0) {
             for (ChunkMetadata md : mrecs) {
-                md.clearFlag(ChunkMetadata.TF_INITIAL);
+                md.clearFlag(TF_CHUNK_FIRST);
             }
         }
         this.dtraceUuidKey = index.add(STRING_TYPE, "DTRACE_UUID");
@@ -156,7 +156,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     public void mpop() {
         if (mrecs.size() > 0) {
             ChunkMetadata md = mrecs.get(mrecs.size()-1);
-            md.markFlag(ChunkMetadata.TF_FINAL);
+            md.markFlag(TF_CHUNK_LAST);
             md.setTstop(tstop);
             md.setDuration((md.getTstop()-md.getTstart())/TICKS_IN_SECOND);
             mrslt.add(md);
@@ -199,7 +199,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         md.setStackDepth(stackDepth);
         md.setChunkNum(chnum);
         md.setTraceUUID(mtop == null ? traceUUID : UUID.randomUUID().toString());
-        md.markFlag(ChunkMetadata.TF_INITIAL);
+        md.markFlag(TF_CHUNK_FIRST);
         md.setStartOffs(lastPos);
         md.setMethodId(lastMethod);
         md.setTstamp(lastTstamp);

@@ -18,25 +18,12 @@ package io.zorka.tdb.meta;
 
 import java.util.*;
 
+import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
+
 /**
  *
  */
 public class ChunkMetadata {
-
-    /** Retrieve also trace attibutes. */
-    public static final int SF_ATTRS = 0x01;
-    /** Start with oldest traces, not newest (default) */
-    public static final int SF_REVERSE = 0x02;
-    /** Search only last (active) store. */
-    public static final int SF_CURRENT = 0x04;
-    /** Error flag  */
-    public static final int TF_ERROR = 0x01;
-    /** If set, chunk is only part of whole trace. */
-    public static final int TF_CHUNKED = 0x02;
-    /** Marks first chunk of trace. */
-    public static final int TF_INITIAL = 0x04;
-    /** Marks final chunk of trace. */
-    public static final int TF_FINAL = 0x08;
 
     public static final int TID_FLAG = 0x80000000;
     public static final int TID_MASK = 0x7fffffff;
@@ -174,14 +161,14 @@ public class ChunkMetadata {
     }
 
     public boolean isErrorFlag() {
-        return 0 != (tflags & TF_ERROR);
+        return 0 != (tflags & TF_ERROR_MARK);
     }
 
     public void setErrorFlag(boolean errorFlag) {
         if (errorFlag) {
-            tflags |= TF_ERROR;
+            tflags |= TF_ERROR_MARK;
         } else {
-            tflags &= ~TF_ERROR;
+            tflags &= ~TF_ERROR_MARK;
         }
     }
 

@@ -28,7 +28,9 @@ import io.zorka.tdb.store.RotatingTraceStore;
 import io.zorka.tdb.store.TraceDataIndexer;
 import io.zorka.tdb.test.support.TraceTestDataBuilder;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
+import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 
 public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
 
@@ -65,9 +67,9 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
         assertEquals(1, tdi.getStackDepth());
 
         ChunkMetadata md1 = store.getChunkMetadata(store.getChunkIds(traceUUID).get(0));
-        assertTrue(0 != (md1.getFlags() & ChunkMetadata.TF_CHUNKED));
-        assertTrue(0 != (md1.getFlags() & ChunkMetadata.TF_INITIAL));
-        assertTrue(0 == (md1.getFlags() & ChunkMetadata.TF_FINAL));
+        assertTrue(0 != (md1.getFlags() & TF_CHUNK_ENABLED));
+        assertTrue(0 != (md1.getFlags() & TF_CHUNK_FIRST));
+        assertTrue(0 == (md1.getFlags() & TF_CHUNK_LAST));
 
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
         TraceRecord rslt1 = store.retrieve(traceUUID, rtr);
@@ -86,9 +88,9 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
         store.handleTraceData(agentUUID, sessnUUID, traceUUID, t1, md);
 
         ChunkMetadata md2 = store.getChunkMetadata(store.getChunkIds(traceUUID).get(1));
-        assertTrue(0 != (md2.getFlags() & ChunkMetadata.TF_CHUNKED));
-        assertTrue(0 == (md2.getFlags() & ChunkMetadata.TF_INITIAL));
-        assertTrue(0 != (md2.getFlags() & ChunkMetadata.TF_FINAL));
+        assertTrue(0 != (md2.getFlags() & TF_CHUNK_ENABLED));
+        assertTrue(0 == (md2.getFlags() & TF_CHUNK_FIRST));
+        assertTrue(0 != (md2.getFlags() & TF_CHUNK_LAST));
 
         rtr.clear();
         TraceRecord rslt2 = store.retrieve(traceUUID, rtr);
