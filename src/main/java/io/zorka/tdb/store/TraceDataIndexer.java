@@ -19,11 +19,11 @@ package io.zorka.tdb.store;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.util.CborDataWriter;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.jitlogic.zorka.cbor.CborDataWriter;
 import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
 
 /**

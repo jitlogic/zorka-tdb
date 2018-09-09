@@ -16,12 +16,14 @@
 
 package io.zorka.tdb.test.support;
 
+import com.jitlogic.zorka.cbor.CborDataWriter;
 import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
-import io.zorka.tdb.util.CborDataWriter;
 
+import javax.xml.bind.DatatypeConverter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.jitlogic.zorka.cbor.CBOR.*;
@@ -43,7 +45,7 @@ public class TraceTestDataBuilder {
 
         public void breakAndReset() {
             if (pos > 0) {
-                results.add(toBase64String());
+                results.add(DatatypeConverter.printBase64Binary(Arrays.copyOf(buf, pos)));
                 pos = 0;
             }
         }

@@ -16,10 +16,10 @@
 
 package io.zorka.tdb.store;
 
+import com.jitlogic.zorka.cbor.CborDataWriter;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.*;
 import io.zorka.tdb.util.CborDataReader;
-import io.zorka.tdb.util.CborDataWriter;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataTextIndex;
 import io.zorka.tdb.meta.StructuredTextIndex;

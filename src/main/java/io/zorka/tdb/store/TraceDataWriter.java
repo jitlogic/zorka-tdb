@@ -16,8 +16,10 @@
 
 package io.zorka.tdb.store;
 
+import com.jitlogic.zorka.cbor.CborDataWriter;
+
 import java.util.Map;
-import io.zorka.tdb.util.CborDataWriter;
+
 
 import static com.jitlogic.zorka.cbor.CBOR.*;
 import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
