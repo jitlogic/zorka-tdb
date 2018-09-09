@@ -19,7 +19,7 @@ package io.zorka.tdb.store;
 import com.jitlogic.zorka.cbor.CborDataWriter;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.*;
-import io.zorka.tdb.util.CborDataReader;
+import io.zorka.tdb.util.CborBufReader;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataTextIndex;
 import io.zorka.tdb.meta.StructuredTextIndex;
@@ -121,7 +121,7 @@ public class AgentHandler implements AgentDataProcessor {
             translator.setup(sindex, this, traceUUID, md.getChunkNum(), new TraceDataWriter(cborWriter), cborWriter);
 
             // Process trace data, translate symbol/string IDs etc.
-            TraceDataReader tdr = new TraceDataReader(new CborDataReader(ibuf), translator);
+            TraceDataReader tdr = new TraceDataReader(new CborBufReader(ibuf), translator);
             cborWriter.reset();
             tdr.run();
 
@@ -172,7 +172,7 @@ public class AgentHandler implements AgentDataProcessor {
 
     public void handleAgentData(String data) {
         byte[] ibuf = DatatypeConverter.parseBase64Binary(data);
-        AgentDataReader ar = new AgentDataReader(agentUUID, new CborDataReader(ibuf), this);
+        AgentDataReader ar = new AgentDataReader(agentUUID, new CborBufReader(ibuf), this);
         ar.run();
     }
 

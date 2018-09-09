@@ -20,12 +20,10 @@ import io.zorka.tdb.MissingSessionException;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.*;
 import io.zorka.tdb.search.*;
-import io.zorka.tdb.search.lsn.AndExprNode;
-import io.zorka.tdb.search.rslt.*;
 import io.zorka.tdb.text.CachingTextIndex;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
-import io.zorka.tdb.util.CborDataReader;
+import io.zorka.tdb.util.CborBufReader;
 
 import io.zorka.tdb.util.ZicoUtil;
 import io.zorka.tdb.meta.ChunkMetadata;
@@ -276,7 +274,7 @@ public class SimpleTraceStore implements TraceStore {
 
         int slotId = parseSlotId(chunkId);
         long offs = qindex.getDataOffs(slotId);
-        CborDataReader rdr = fdata.read(offs);
+        CborBufReader rdr = fdata.read(offs);
         try {
             bos.write(rdr.getRawBytes());
         } catch (IOException e) {
@@ -289,7 +287,7 @@ public class SimpleTraceStore implements TraceStore {
 
         int slotId = parseSlotId(chunkId);
         ChunkMetadata md = qindex.getChunkMetadata(slotId);
-        CborDataReader rdr = fdata.read(md.getDataOffs());
+        CborBufReader rdr = fdata.read(md.getDataOffs());
         rdr.position(md.getStartOffs());
         rtr.setResolver(itext);
         TraceDataReader tdr = new TraceDataReader(rdr, rtr);

@@ -17,13 +17,7 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.util.CborDataReader;
-import io.zorka.tdb.util.lz4.LZ4Compressor;
-import io.zorka.tdb.util.lz4.LZ4Decompressor;
-import io.zorka.tdb.util.lz4.LZ4HCJavaSafeCompressor;
-import io.zorka.tdb.util.lz4.LZ4JavaSafeDecompressor;
-import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.util.CborDataReader;
+import io.zorka.tdb.util.CborBufReader;
 import io.zorka.tdb.util.lz4.LZ4Compressor;
 import io.zorka.tdb.util.lz4.LZ4Decompressor;
 import io.zorka.tdb.util.lz4.LZ4HCJavaSafeCompressor;
@@ -97,7 +91,7 @@ public class RawTraceDataFile implements Closeable {
     }
 
 
-    public CborDataReader read(long pos) {
+    public CborBufReader read(long pos) {
         try {
             int csize, lsize;
             long cksum;
@@ -156,7 +150,7 @@ public class RawTraceDataFile implements Closeable {
                     throw new IOException("Invalid compression algorithm: " + (flags & COMPRESSION_MASK));
             }
 
-            return new CborDataReader(lbuf);
+            return new CborBufReader(lbuf);
 
         } catch (IOException e) {
             throw new ZicoException("Error reading trace chunk: " + e.getMessage(), e);

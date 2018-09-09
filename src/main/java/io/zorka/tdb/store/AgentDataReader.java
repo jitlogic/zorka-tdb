@@ -17,7 +17,7 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.util.CborDataReader;
+import io.zorka.tdb.util.CborBufReader;
 import io.zorka.tdb.meta.StructuredTextIndex;
 
 import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
@@ -30,11 +30,11 @@ import static com.jitlogic.zorka.cbor.CBOR.*;
  */
 public class AgentDataReader implements Runnable {
 
-    private CborDataReader reader;
+    private CborBufReader reader;
     private AgentDataProcessor output;
     private String agentUUID;
 
-    public AgentDataReader(String agentUUID, CborDataReader reader, AgentDataProcessor output) {
+    public AgentDataReader(String agentUUID, CborBufReader reader, AgentDataProcessor output) {
         this.reader = reader;
         this.output = output;
         this.agentUUID = agentUUID;

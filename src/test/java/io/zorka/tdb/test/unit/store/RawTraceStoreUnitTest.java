@@ -18,7 +18,7 @@ package io.zorka.tdb.test.unit.store;
 
 import io.zorka.tdb.store.RawTraceDataFile;
 import io.zorka.tdb.test.support.ZicoTestFixture;
-import io.zorka.tdb.util.CborDataReader;
+import io.zorka.tdb.util.CborBufReader;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -38,11 +38,11 @@ public class RawTraceStoreUnitTest extends ZicoTestFixture {
         long pos1 = tdf.write("ABCDE".getBytes());
         long pos2 = tdf.write("GHIJ".getBytes());
 
-        CborDataReader rdr1 = tdf.read(pos1);
+        CborBufReader rdr1 = tdf.read(pos1);
         assertEquals(5, rdr1.size());
         assertEquals(65, rdr1.peek());
 
-        CborDataReader rdr2 = tdf.read(pos2);
+        CborBufReader rdr2 = tdf.read(pos2);
         assertEquals(4, rdr2.size());
         assertEquals(71, rdr2.peek());
     }
@@ -56,11 +56,11 @@ public class RawTraceStoreUnitTest extends ZicoTestFixture {
         long pos1 = tdf.write("ABCDE".getBytes());
         long pos2 = tdf.write("GHIJ".getBytes());
 
-        CborDataReader rdr1 = tdf.read(pos1);
+        CborBufReader rdr1 = tdf.read(pos1);
         assertEquals(5, rdr1.size());
         assertEquals(65, rdr1.peek());
 
-        CborDataReader rdr2 = tdf.read(pos2);
+        CborBufReader rdr2 = tdf.read(pos2);
         assertEquals(4, rdr2.size());
         assertEquals(71, rdr2.peek());
     }
@@ -74,11 +74,11 @@ public class RawTraceStoreUnitTest extends ZicoTestFixture {
         long pos1 = tdf.write("ABCDE".getBytes());
         long pos2 = tdf.write("GHIJ".getBytes());
 
-        CborDataReader rdr1 = tdf.read(pos1);
+        CborBufReader rdr1 = tdf.read(pos1);
         assertEquals(5, rdr1.size());
         assertEquals(65, rdr1.peek());
 
-        CborDataReader rdr2 = tdf.read(pos2);
+        CborBufReader rdr2 = tdf.read(pos2);
         assertEquals(4, rdr2.size());
         assertEquals(71, rdr2.peek());
     }

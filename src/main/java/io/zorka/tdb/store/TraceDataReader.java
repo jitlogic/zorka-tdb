@@ -17,7 +17,7 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.util.CborDataReader;
+import io.zorka.tdb.util.CborBufReader;
 import io.zorka.tdb.util.Debug;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,14 +40,14 @@ public class TraceDataReader implements Runnable {
 
     private final static Logger log = LoggerFactory.getLogger(TraceDataReader.class);
 
-    private CborDataReader reader;
+    private CborBufReader reader;
     private StatelessDataProcessor output;
 
     private boolean running = true;
 
     // TODO use CborDataReader instead of implementing things by hand
 
-    public TraceDataReader(CborDataReader reader, StatelessDataProcessor output) {
+    public TraceDataReader(CborBufReader reader, StatelessDataProcessor output) {
         this.reader = reader;
         this.output = output;
     }

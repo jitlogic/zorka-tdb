@@ -22,10 +22,11 @@ import static io.zorka.tdb.util.BitUtils.UNSAFE;
 import static io.zorka.tdb.util.BitUtils.BYTE_ARRAY_OFFS;
 
 import static com.jitlogic.zorka.cbor.CBOR.*;
+
 /**
  *
  */
-public class CborDataReader {
+public class CborBufReader {
 
     private Object obj = null;
 
@@ -34,18 +35,18 @@ public class CborDataReader {
 
     // TODO implement on-the-fly decompression for LZ4
 
-    public CborDataReader(byte[] buf) {
+    public CborBufReader(byte[] buf) {
         this.obj = buf;
         this.addr = BYTE_ARRAY_OFFS;
         this.end = this.addr + buf.length;
         this.pos = addr;
     }
 
-    public CborDataReader(long addr, long end) {
+    public CborBufReader(long addr, long end) {
         this(null, addr, end);
     }
 
-    public CborDataReader(Object obj, long addr, long end) {
+    public CborBufReader(Object obj, long addr, long end) {
         this.obj = obj;
         this.addr = addr;
         this.end = end;
