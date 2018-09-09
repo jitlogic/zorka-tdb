@@ -28,7 +28,10 @@ import java.util.List;
 import java.util.Map;
 
 import static com.jitlogic.zorka.cbor.CBOR.*;
-import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+
+import static com.jitlogic.zorka.cbor.TraceDataTags.*;
+import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
+import static com.jitlogic.zorka.cbor.TraceInfoConstants.*;
 
 import static io.zorka.tdb.util.Debug.*;
 
@@ -298,17 +301,12 @@ public class TraceDataReader implements Runnable {
                 }
                 break;
             }
-            case TAG_FLAG_TOKEN:
-                int flag = reader.readInt();
-                if (flag == FLAG_ERROR) {
-                    output.traceInfo(TI_FLAGS, TF_ERROR);
-                } else if (flag == FLAG_NO_ERROR) {
-                    output.traceInfo(TI_FLAGS_C, TF_ERROR);
-                }
+            case TAG_TRACE_FLAGS:
+                output.traceInfo(TI_FLAGS, reader.readInt());
                 break;
             default:
                 throw new ZicoException("Invalid tag: " + tag);
-        } // switch (tag)
+        } // switch
 
     } // process()
 

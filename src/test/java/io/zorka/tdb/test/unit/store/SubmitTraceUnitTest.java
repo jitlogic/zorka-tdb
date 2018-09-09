@@ -17,7 +17,9 @@
 package io.zorka.tdb.test.unit.store;
 
 import static com.jitlogic.zorka.cbor.CBOR.*;
-import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+
+import static com.jitlogic.zorka.cbor.TraceDataTags.*;
+import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.StructuredTextIndex;
@@ -102,6 +104,8 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         assertEquals("1234-5678-9012/22/33", store.getTextIndex().gets(md.getDtraceTID()));
     }
 
+    public final static int TICKS_IN_SECOND = 1000000000/65536;
+
     @Test
     public void testSubmitSimpleTraceAndCheckForFormatting() throws Exception {
         SimpleTraceStore store = createSimpleStore(1);
@@ -122,7 +126,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
                 tb(1500, 1),
                 ta(ti(TAG_STRING_REF, sid("URI")), "/my/app"),
                 ta("STATUS", "200"),
-                tf(FLAG_ERROR)
+                tf(TF_ERROR_MARK)
             )).get(0),
             md(1, 2));
 
@@ -134,7 +138,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         assertEquals(42, md.getCalls());
         assertEquals(100, md.getDuration());
         assertEquals(100, store.getTraceDuration(0));
-        assertTrue(md.hasFlag(TF_ERROR));
+        assertTrue(md.hasFlag(TF_ERROR_MARK));
     }
 
     @Test

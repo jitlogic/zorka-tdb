@@ -62,7 +62,7 @@ TraceBegin structure marks beginning of a trace.
 * `traceId` - trace ID (as an integer) - string ref;
 
 
-## Attributes
+## TraceAttr
 
 Normal attributes are attached to current method:
 

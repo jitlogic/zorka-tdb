@@ -24,13 +24,17 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.jitlogic.zorka.cbor.CborDataWriter;
-import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+
+import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
+import static com.jitlogic.zorka.cbor.TraceInfoConstants.*;
+import static com.jitlogic.zorka.cbor.TextIndexTypeMarkers.*;
 
 /**
  * Normalizes all strings and translates IDs. Extract
  */
 public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProcessor {
 
+    public final static int TICKS_IN_SECOND = 1000000000/65536;
     private final static int EXC_DELTA = 128;
     private int[] localExIds = new int[EXC_DELTA], agentExIds = new int[EXC_DELTA];
     private int exIdSize = 0;
@@ -232,7 +236,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 v = traceBegin((int)v);
                 break;
             case TI_FLAGS:
-                if (0 != (v & TF_ERROR)) {
+                if (0 != (v & TF_ERROR_MARK)) {
                     if (mtop != null) mtop.setErrorFlag(true);
                 }
                 break;

@@ -19,7 +19,7 @@ package io.zorka.tdb.store;
 import com.jitlogic.zorka.cbor.CborDataWriter;
 import com.jitlogic.zorka.cbor.CborObject;
 
-import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+import static com.jitlogic.zorka.cbor.TraceDataTags.*;
 
 
 /**

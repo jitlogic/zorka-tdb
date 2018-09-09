@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.jitlogic.zorka.cbor.CBOR.*;
-import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+import static com.jitlogic.zorka.cbor.TraceDataTags.*;
 
 
 /**
@@ -229,7 +229,7 @@ public class TraceTestDataBuilder {
     }
 
     public static WireObj tf(int flag) {
-        return new TaggedInt(TAG_FLAG_TOKEN, flag);
+        return new TaggedInt(TAG_TRACE_FLAGS, flag);
     }
 
     public static WireObj brk() {

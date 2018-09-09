@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+import static com.jitlogic.zorka.cbor.TraceInfoConstants.*;
 
 /**
  * Stateful trace data builder that reconstructs trace call tree and transforms

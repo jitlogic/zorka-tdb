@@ -20,7 +20,7 @@ import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.util.CborBufReader;
 import io.zorka.tdb.meta.StructuredTextIndex;
 
-import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+import static com.jitlogic.zorka.cbor.TraceDataTags.*;
 
 import static com.jitlogic.zorka.cbor.CBOR.*;
 

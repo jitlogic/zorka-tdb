@@ -22,7 +22,7 @@ import java.util.Map;
 
 
 import static com.jitlogic.zorka.cbor.CBOR.*;
-import static com.jitlogic.zorka.cbor.TraceDataFormat.*;
+import static com.jitlogic.zorka.cbor.TraceDataTags.*;
 
 /**
  *
