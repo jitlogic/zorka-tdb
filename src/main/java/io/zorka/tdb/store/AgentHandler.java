@@ -119,6 +119,11 @@ public class AgentHandler implements AgentDataProcessor {
         TraceDataIndexer translator =  indexerCache.get(traceUUID);
         if (translator == null) {
             translator = new TraceDataIndexer(traceTypeResolver);
+        } else {
+            // Each trace that spans onto next chunk needs to have its start offset set to 0
+            for (ChunkMetadata d : translator.getTraceStackRecs()) {
+                d.setStartOffs(0);
+            }
         }
 
         synchronized (translator) {

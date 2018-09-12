@@ -394,6 +394,10 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         return rslt;
     }
 
+    public List<ChunkMetadata> getTraceStackRecs() {
+        return mrecs;
+    }
+
     @Override
     public int defStringRef(int remoteId, String s, byte type) {
         return ah.defStringRef(remoteId, s, type);

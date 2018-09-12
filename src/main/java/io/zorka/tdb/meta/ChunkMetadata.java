@@ -21,47 +21,89 @@ import java.util.*;
 import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 
 /**
- *
+ * Metadata describing given trace chunk. Some attributes are stored in MetadataQuickIndex,
+ * other ones are used as interim in trace ingestion process.
  */
 public class ChunkMetadata {
 
     public static final int TID_FLAG = 0x80000000;
     public static final int TID_MASK = 0x7fffffff;
 
-    private int typeId; // Trace type (eg.
+    /** Trace type ID. This is resolved externally and is consistent across all stores. */
+    private int typeId;
+
+    /** Application ID. This is resolved externally and is consistent across stores. */
     private int appId;
+
+    /** Environment ID. This is resolved externally and is consistent across stores. */
     private int envId;
+
+    /** Host ID. This is resolved externally and is consistent across stores. */
     private int hostId;
+
+    /** Trace flags. See com.jitlogic.zorka.cbor.TraceRecordFlags for reference. */
     private int tflags;
 
+    /** Trace timestamp (time when trace started in milliseconds since Epoch). */
     private long tstamp;
+
+    /** Trace duration (in seconds). */
     private long duration;
 
+    /** Chunk sequential number. */
     private int chunkNum;
 
+    /** Position of saved chunk inside trace data file. */
     private long dataOffs;
 
+    /** Start offset of trace inside data chunk. For top level traces it should always be 0. */
     private int startOffs;
 
     private int zeroLevel = 1;
 
+    /** Top level method (resolved via text index). */
     private int methodId;
+
+    /** Trace description (resolved via text index). */
     private int descId;
 
+    /** Initial stack depth (should be 0 for top level traces, more than 0 for all embedded traces). */
     private int stackDepth;
 
-    private int calls, errors, recs;
+    /** Number of method calls processed (but not always recorded) by tracer. */
+    private int calls;
 
-    private long tstart, tstop;
+    /** Number of errors registered by tracer. */
+    private int errors;
 
-    private long uuidLSB, uuidMSB;
+    /** Number of method calls recorded by tracer. */
+    private int recs;
 
-    private int dtraceUUID, dtraceTID;
+    /** Start timestamp (ticks since trace start). */
+    private long tstart;
 
+    /** End timestamp (ticks since trace stop). */
+    private long tstop;
+
+    /** Trace UUID (low word) */
+    private long uuidLSB;
+
+    /** Trace UUID (high word) */
+    private long uuidMSB;
+
+    /** Distributed trace UUID (common across all components) */
+    private int dtraceUUID;
+
+    /** Distributed trace TID (unique to each component in distributed trace)  */
+    private int dtraceTID;
+
+    /** Full search IDs */
     private Set<Integer> fids = null;
 
+    /** Top level IDs */
     private Set<Integer> tids = null;
 
+    /** Trace attributes (if resolved) */
     private Map<Object,Object> attrs = null;
 
     @Override
