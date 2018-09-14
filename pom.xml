@@ -59,25 +59,30 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.jitlogic.zorka</groupId>
-            <artifactId>zorka-cbor</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm</artifactId>
-            <version>${asm.version}</version>
         </dependency>
         <dependency>
             <groupId>com.jitlogic.zorka</groupId>
             <artifactId>zorka-slf4j</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.jitlogic.zorka</groupId>
+            <artifactId>zorka-cbor</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jitlogic.zorka</groupId>
+            <artifactId>zorka-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>${asm.version}</version>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>

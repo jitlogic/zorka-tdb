@@ -10,7 +10,7 @@ import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.search.lsn.AndExprNode;
 import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.util.BitmapSet;
-import io.zorka.tdb.util.KVSortingHeap;
+import com.jitlogic.zorka.common.util.KVSortingHeap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
