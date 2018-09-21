@@ -291,12 +291,16 @@ public class SimpleTraceStore implements TraceStore {
     }
 
     public <T> void retrieveChunk(long chunkId, TraceDataRetriever<T> rtr) {
+        retrieveChunk(chunkId, true, rtr);
+    }
+
+    public <T> void retrieveChunk(long chunkId, boolean first, TraceDataRetriever<T> rtr) {
         if (fdata == null) open();
 
         int slotId = parseSlotId(chunkId);
         ChunkMetadata md = qindex.getChunkMetadata(slotId);
         CborBufReader rdr = fdata.read(md.getDataOffs());
-        rdr.position(md.getStartOffs());
+        if (first) rdr.position(md.getStartOffs());
         rtr.setResolver(itext);
         TraceDataReader tdr = new TraceDataReader(rdr, rtr);
         rtr.setReader(tdr);

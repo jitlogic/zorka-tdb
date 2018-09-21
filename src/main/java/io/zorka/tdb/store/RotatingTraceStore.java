@@ -206,11 +206,12 @@ public class RotatingTraceStore implements TraceStore {
 
         List<Long> chunkIds = getChunkIds(traceUUID);
 
-        for (long chunkId : chunkIds) {
+        for (int i = 0; i < chunkIds.size(); i++) {
+            long chunkId = chunkIds.get(i);
             int storeId = parseStoreId(chunkId);
             SimpleTraceStore ts = storeId == currentId ? current : archived.get(storeId);
             ts.open();
-            ts.retrieveChunk(chunkId, rtr);
+            ts.retrieveChunk(chunkId, i==0, rtr);
         }
 
         rtr.commit();
