@@ -1,7 +1,9 @@
-Zorka 1.90.4 (2018-09-30)
+Zorka 1.90.4 (2018-09-24)
 -------------------------
 
 * method call stats;
+* fixes: streaming tracer chunked mode etc. 
+
 
 Zorka 1.90.3 (2018-08-16)
 -------------------------
