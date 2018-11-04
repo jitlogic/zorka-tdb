@@ -7,7 +7,7 @@
 
     <groupId>io.zorka</groupId>
     <artifactId>zorka-tdb</artifactId>
-    <version>1.90.5-SNAPSHOT</version>
+    <version>1.90.5</version>
 
     <properties>
         <jdk.version>1.8</jdk.version>
