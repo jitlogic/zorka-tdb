@@ -29,6 +29,7 @@ import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
 import io.zorka.tdb.text.fm.FmTextIndex;
 import io.zorka.tdb.util.ZicoUtil;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -90,7 +91,7 @@ public class SearchMetaTidsUnitTest extends ZicoTestFixture {
     }
 
 
-    @Test
+    @Test @Ignore  // TODO enable this test
     public void testSearchIds() {
         TextSearchResult sr = index.searchIds(2, false);
         Set<Long> r1 = drain(sr);

@@ -126,4 +126,9 @@ public class TextIndexR extends AbstractTextIndex implements TextIndex {
         return null;
     }
 
+    @Override
+    public int search(SearchNode expr, BitmapSet rslt) {
+        return 0;
+    }
+
 }

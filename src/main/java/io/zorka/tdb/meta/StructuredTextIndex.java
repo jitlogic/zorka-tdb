@@ -635,4 +635,10 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         }
     }
 
+    @Override
+    public int search(SearchNode expr, BitmapSet rslt) {
+        return tidx.search(expr, rslt);
+    }
+
+
 }

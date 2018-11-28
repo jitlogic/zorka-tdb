@@ -455,11 +455,13 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         return jump(pos, RawDictCodec.MARK_ID1);
     }
 
-    private int scan(byte[] text, BitmapSet matches, boolean fetchTids) {
+    private int scan(byte[] text, BitmapSet matches, boolean fetchTids, boolean addIdBase) {
         int rec = 0;
         int cnt = 0;
         int limit = fpos - text.length;  // TODO concurrency
         byte[] buf = new byte[8];
+
+        int idb = addIdBase ? getIdBase() : 0;
 
         for (int pos = jump(4) + 1; pos <= limit; pos = jump(pos) + 1) {
             if (pos >= limit) break;
@@ -490,7 +492,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
                             }
                         }
                     } else {
-                        matches.set(rec);
+                        matches.set(rec+idb);
                         cnt++;
                     }
                     break;
@@ -506,32 +508,27 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
     @Override
     public TextSearchResult search(SearchNode expr) {
+        throw new RuntimeException("Not implemented (anymore).");
+    }
+
+    @Override
+    public int search(SearchNode expr, BitmapSet rslt) {
         if (expr instanceof TextNode) {
-            byte[] text = ((TextNode)expr).getText();
-            BitmapSet matches = new BitmapSet();
-
-            scan(text, matches, false);
-
-            return new MappingSearchResult(matches.searchAll(), x -> x + idBase);
+            return scan(((TextNode)expr).getText(), rslt, false, true);
         } else {
-            return EmptySearchResult.INSTANCE;
+            return 0;
         }
     }
 
     @Override
     public TextSearchResult searchIds(long tid, boolean deep) {
-        byte[] text = MetaIndexUtils.encodeMetaInt(TID_MARKER, (int)tid, deep ? FIDS_MARKER : TIDS_MARKER);
-        BitmapSet matches = new BitmapSet();
-
-        scan(text, matches, true);
-
-        return new MappingSearchResult(matches.searchAll(), Function.identity());
+        throw new RuntimeException("Not implemented (anymore)");
     }
 
     @Override
     public int searchIds(long tid, boolean deep, BitmapSet rslt) {
         byte[] text = MetaIndexUtils.encodeMetaInt(TID_MARKER, (int)tid, deep ? FIDS_MARKER : TIDS_MARKER);
-        return scan(text, rslt, true);
+        return scan(text, rslt, true, false);
     }
 }
 

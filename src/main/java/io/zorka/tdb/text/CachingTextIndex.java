@@ -127,6 +127,12 @@ public class CachingTextIndex extends AbstractTextIndex implements WritableTextI
     }
 
     @Override
+    public int search(SearchNode expr, BitmapSet rslt) {
+        return idx.search(expr, rslt);
+    }
+
+
+    @Override
     public void close() throws IOException {
         idx.close();
     }

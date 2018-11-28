@@ -17,11 +17,13 @@
 package io.zorka.tdb.test.unit.search;
 
 import io.zorka.tdb.search.QueryBuilder;
+import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
 import io.zorka.tdb.text.ci.CompositeIndexStore;
+import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -35,6 +37,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 @RunWith(Parameterized.class)
@@ -75,13 +78,15 @@ public class TextIndexSearchIdsUnitTest extends ZicoTestFixture {
             idx.add("blop"+i);
         }
 
-        Set<Long> ids1 = ZicoUtil.<Long>set((long)idx.add("XYZ"));
+        int id1 = idx.add("XYZ");
 
         if (archive) idx.archive();
 
-        TextSearchResult sr = idx.search(QueryBuilder.stext("XYZ").node());
-        Set<Long> ids2 = drain(sr);
+        BitmapSet bmps = new BitmapSet();
 
-        assertEquals(ids1, ids2);
+        SearchNode node = QueryBuilder.stext("XYZ").node();
+        int cnt = idx.search(node, bmps);
+        assertEquals(1, cnt);
+        assertTrue(bmps.get(id1));
     }
 }

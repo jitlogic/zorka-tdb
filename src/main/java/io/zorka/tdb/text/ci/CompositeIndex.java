@@ -613,6 +613,8 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
     @Override
     public TextSearchResult search(SearchNode expr) {
+        System.err.println("COMPOSITE search() called.");
+        new RuntimeException().printStackTrace();
         if (expr instanceof TextNode) {
             ListSearchResultsMapper<TextIndex> results = new ListSearchResultsMapper<>(
                     getCState().getSearchIndexes(),
@@ -621,6 +623,19 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         } else {
             return EmptySearchResult.INSTANCE;
         }
+    }
+
+    @Override
+    public int search(SearchNode expr, BitmapSet rslt) {
+        int cnt = 0;
+
+        List<TextIndex> indexes = getCState().getSearchIndexes();
+
+        for (TextIndex idx : indexes) {
+            cnt += idx.search(expr, rslt);
+        }
+
+        return cnt;
     }
 
 

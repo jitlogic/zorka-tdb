@@ -24,19 +24,9 @@ import io.zorka.tdb.util.BitmapSet;
  */
 public interface SearchableStore {
 
-    TextSearchResult search(SearchNode expr);
+    TextSearchResult search(SearchNode expr); // TODO get rid of this
 
-    default int search(SearchNode expr, BitmapSet rslt) {
-        TextSearchResult sr = search(expr);
-        int cnt = 0;
-
-        for (long r = sr.nextResult(); r >= 0; r = sr.nextResult()) {
-            rslt.set((int)r);
-            cnt++;
-        }
-
-        return cnt;
-    }
+    int search(SearchNode expr, BitmapSet rslt);
 
     default int estimate(SearchNode expr, int limit) {
         return search(expr).estimateSize(limit);

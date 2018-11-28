@@ -328,12 +328,62 @@ public class FmTextIndex extends AbstractTextIndex {
 
     @Override
     public TextSearchResult search(SearchNode expr) {
+        System.err.println("FM search() called.");
         if (expr instanceof TextNode) {
             return new FmTextSearchResult(this, (TextNode)expr);
         } else {
             return EmptySearchResult.INSTANCE;
         }
     }
+
+    @Override
+    public int search(SearchNode expr, BitmapSet rslt) {
+
+        // TODO make unit test for this
+
+        if (!(expr instanceof TextNode)) return 0;
+
+        TextNode node = (TextNode)expr;
+
+        // Prepare search phrase
+        byte[] buf = new byte[node.getText().length + (node.isMatchStart() ? 1 : 0) + (node.isMatchEnd() ? 1 : 0)];
+        System.arraycopy(node.getText(), 0, buf, node.isMatchStart() ? 1 : 0, node.getText().length);
+
+        if (node.isMatchStart()) {
+            buf[0] = RawDictCodec.MARK_TXT;
+        }
+
+        if (node.isMatchEnd()) {
+            buf[buf.length-1] = RawDictCodec.MARK_ID2;
+        }
+
+        ZicoUtil.reverse(buf);
+
+        long range = locateL(buf);
+
+        if (range == -1L) return 0;
+
+        int sptr = ep(range);
+        int eptr = sp(range);
+
+        boolean bskip = !node.isMatchStart();
+
+        int cnt = 0;
+
+        while (sptr >= 0 && sptr <= eptr) {
+            int pos = bskip ? skipUntil(sptr++, RawDictCodec.MARK_ID1, true) : sptr++;
+            if (pos >= 0) {
+                if (bskip) pos = skip(pos, 1);
+                int id = extractId(pos);
+                rslt.set(id);
+                cnt++;
+            }
+
+        }
+
+        return cnt;
+    }
+
 
     @Override
     public String toString() {

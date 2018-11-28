@@ -16,8 +16,11 @@
 
 package io.zorka.tdb.test.unit.text.ci;
 
+import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.text.WritableTextIndex;
 import io.zorka.tdb.text.WritableTextIndex;
+import io.zorka.tdb.util.BitmapSet;
 
 import java.nio.charset.Charset;
 
@@ -79,4 +82,5 @@ public class TextIndexW extends TextIndexR implements WritableTextIndex {
     public String getPath() {
         return String.format("test-%08x.wal", idBase);
     }
+
 }
