@@ -17,7 +17,6 @@
 package io.zorka.tdb.util;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.search.rslt.TextSearchResult;
 
 import java.util.Arrays;
 
@@ -166,25 +165,14 @@ public class BitmapSet {
         return data.length << LBITS;
     }
 
-    private class SearchIterator implements TextSearchResult {
-
-        int cur = 0, cnt = 0;
-
-        @Override
-        public int nextResult() {
-            while (cur <= imax && !get(cur)) cur++;
-            int rslt = cur <= imax ? cur : -1;
-            cur++; cnt++;
-            return rslt;
-        }
-
-        @Override
-        public int estimateSize(int limit) {
-            return count() - cnt;
-        }
+    public int first() {
+        return get(0) ? 0 : next(0);
     }
 
-    public TextSearchResult searchAll() {
-        return new SearchIterator();
+    public int next(int cur) {
+        // TODO this is naive implementation, it should be optimized
+        cur++;
+        while (cur < imax && !get(cur)) cur++;
+        return cur <= imax ? cur : -1;
     }
 }

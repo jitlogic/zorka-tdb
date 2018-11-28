@@ -17,12 +17,7 @@
 package io.zorka.tdb.text.ci;
 
 
-import io.zorka.tdb.search.EmptySearchResult;
 import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.rslt.ListSearchResultsMapper;
-import io.zorka.tdb.search.rslt.TextSearchResult;
-import io.zorka.tdb.search.rslt.StreamingSearchResult;
-import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WritableTextIndex;
@@ -612,20 +607,6 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
 
     @Override
-    public TextSearchResult search(SearchNode expr) {
-        System.err.println("COMPOSITE search() called.");
-        new RuntimeException().printStackTrace();
-        if (expr instanceof TextNode) {
-            ListSearchResultsMapper<TextIndex> results = new ListSearchResultsMapper<>(
-                    getCState().getSearchIndexes(),
-                    x -> x.search(expr));
-            return new StreamingSearchResult(results);
-        } else {
-            return EmptySearchResult.INSTANCE;
-        }
-    }
-
-    @Override
     public int search(SearchNode expr, BitmapSet rslt) {
         int cnt = 0;
 
@@ -638,13 +619,6 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         return cnt;
     }
 
-
-    @Override
-    public TextSearchResult searchIds(long tid, boolean deep) {
-        ListSearchResultsMapper<TextIndex> results = new ListSearchResultsMapper<>(
-                getCState().getSearchIndexes(), x -> x.searchIds(tid, deep));
-        return new StreamingSearchResult(results);
-    }
 
     @Override
     public int searchIds(long tid, boolean deep, BitmapSet rslt) {

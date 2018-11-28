@@ -8,7 +8,6 @@ import io.zorka.tdb.search.QmiNode;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.search.lsn.AndExprNode;
-import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.util.BitmapSet;
 import com.jitlogic.zorka.common.util.KVSortingHeap;
 import org.slf4j.Logger;
@@ -130,12 +129,13 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
         }
 
         for (SearchNode node : args) {
-            TextSearchResult tsr = itext.search(node);
+            BitmapSet bbs = new BitmapSet();
+            itext.search(node, bbs);
             BitmapSet bps = new BitmapSet();
 
             // TODO further optimizations here: switch to matching mode (full scan) if there are too many TID results;
 
-            for (int tid = tsr.nextResult(); tid >= 0; tid = tsr.nextResult()) {
+            for (int tid = bbs.first(); tid >= 0; tid = bbs.next(tid)) {
                 imeta.searchIds(tid, query.isDeepSearch(), bps);
             }
 

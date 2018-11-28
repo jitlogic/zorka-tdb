@@ -17,14 +17,8 @@
 package io.zorka.tdb.meta;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.search.EmptySearchResult;
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.rslt.DirectMappingSearchResult;
-import io.zorka.tdb.search.rslt.TextSearchResult;
-import io.zorka.tdb.search.rslt.CachedItemsSearchResult;
-import io.zorka.tdb.search.ssn.TextNode;
-import io.zorka.tdb.search.tsn.KeyValSearchNode;
 import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
 import io.zorka.tdb.text.AbstractTextIndex;
@@ -117,10 +111,11 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
 
         Map<String,String> rslt = new HashMap<>();
         QueryBuilder query = QueryBuilder.text("\u000f" + RawDictCodec.idEncodeStr(agentId), true, false);
-        TextSearchResult sr = tidx.search(query.node());
-        for (long id = sr.nextResult(); id != -1; id = sr.nextResult()) {
+        BitmapSet bbs = new BitmapSet();
+        tidx.search(query.node(), bbs);
+        for (int id = bbs.first(); id != -1; id = bbs.next(id)) {
 
-            byte[] b = tidx.get((int)id);
+            byte[] b = tidx.get(id);
 
             int idk = MetaIndexUtils.getInt(b, AGENT_ATTR_DESC, 1);
 
@@ -151,9 +146,10 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
 
         Map<Integer,String> tmp = new HashMap<>();
         QueryBuilder query = QueryBuilder.text("\u000f", true, false);
-        TextSearchResult sr = tidx.search(query.node());
-        for (long id = sr.nextResult(); id != -1; id = sr.nextResult()) {
-            byte[] b = tidx.get((int)id);
+        BitmapSet bbs = new BitmapSet();
+        tidx.search(query.node(), bbs);
+        for (int id = bbs.first(); id != -1; id = bbs.next(id)) {
+            byte[] b = tidx.get(id);
 
             int ida = MetaIndexUtils.getInt(b, AGENT_ATTR_DESC, 0);
 
@@ -487,11 +483,6 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
 
 
     @Override
-    public TextSearchResult searchIds(long tid, boolean deep) {
-        throw new ZicoException("Not implemented.");
-    }
-
-    @Override
     public int searchIds(long tid, boolean deep, BitmapSet rslt) {
         throw new ZicoException("Not implemented.");
     }
@@ -593,50 +584,40 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
     }
 
 
-    private TextSearchResult searchKeyVal(KeyValSearchNode expr) {
+//    private TextSearchResult searchKeyVal(KeyValSearchNode expr) {
+//
+//        int idk = tidx.get(expr.getKey());
+//
+//        if (idk < 0) return EmptySearchResult.INSTANCE;
+//
+//        // Character class search nodes not supported (yet)
+//        if (!(expr.getVal() instanceof TextNode)) return EmptySearchResult.INSTANCE;
+//
+//
+//        TextNode tsn = (TextNode)expr.getVal();
+//
+//        if (tsn.isMatchStart() && tsn.isMatchEnd()) {
+//            // Looking for exact match ...
+//            int idv = tidx.get(tsn.getText());
+//            if (idv < 0) return EmptySearchResult.INSTANCE;
+//
+//            byte[] buf = encTuple2(KR_PAIR, idk, idv);
+//            int rslt = tidx.get(buf);
+//            return rslt >= 0 ? new CachedItemsSearchResult(rslt) : EmptySearchResult.INSTANCE;
+//        } else {
+//            BitmapSet bbs = new BitmapSet();
+//            int sz = tidx.search(tsn, bbs);
+//            if (sz == 0) return EmptySearchResult.INSTANCE;
+//            return new DirectMappingSearchResult(sr, r -> {
+//                byte[] buf = encTuple2(KR_PAIR, idk, (int)(long)r);
+//                return tidx.get(buf); });
+//        }
+//    }
 
-        int idk = tidx.get(expr.getKey());
-
-        if (idk < 0) return EmptySearchResult.INSTANCE;
-
-        // Character class search nodes not supported (yet)
-        if (!(expr.getVal() instanceof TextNode)) return EmptySearchResult.INSTANCE;
-
-
-        TextNode tsn = (TextNode)expr.getVal();
-
-        if (tsn.isMatchStart() && tsn.isMatchEnd()) {
-            // Looking for exact match ...
-            int idv = tidx.get(tsn.getText());
-            if (idv < 0) return EmptySearchResult.INSTANCE;
-
-            byte[] buf = encTuple2(KR_PAIR, idk, idv);
-            int rslt = tidx.get(buf);
-            return rslt >= 0 ? new CachedItemsSearchResult(rslt) : EmptySearchResult.INSTANCE;
-        } else {
-            TextSearchResult sr = tidx.search(tsn);
-            int sz = sr.estimateSize(100);
-            if (sz == 0) return EmptySearchResult.INSTANCE;
-            return new DirectMappingSearchResult(sr, r -> {
-                byte[] buf = encTuple2(KR_PAIR, idk, (int)(long)r);
-                return tidx.get(buf); });
-        }
-    }
-
-
-    @Override
-    public TextSearchResult search(SearchNode expr) {
-        if (expr instanceof TextNode) {
-            return tidx.search(expr);
-        } else if (expr instanceof KeyValSearchNode) {
-            return searchKeyVal((KeyValSearchNode) expr);
-        } else {
-            return EmptySearchResult.INSTANCE;
-        }
-    }
 
     @Override
     public int search(SearchNode expr, BitmapSet rslt) {
+        // TODO searchByKeyVal - zaimplementowac od nowa na podstawie w/w zakomentowanej implementacji
         return tidx.search(expr, rslt);
     }
 

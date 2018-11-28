@@ -17,9 +17,7 @@
 package io.zorka.tdb.text.fm;
 
 import io.zorka.tdb.meta.MetaIndexUtils;
-import io.zorka.tdb.search.EmptySearchResult;
 import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.RawDictCodec;
@@ -294,11 +292,6 @@ public class FmTextIndex extends AbstractTextIndex {
     public final static int CHUNK_MAX = 1024 * 1024;
 
 
-    @Override
-    public TextSearchResult searchIds(long tid, boolean deep) {
-        return new FmTextSearchIdsResult(this, (int)tid, deep);
-    }
-
     public int searchIds(long tid, boolean deep, BitmapSet rslt) {
         int sptr;
         int eptr;
@@ -324,16 +317,6 @@ public class FmTextIndex extends AbstractTextIndex {
         }
 
         return cnt;
-    }
-
-    @Override
-    public TextSearchResult search(SearchNode expr) {
-        System.err.println("FM search() called.");
-        if (expr instanceof TextNode) {
-            return new FmTextSearchResult(this, (TextNode)expr);
-        } else {
-            return EmptySearchResult.INSTANCE;
-        }
     }
 
     @Override

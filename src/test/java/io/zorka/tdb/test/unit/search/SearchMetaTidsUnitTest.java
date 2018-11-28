@@ -17,7 +17,6 @@
 package io.zorka.tdb.test.unit.search;
 
 import io.zorka.tdb.meta.MetadataTextIndex;
-import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.test.support.WritableIndexWrapper;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.TextIndex;
@@ -27,7 +26,7 @@ import io.zorka.tdb.text.fm.FmCompressionLevel;
 import io.zorka.tdb.text.fm.FmIndexFileStore;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
 import io.zorka.tdb.text.fm.FmTextIndex;
-import io.zorka.tdb.util.ZicoUtil;
+import io.zorka.tdb.util.BitmapSet;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -37,7 +36,6 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -93,9 +91,10 @@ public class SearchMetaTidsUnitTest extends ZicoTestFixture {
 
     @Test @Ignore  // TODO enable this test
     public void testSearchIds() {
-        TextSearchResult sr = index.searchIds(2, false);
-        Set<Long> r1 = drain(sr);
-        assertEquals(ZicoUtil.set(11L,12L),r1);
+        BitmapSet bbs = new BitmapSet();
+        int cnt = index.searchIds(2, false, bbs);
+        assertTrue(bbs.get(11));
+        assertTrue(bbs.get(12));
     }
 
 }

@@ -17,7 +17,6 @@
 package io.zorka.tdb.text;
 
 import io.zorka.tdb.search.SearchableStore;
-import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.util.BitmapSet;
 
 import java.io.Closeable;
@@ -113,13 +112,6 @@ public interface TextIndex extends Closeable, SearchableStore {
      * Returns physical file length.
      */
     long length();
-
-    /**
-     * Used in metadata text index
-     * @param tid
-     * @return
-     */
-    TextSearchResult searchIds(long tid, boolean deep);
 
     int searchIds(long tid, boolean deep, BitmapSet rslt);
 

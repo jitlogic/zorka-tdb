@@ -18,11 +18,7 @@ package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.TraceSearchQuery;
-import io.zorka.tdb.search.SearchableStore;
-import io.zorka.tdb.search.rslt.ListSearchResultsMapper;
-import io.zorka.tdb.search.rslt.StreamingSearchResult;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

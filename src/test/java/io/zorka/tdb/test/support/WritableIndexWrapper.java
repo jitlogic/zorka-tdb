@@ -17,7 +17,6 @@
 package io.zorka.tdb.test.support;
 
 import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.TextIndexState;
 import io.zorka.tdb.text.WritableTextIndex;
@@ -84,11 +83,6 @@ public class WritableIndexWrapper implements WritableTextIndex {
     }
 
     @Override
-    public TextSearchResult searchIds(long tid, boolean deep) {
-        return index.searchIds(tid, deep);
-    }
-
-    @Override
     public int searchIds(long tid, boolean deep, BitmapSet rslt) {
         return index.searchIds(tid, deep, rslt);
     }
@@ -114,12 +108,12 @@ public class WritableIndexWrapper implements WritableTextIndex {
     }
 
     @Override
-    public TextSearchResult search(SearchNode expr) {
-        return index.search(expr);
+    public void close() throws IOException {
+        index.close();
     }
 
     @Override
-    public void close() throws IOException {
-        index.close();
+    public int search(SearchNode expr, BitmapSet rslt) {
+        return 0;
     }
 }

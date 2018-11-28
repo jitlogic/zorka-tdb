@@ -18,10 +18,7 @@ package io.zorka.tdb.text;
 
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.MetaIndexUtils;
-import io.zorka.tdb.search.EmptySearchResult;
 import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.rslt.MappingSearchResult;
-import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.util.*;
 
@@ -29,7 +26,6 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.function.Function;
 
 import static io.zorka.tdb.meta.MetadataTextIndex.FIDS_MARKER;
 import static io.zorka.tdb.meta.MetadataTextIndex.TIDS_MARKER;
@@ -118,7 +114,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     /**
      * Looks up for end of (already written) data.
      */
-    private void scan() throws IOException {
+    private void scan() {
         int rstart = WAL_HDR_SIZE, rstop = 0, istart = 0, istop;
         int id ;
         byte[] ibuf = new byte[8];
@@ -186,14 +182,6 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         return fpos-WAL_HDR_SIZE;
     }
 
-    synchronized int getFilePos() {
-        return fpos;
-    }
-
-    synchronized MappedByteBuffer getMappedBuffer() {
-        return buffer;
-    }
-
     @Override
     public String getPath() {
         return file.getPath();
@@ -202,34 +190,6 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     public int getIdBase() {
         return idBase;
     }
-
-
-    /**
-     * Useful only for full text searches. Exact searches are performed using quick map.
-     */
-    private int lookup(byte[] pbuf, int plen, int start, byte sm, boolean incl, boolean skip) {
-
-        for (int i = start; i < fpos - plen; i++) {
-            byte b = buffer.get(i);
-            if (b == sm) {
-                if (!incl) {
-                    i++;
-                }
-                boolean match = true;
-                for (int j = 0; j < plen; j++) {
-                    if (pbuf[j] != buffer.get(i+j)) {
-                        match = false;
-                        break;
-                    }
-                }
-                if (match) {
-                    return skip ? i + plen : i;
-                }
-            }
-        }
-        return -1;
-    }
-
 
     private byte[] extract(int start, byte em) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -506,10 +466,6 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         return cnt;
     }
 
-    @Override
-    public TextSearchResult search(SearchNode expr) {
-        throw new RuntimeException("Not implemented (anymore).");
-    }
 
     @Override
     public int search(SearchNode expr, BitmapSet rslt) {
@@ -518,11 +474,6 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         } else {
             return 0;
         }
-    }
-
-    @Override
-    public TextSearchResult searchIds(long tid, boolean deep) {
-        throw new RuntimeException("Not implemented (anymore)");
     }
 
     @Override

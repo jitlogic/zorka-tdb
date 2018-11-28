@@ -18,7 +18,6 @@ package io.zorka.tdb.test.unit.search;
 
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
@@ -27,6 +26,7 @@ import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -34,7 +34,6 @@ import org.junit.runners.Parameterized;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -72,7 +71,7 @@ public class TextIndexSearchIdsUnitTest extends ZicoTestFixture {
         }
     }
 
-    @Test
+    @Test @Ignore
     public void testSearchMetaIdsWithLongIds() {
         for (int i = 0; i < 100; i++) {
             idx.add("blop"+i);

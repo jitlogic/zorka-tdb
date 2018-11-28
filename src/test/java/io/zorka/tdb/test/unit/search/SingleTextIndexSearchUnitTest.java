@@ -17,7 +17,6 @@
 package io.zorka.tdb.test.unit.search;
 
 import io.zorka.tdb.search.QueryBuilder;
-import io.zorka.tdb.search.rslt.TextSearchResult;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.TextIndexType;
@@ -29,6 +28,7 @@ import io.zorka.tdb.text.fm.FmIndexFileStore;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
 import io.zorka.tdb.text.fm.FmTextIndex;
 import io.zorka.tdb.text.WalTextIndex;
+import io.zorka.tdb.util.BitmapSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -55,7 +55,7 @@ public class SingleTextIndexSearchUnitTest extends ZicoTestFixture {
     private TextIndexType type;
     private TextIndex index;
     private String[] samples = { "AA", "BROMBA", "BANGLA", "ABRA" };
-    private Map<Long, String> data = new HashMap<>();
+    private Map<Integer, String> data = new HashMap<>();
 
     public SingleTextIndexSearchUnitTest(TextIndexType type) {
         this.type = type;
@@ -67,7 +67,7 @@ public class SingleTextIndexSearchUnitTest extends ZicoTestFixture {
         if (type == WAL || type == FMI) {
             WalTextIndex wal = new WalTextIndex(new File(tmpDir, "test.wal").getPath(), 0);
             for (String s : samples) {
-                data.put((long) wal.add(s), s);
+                data.put(wal.add(s), s);
             }
 
             if (type == WAL) {
@@ -87,7 +87,7 @@ public class SingleTextIndexSearchUnitTest extends ZicoTestFixture {
             CompositeIndexStore cs = new CompositeIndexFileStore(tmpDir, "test", new Properties());
             CompositeIndex ci = new CompositeIndex(cs, new Properties(), Runnable::run);
             for (String s : samples) {
-                data.put((long)ci.add(s), s);
+                data.put(ci.add(s), s);
             }
             index = ci;
         }
@@ -101,11 +101,10 @@ public class SingleTextIndexSearchUnitTest extends ZicoTestFixture {
 
     @Test @Ignore("TODO enable this test")
     public void testBasicSearch() {
-        TextSearchResult rslt = index.search(QueryBuilder.stext("BA").node());
-        assertEquals(2, rslt.estimateSize(100));
-        Set<Long> ids = drain(rslt);
-        assertEquals(2, ids.size());
-        for (Long id : ids) {
+        BitmapSet bbs = new BitmapSet();
+        int cnt = index.search(QueryBuilder.stext("BA").node(), bbs);
+        assertEquals(2, cnt);
+        for (int id = bbs.first(); id != -1; id = bbs.next(id)) {
             //System.out.println(data.get(id));
             assertTrue(data.get(id).contains("BA"));
         }

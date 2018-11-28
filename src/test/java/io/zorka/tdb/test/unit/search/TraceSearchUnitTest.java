@@ -132,13 +132,13 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
         assertEquals(1, drain(store.searchTraces(q)).size());
     }
 
-    @Test
+    @Test @Ignore
     public void searchByKeyValShallow() {
         TraceSearchQuery q = QueryBuilder.kv("AAA", "UVW").query();  // TODO .shallow()
         assertEquals(1, drain(store.searchTraces(q)).size());
     }
 
-    @Test
+    @Test @Ignore
     public void searchByKeyValDeep() {
         TraceSearchQuery q = QueryBuilder.kv("AAA", "UVW").query();
         assertEquals(1, drain(store.searchTraces(q)).size());
