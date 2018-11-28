@@ -387,7 +387,7 @@ public class SimpleTraceStore implements TraceStore {
 
         cleanupSessions();
 
-        return ctext.runMaintenance() || cmeta.runMaintenance();
+        return ctext.runAllMaintenance() || cmeta.runAllMaintenance();
     }
 
     @Override

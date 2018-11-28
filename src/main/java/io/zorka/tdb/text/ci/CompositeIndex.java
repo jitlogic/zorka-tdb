@@ -45,6 +45,8 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
     public static final int DEFAULT_WAL_SIZE = 4096;
 
+    public static final int MAINT_CYCLES_MAX = 3;
+
     private volatile CompositeIndexState cstate;
     private volatile boolean archived;
     private final int removalTimeout;
@@ -93,11 +95,20 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
         cstate = new CompositeIndexState(allIndexes, lookupIndexes, searchIndexes, archived);
 
-        executor.execute(this::runMaintenance);
+        executor.execute(this::runAllMaintenance);
     }
 
     private final Object MAINTENANCE_LOCK = new Object();
 
+    public boolean runAllMaintenance() {
+        boolean rslt = true;
+
+        for (int i = 0; rslt && i < MAINT_CYCLES_MAX; i++) {
+            rslt = runMaintenance();
+        }
+
+        return rslt;
+    }
 
     /**
      * This method performs all background maintenance tasks: compression, merges, removal.
@@ -119,10 +130,6 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
             runRemovalCycle(arch);
 
             log.debug("Finishing maintenance cycle (tasksDone=" + tasksDone + ")");
-
-            if (tasksDone > 0) {
-                executor.execute(this::runMaintenance);
-            }
 
             return tasksDone > 0;
         }
@@ -222,7 +229,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         log.info("Archiving index: " + store.getPath());
 
         archived = true;
-        executor.execute(this::runMaintenance);
+        executor.execute(this::runAllMaintenance);
     }
 
     @Override
@@ -260,7 +267,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
             changeState(cidx, true);
 
             id = cidx.add(buf, offs, len, esc);
-            executor.execute(this::runMaintenance);
+            executor.execute(this::runAllMaintenance);
         }
 
         return id;
