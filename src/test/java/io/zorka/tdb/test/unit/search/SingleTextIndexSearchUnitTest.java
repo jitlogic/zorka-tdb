@@ -31,7 +31,6 @@ import io.zorka.tdb.text.WalTextIndex;
 import io.zorka.tdb.util.BitmapSet;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -99,7 +98,7 @@ public class SingleTextIndexSearchUnitTest extends ZicoTestFixture {
     }
 
 
-    @Test @Ignore("TODO enable this test")
+    @Test
     public void testBasicSearch() {
         BitmapSet bbs = new BitmapSet();
         int cnt = index.search(QueryBuilder.stext("BA").node(), bbs);

@@ -56,7 +56,7 @@ public class StructuredTextIndexUnitTest extends ZicoTestFixture {
     }
 
 
-    @Test @Ignore
+    @Test
     public void testSearchExactKVPhrases() {
         SearchNode q = QueryBuilder.kv("A", "ZYX").node();
         BitmapSet bbs = new BitmapSet();
@@ -65,7 +65,7 @@ public class StructuredTextIndexUnitTest extends ZicoTestFixture {
         assertNotNull(idx.get(bbs.first()));
     }
 
-    @Test @Ignore  // TODO enable this test
+    @Test @Ignore
     public void testSearchPartialKVPhrases() {
         SearchNode y = QueryBuilder.stext("Y").node();
         SearchNode q = QueryBuilder.kv("A", (TextNode)y).node();

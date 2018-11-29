@@ -107,38 +107,38 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
     }
 
 
-    @Test @Ignore("TODO enable this test") // TODO enable this test
+    @Test
     public void searchByFreeFormStrings() {
         TraceSearchQuery q = QueryBuilder.stext("XYZ").query();
         assertEquals(1, drain(store.searchTraces(q)).size());
     }
 
 
-    @Test @Ignore("TODO enable this test") // TODO enable this test
+    @Test
     public void searchByFreeFormStringsShallow() {
         TraceSearchQuery q = QueryBuilder.stext("UVW").shallow().query();
         assertEquals(0, drain(store.searchTraces(q)).size());
     }
 
-    @Test @Ignore("TODO enable this test") // TODO enable this test
+    @Test
     public void searchByFreeFormStringsDeep() {
         TraceSearchQuery q = QueryBuilder.stext("UVW").deep().query();
         assertEquals(2, drain(store.searchTraces(q)).size());
     }
 
-    @Test @Ignore("TODO enable this test") // TODO enable this test
+    @Test
     public void searchByFreeFormStringsPartial() {
         TraceSearchQuery q = QueryBuilder.stext("YZ").query();
         assertEquals(1, drain(store.searchTraces(q)).size());
     }
 
-    @Test @Ignore
+    @Test
     public void searchByKeyValShallow() {
         TraceSearchQuery q = QueryBuilder.kv("AAA", "UVW").query();  // TODO .shallow()
         assertEquals(1, drain(store.searchTraces(q)).size());
     }
 
-    @Test @Ignore
+    @Test
     public void searchByKeyValDeep() {
         TraceSearchQuery q = QueryBuilder.kv("AAA", "UVW").query();
         assertEquals(1, drain(store.searchTraces(q)).size());

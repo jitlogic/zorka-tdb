@@ -183,6 +183,14 @@ public class ZicoTestFixture {
         return new FmTextIndex(f);
     }
 
+    protected static FmTextIndex toFmIndex(WalTextIndex wal) throws Exception {
+        File f = new File(wal.getPath().replace(".wal", ".fmi"));
+        FmIndexFileStoreBuilder fib = new FmIndexFileStoreBuilder(f);
+        fib.walToFm(wal);
+        fib.close();
+        return new FmTextIndex(f);
+    }
+
 
     public static ChunkMetadata md(int startOffs, int typeId, int appId, int envId,
                                    long tstamp, int duration, boolean errorFlag,

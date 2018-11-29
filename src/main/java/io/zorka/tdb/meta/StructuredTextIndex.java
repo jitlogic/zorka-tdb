@@ -19,6 +19,8 @@ package io.zorka.tdb.meta;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;
+import io.zorka.tdb.search.ssn.TextNode;
+import io.zorka.tdb.search.tsn.KeyValSearchNode;
 import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
 import io.zorka.tdb.text.AbstractTextIndex;
@@ -584,41 +586,51 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
     }
 
 
-//    private TextSearchResult searchKeyVal(KeyValSearchNode expr) {
-//
-//        int idk = tidx.get(expr.getKey());
-//
-//        if (idk < 0) return EmptySearchResult.INSTANCE;
-//
-//        // Character class search nodes not supported (yet)
-//        if (!(expr.getVal() instanceof TextNode)) return EmptySearchResult.INSTANCE;
-//
-//
-//        TextNode tsn = (TextNode)expr.getVal();
-//
-//        if (tsn.isMatchStart() && tsn.isMatchEnd()) {
-//            // Looking for exact match ...
-//            int idv = tidx.get(tsn.getText());
-//            if (idv < 0) return EmptySearchResult.INSTANCE;
-//
-//            byte[] buf = encTuple2(KR_PAIR, idk, idv);
-//            int rslt = tidx.get(buf);
-//            return rslt >= 0 ? new CachedItemsSearchResult(rslt) : EmptySearchResult.INSTANCE;
-//        } else {
-//            BitmapSet bbs = new BitmapSet();
-//            int sz = tidx.search(tsn, bbs);
-//            if (sz == 0) return EmptySearchResult.INSTANCE;
-//            return new DirectMappingSearchResult(sr, r -> {
-//                byte[] buf = encTuple2(KR_PAIR, idk, (int)(long)r);
-//                return tidx.get(buf); });
-//        }
-//    }
-
-
     @Override
     public int search(SearchNode expr, BitmapSet rslt) {
-        // TODO searchByKeyVal - zaimplementowac od nowa na podstawie w/w zakomentowanej implementacji
-        return tidx.search(expr, rslt);
+
+        if (!(expr instanceof KeyValSearchNode)) {
+            return tidx.search(expr, rslt);
+        }
+
+        int idk = tidx.get(((KeyValSearchNode)expr).getKey());
+
+        if (idk < 0) return 0;
+
+        // Character class search nodes not supported (yet)
+        if (!(((KeyValSearchNode)expr).getVal() instanceof TextNode)) return 0;
+
+
+        TextNode tsn = (TextNode) ((KeyValSearchNode)expr).getVal();
+
+        if (tsn.isMatchStart() && tsn.isMatchEnd()) {
+            // Looking for exact match ...
+            int idv = tidx.get(tsn.getText());
+            if (idv < 0) return 0;
+
+            byte[] buf = encTuple2(KR_PAIR, idk, idv);
+            int r = tidx.get(buf);
+            if (r >= 0) {
+                rslt.set(r);
+                return 1;
+            } else {
+                return 0;
+            }
+        } else {
+            BitmapSet ids = new BitmapSet();
+            int sz = tidx.search(tsn, rslt);
+            if (sz == 0) return 0;
+            int cnt = 0;
+            for (int id = ids.first(); id > 0; id = ids.next(id)) {
+                byte[] buf = encTuple2(KR_PAIR, idk, id);
+                int i = tidx.get(buf);
+                if (i > 0 && !rslt.get(i)) {
+                    cnt++;
+                    rslt.set(i);
+                }
+            }
+            return cnt;
+        }
     }
 
 

@@ -17,7 +17,6 @@
 package io.zorka.tdb.util;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.ZicoException;
 
 /**
  * This is simple hash map implementation for WAL indexes. It is also mapped to a file, so it opens quickly.
@@ -163,6 +162,11 @@ public class QuickHashTab {
                 return (l & 0xffffffff00000000L) | i;
         }
         return -1;
+    }
+
+
+    public static int pos(long l) {
+        return (int)(l >>> 32);
     }
 
 

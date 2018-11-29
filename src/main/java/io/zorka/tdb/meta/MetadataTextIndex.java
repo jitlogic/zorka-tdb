@@ -56,16 +56,6 @@ public class MetadataTextIndex {
         86400,  // '9' - 1 day
     };
 
-    public static int formatDuration(long duration) {
-        long d = duration / 1000;
-        for (int i = DURATIONS.length-1; i >= 0; i--) {
-            if (d >= DURATIONS[i]) {
-                return i;
-            }
-        }
-        return 0;
-    }
-
     /** Error flag. */
     private final static byte ERR_FLAG = (byte)'!';
 
@@ -87,15 +77,14 @@ public class MetadataTextIndex {
 
 
     public int addTextMetaData(int traceId, List<Integer> tids, boolean deep) {
+
+        if (tids.isEmpty()) return -1;
+
         byte marker = deep ? FIDS_MARKER : TIDS_MARKER;
         byte[] buf = new byte[32 + 18 * tids.size()];
         int pos = 1;
 
         buf[0] = marker;
-
-        if (tids.size() == 0) {
-            return -1;
-        }
 
         for (Integer id : tids) {
             pos += idEncode(buf, pos, traceId);

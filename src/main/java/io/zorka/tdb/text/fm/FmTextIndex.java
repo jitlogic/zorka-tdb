@@ -169,19 +169,6 @@ public class FmTextIndex extends AbstractTextIndex {
     }
 
 
-    public byte[] extract(int s0, int n) {
-        byte[] rslt = new byte[n];
-        int l = rslt.length-1;
-        int pos = s0;
-        for (int i = 0; i < n; i++) {
-            long car = fif.charAndRank(pos);
-            byte ch = FmIndexStore.chr(car);
-            rslt[l-i] = ch;
-            pos = fif.getCharOffs(ch) + FmIndexStore.rnk(car);
-        }
-        return rslt;
-    }
-
     int extractId(int pos) {
         byte[] ibuf = new byte[8];
         int ilen = extractChunk(ibuf, pos);
@@ -346,8 +333,8 @@ public class FmTextIndex extends AbstractTextIndex {
 
         if (range == -1L) return 0;
 
-        int sptr = ep(range);
-        int eptr = sp(range);
+        int sptr = sp(range);
+        int eptr = ep(range);
 
         boolean bskip = !node.isMatchStart();
 
@@ -358,8 +345,10 @@ public class FmTextIndex extends AbstractTextIndex {
             if (pos >= 0) {
                 if (bskip) pos = skip(pos, 1);
                 int id = extractId(pos);
-                rslt.set(id);
-                cnt++;
+                if (!rslt.get(id)) {
+                    cnt++;
+                    rslt.set(id);
+                }
             }
 
         }

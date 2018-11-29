@@ -11,8 +11,6 @@ import io.zorka.tdb.store.TraceStore;
 import io.zorka.tdb.test.support.TraceTestDataBuilder;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -106,7 +104,7 @@ public class HLSearchUnitTest extends ZicoTestFixture {
     }
 
 
-    @Test @Ignore
+    @Test
     public void testSimpleHlSearchDtraceIn() throws Exception {
         store = createAndPopulateDTraceStore(false);
 
@@ -136,7 +134,7 @@ public class HLSearchUnitTest extends ZicoTestFixture {
         assertEquals(0, store.searchTraces(QueryBuilder.all().query(qmi)).size());
     }
 
-    @Test @Ignore
+    @Test
     public void testSimpleHlSearchDtraceOut() throws Exception {
         store = createAndPopulateDTraceStore(true);
 
@@ -166,7 +164,7 @@ public class HLSearchUnitTest extends ZicoTestFixture {
         assertEquals(0, store.searchTraces(QueryBuilder.all().query(qmi)).size());
     }
 
-    @Test @Ignore
+    @Test
     public void testSimpleHlSearchAll() throws Exception {
         store = createAndPopulateStore();
 
@@ -182,7 +180,7 @@ public class HLSearchUnitTest extends ZicoTestFixture {
         assertTrue(itm1.getChunkId() > itm2.getChunkId());
     }
 
-    @Test @Ignore
+    @Test
     public void testSimpleHlSearchWithKV() throws Exception {
         store = createAndPopulateStore();
 
@@ -202,7 +200,7 @@ public class HLSearchUnitTest extends ZicoTestFixture {
     }
 
 
-    @Test @Ignore
+    @Test
     public void testSimpleHLSearchWithOffset() throws Exception {
         store = createAndPopulateStore();
 

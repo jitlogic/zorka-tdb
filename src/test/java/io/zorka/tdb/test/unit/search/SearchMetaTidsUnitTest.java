@@ -89,7 +89,7 @@ public class SearchMetaTidsUnitTest extends ZicoTestFixture {
     }
 
 
-    @Test @Ignore  // TODO enable this test
+    @Test
     public void testSearchIds() {
         BitmapSet bbs = new BitmapSet();
         int cnt = index.searchIds(2, false, bbs);

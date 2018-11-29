@@ -47,7 +47,7 @@ public class AgentStateSubmissionUnitTest extends ZicoTestFixture {
     }
 
 
-    @Test @Ignore("TODO enable this test") // TODO enable this test
+    @Test
     public void testSubmitAgentAttrs() {
         assertEquals(24, store.length());
 

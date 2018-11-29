@@ -14,7 +14,7 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.zorka.tdb.test.unit.text.fm;
+package io.zorka.tdb.test.unit.text;
 
 import io.zorka.tdb.text.fm.BWT;
 import org.junit.Test;
