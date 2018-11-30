@@ -118,8 +118,4 @@ public interface TextIndex extends Closeable, SearchableStore {
     TextIndexState getState();
 
     void setState(TextIndexState state);
-
-    boolean canRemove();
-
-    void markForRemoval(long timeout);
 }

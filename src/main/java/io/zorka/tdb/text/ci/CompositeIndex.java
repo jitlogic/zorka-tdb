@@ -165,33 +165,31 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
 
     public void runRemovalCycle(boolean archived) {
-
         synchronized (MAINTENANCE_LOCK) {
-            for (TextIndex idx : findRemoveFmIndexes(getCState().getAllIndexes())) {
-                log.debug("Marking index " + idx + " for removal.");
-                idx.markForRemoval(removalTimeout);
+            List<TextIndex> idxs = getCState().getAllIndexes();
+
+            for (TextIndex idx : findRemoveFmIndexes(idxs)) {
+                removeIndex(idx);
             }
 
-            List<TextIndex> removeWals = findRemoveWalIndexes(getCState().getAllIndexes());
-            if (archived || removeWals.size() > maxWals) {
-                for (TextIndex idx : archived ? removeWals : removeWals.subList(0, removeWals.size() - maxWals)) {
-                    log.debug("Marking index " + idx + " for removal.");
-                    idx.markForRemoval(removalTimeout);
-                }
-            }
-
-            for (TextIndex idx : getCState().getAllIndexes()) {
-                if (idx.canRemove()) {
-                    try {
-                        log.debug("Removing index: " + idx);
-                        changeState(idx, false);
-                        store.removeIndex(idx);
-                    } catch (Exception e) {
-                        log.error("Error removing index " + idx);
-                    }
+            List<TextIndex> removeWals = findRemoveWalIndexes(idxs);
+            for (TextIndex idx : removeWals) {
+                if (archived || removeWals.size() > maxWals) {
+                    removeIndex(idx);
                 }
             }
         } // synchronized
+    }
+
+    private void removeIndex(TextIndex idx) {
+        try {
+            log.debug("Removing index file: " + idx);
+            changeState(idx, false);
+            idx.close();
+            store.removeIndex(idx);
+        } catch (Exception e) {
+            log.error("Cannot remove index " + idx + ". Will try again.", e);
+        }
     }
 
 
@@ -357,7 +355,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     }
 
     private static boolean isIndexOpen(TextIndex idx) {
-        return idx != null && idx.isOpen() && !idx.canRemove();
+        return idx != null && idx.isOpen();
     }
 
     /**

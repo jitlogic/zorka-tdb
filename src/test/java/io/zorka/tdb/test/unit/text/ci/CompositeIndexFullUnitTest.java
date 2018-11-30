@@ -68,10 +68,10 @@ public class CompositeIndexFullUnitTest extends ZicoTestFixture {
 
         assertEquals(1, cs.getLookupIndexes().size());
         assertTrue("Expected FM index in lookup list.", cs.getLookupIndexes().get(0).isReadOnly());
-        assertEquals(TextIndexState.REMOVAL, cs.getAllIndexes().get(0).getState());
+        assertEquals(TextIndexState.CLOSED, cs.getAllIndexes().get(0).getState());
         assertEquals(1, cs.getSearchIndexes().size());
         assertTrue(cs.getSearchIndexes().get(0).isReadOnly());
-        assertEquals(2, cs.getAllIndexes().size());
+        assertEquals(1, cs.getAllIndexes().size());
 
         assertNotEquals(-1, idA);
         assertEquals(idA, ci.get("A"));

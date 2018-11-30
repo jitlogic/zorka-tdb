@@ -48,7 +48,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
     public final static int WAL_HDR_SIZE = 4;
 
-    private int flimit, fpos;
+    private volatile int flimit, fpos;
     private int idBase;
     private int nextId;
 
@@ -207,11 +207,22 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
     @Override
     public byte[] get(int id) {
-        if (id < idBase) return null;
+        byte[] rslt;
 
-        int pos = qmap.getById(id-idBase);
+        if (getState() != TextIndexState.OPEN) {
+            return null;
+        }
 
-        return pos > 0 ? TextIndexUtils.unescape(extract(pos, RawDictCodec.MARK_TXT)) : null;
+        lock.readLock().lock();
+        try {
+            if (id < idBase) return null;
+            int pos = qmap.getById(id - idBase);
+            rslt = pos > 0 ? TextIndexUtils.unescape(extract(pos, RawDictCodec.MARK_TXT)) : null;
+        } finally {
+            lock.readLock().unlock();
+        }
+
+        return rslt;
     }
 
 
@@ -225,29 +236,32 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     public synchronized int getData(byte[] rslt, int offs, boolean lead, boolean term, boolean rev) {
         int dl = (int)getDatalen(), ll = lead ? 1 : 0, tl = term ? 1 : 0;
 
-        buffer.position(WAL_HDR_SIZE);
+        lock.writeLock().lock();
 
-        if (rev) {
-            int op = dl+ll, ip = WAL_HDR_SIZE, ep = ip + dl;
+        try {
+            buffer.position(WAL_HDR_SIZE);
 
-            while (ip < ep) {
-                int p = ip;
-                while (buffer.get(p) != RawDictCodec.MARK_ID2) p++;
-                p++;
-                int l = p - ip;
-                buffer.get(rslt, offs+op-l, l);
-                op -= l;
-                ip = p;
+            if (rev) {
+                int op = dl + ll, ip = WAL_HDR_SIZE, ep = ip + dl;
+
+                while (ip < ep) {
+                    int p = ip;
+                    while (buffer.get(p) != RawDictCodec.MARK_ID2) p++;
+                    p++;
+                    int l = p - ip;
+                    buffer.get(rslt, offs + op - l, l);
+                    op -= l;
+                    ip = p;
+                }
+            } else {
+                buffer.get(rslt, offs + ll, dl);
             }
-        } else {
-            buffer.get(rslt, offs+ll, dl);
+
+            if (lead) rslt[offs] = RawDictCodec.MARK_ID2;
+            if (term) rslt[offs + dl + ll + tl - 1] = 0;
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        if (lead)
-            rslt[offs] = RawDictCodec.MARK_ID2;
-
-        if (term)
-            rslt[offs + dl + ll + tl - 1] = 0;
 
         return dl;
     }
@@ -278,9 +292,20 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     }
 
 
-
     @Override
     public int get(byte[] buf, int offs, int len, boolean esc) {
+        int rslt;
+        lock.readLock().lock();
+        try {
+            rslt = getInternal(buf, offs, len, esc);
+        } finally {
+            lock.readLock().unlock();
+        }
+        return rslt;
+    }
+
+
+    public int getInternal(byte[] buf, int offs, int len, boolean esc) {
 
         if (esc) {
             byte[] eb = TextIndexUtils.escape(buf, offs, len);
@@ -316,14 +341,21 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
 
     public synchronized void close() throws IOException {
-        flush();
-        ZicoUtil.unmapBuffer(buffer);
-        channel.close();
-        raf.close();
-        channel = null;
-        raf = null;
-        buffer = null;
-        qmap = null;
+        lock.writeLock().lock();
+
+        try {
+            flush();
+            ZicoUtil.unmapBuffer(buffer);
+            channel.close();
+            raf.close();
+            channel = null;
+            raf = null;
+            buffer = null;
+            qmap = null;
+            setState(TextIndexState.CLOSED);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
 
@@ -333,6 +365,18 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     }
 
     public int add(byte[] buf, int offs, int len, boolean esc) {
+        int rslt;
+        if (getState() != TextIndexState.OPEN) return -1;
+        lock.writeLock().lock();
+        try {
+            rslt = addInternal(buf, offs, len, esc);
+        } finally {
+            lock.writeLock().unlock();
+        }
+        return rslt;
+    }
+
+    private int addInternal(byte[] buf, int offs, int len, boolean esc) {
 
         if (esc) {
             byte[] eb = TextIndexUtils.escape(buf, offs, len);
@@ -384,7 +428,12 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
     @Override
     public void flush() {
-        buffer.force();
+        lock.readLock().lock();
+        try {
+            buffer.force();
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
 
@@ -394,9 +443,14 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
 
     public void archive(File newPath) {
-        this.file.renameTo(newPath); // TODO handle errors here
-        this.file = newPath;
-        // TODO some flag here
+        lock.writeLock().lock();
+        try {
+            this.file.renameTo(newPath); // TODO handle errors here
+            this.file = newPath;
+            // TODO some flag here
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
 
@@ -467,17 +521,31 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
     @Override
     public int search(SearchNode expr, BitmapSet rslt) {
-        if (expr instanceof TextNode) {
-            return scan(((TextNode)expr).getText(), rslt, false);
-        } else {
-            return 0;
+        int r;
+        lock.readLock().lock();
+        try {
+            if (expr instanceof TextNode) {
+                r = scan(((TextNode) expr).getText(), rslt, false);
+            } else {
+                r = 0;
+            }
+        } finally {
+            lock.readLock().unlock();
         }
+        return r;
     }
 
     @Override
     public int searchIds(long tid, boolean deep, BitmapSet rslt) {
         byte[] text = MetaIndexUtils.encodeMetaInt(TID_MARKER, (int)tid, deep ? FIDS_MARKER : TIDS_MARKER);
-        return scan(text, rslt, true);
+        int r;
+        lock.readLock().lock();
+        try {
+            r = scan(text, rslt, true);
+        } finally {
+            lock.readLock().unlock();
+        }
+        return r;
     }
 }
 

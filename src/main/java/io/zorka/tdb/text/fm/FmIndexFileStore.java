@@ -134,7 +134,7 @@ public class FmIndexFileStore implements Closeable, FmIndexStore {
     /**
      * Reads file header, performs basic checks.
      */
-    private void init() throws IOException {
+    private void init() {
         if (BitUtils.UNSAFE.getInt(fmaddr) != FmIndexFormat.FH_MAGIC) {
             throw new ZicoException("File " + file + " is not FM index.");
         }

@@ -71,7 +71,7 @@ public class TextIndexW extends TextIndexR implements WritableTextIndex {
 
     @Override
     public String toString() {
-        return "W(" + (isOpen() ? "-" : "C" ) + (canRemove() ? "-" : "R" ) + ", " + idBase + "," + nWords + "," + dataLen + ")";
+        return "W(" + (isOpen() ? "-" : "C" ) + ", " + idBase + "," + nWords + "," + dataLen + ")";
     }
 
     @Override

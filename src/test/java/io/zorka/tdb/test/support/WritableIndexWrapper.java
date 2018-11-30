@@ -98,16 +98,6 @@ public class WritableIndexWrapper implements WritableTextIndex {
     }
 
     @Override
-    public boolean canRemove() {
-        return index.canRemove();
-    }
-
-    @Override
-    public void markForRemoval(long timeout) {
-        index.markForRemoval(timeout);
-    }
-
-    @Override
     public void close() throws IOException {
         index.close();
     }

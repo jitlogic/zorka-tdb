@@ -108,7 +108,7 @@ public class TextIndexR extends AbstractTextIndex implements TextIndex {
 
     @Override
     public String toString() {
-        return "R(" + (isOpen() ? "-" : "C" ) + (canRemove() ? "-" : "R" ) + ", " + idBase + "," + nWords + "," + dataLen + ")";
+        return "R(" + (isOpen() ? "-" : "C" ) + ", " + idBase + "," + nWords + "," + dataLen + ")";
     }
 
     public NavigableMap<Integer,String> getWords() {
