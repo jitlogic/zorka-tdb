@@ -17,7 +17,6 @@
 package io.zorka.tdb.test.unit.text.ci;
 
 import io.zorka.tdb.test.support.ZicoTestFixture;
-import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.TextIndexState;
 import io.zorka.tdb.text.ci.CompositeIndexState;
 import io.zorka.tdb.text.ci.CompositeIndexStore;
@@ -25,15 +24,11 @@ import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
 import io.zorka.tdb.util.ZicoUtil;
 
-import io.zorka.tdb.text.TextIndexState;
-import io.zorka.tdb.text.ci.CompositeIndexStore;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class CompositeIndexFullUnitTest extends ZicoTestFixture {
 
@@ -66,9 +61,12 @@ public class CompositeIndexFullUnitTest extends ZicoTestFixture {
         CompositeIndexState cs = ci.getCState();
         assertNull(cs.getCurrentIndex());
 
-        assertEquals(1, cs.getLookupIndexes().size());
-        assertTrue("Expected FM index in lookup list.", cs.getLookupIndexes().get(0).isReadOnly());
-        assertEquals(TextIndexState.CLOSED, cs.getAllIndexes().get(0).getState());
+        assertEquals("Expected only one index file.",
+                1, cs.getLookupIndexes().size());
+        assertTrue("Expected FM index in lookup list.",
+                cs.getLookupIndexes().get(0).isReadOnly());
+        assertEquals("FM index should be open.",
+                TextIndexState.OPEN, cs.getAllIndexes().get(0).getState());
         assertEquals(1, cs.getSearchIndexes().size());
         assertTrue(cs.getSearchIndexes().get(0).isReadOnly());
         assertEquals(1, cs.getAllIndexes().size());

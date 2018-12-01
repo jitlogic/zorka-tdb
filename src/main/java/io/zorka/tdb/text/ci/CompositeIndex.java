@@ -32,37 +32,32 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
 public class CompositeIndex extends AbstractTextIndex implements WritableTextIndex {
 
     private static final Logger log = LoggerFactory.getLogger(CompositeIndex.class);
 
-    public static final long MB = 1024 * 1024;
-
+    public static final long MB = 1048576;
     public static final int DEFAULT_WAL_SIZE = 4096;
-
     public static final int MAINT_CYCLES_MAX = 3;
+
+    private final Object MAINTENANCE_LOCK = new Object();
 
     private volatile CompositeIndexState cstate;
     private volatile boolean archived;
-    private final int removalTimeout;
     private final CompositeIndexStore store;
     private final Executor executor;
 
-    private final int maxWals, baseSize, maxSize;
-    private final boolean stagedMerge;
-    private final int maxGens;
+    private final int baseSize;
+    private final int maxSize;
 
     public CompositeIndex(CompositeIndexStore store, Properties props,
                           Executor executor) {
 
         this.store = store;
         this.archived = "true".equalsIgnoreCase(props.getProperty("archived", "false"));
-        this.removalTimeout = Integer.parseInt(props.getProperty("rotation.removal_timeout", "10000"));
 
-        this.maxWals = Integer.parseInt(props.getProperty("rotation.max_wals", "1"));
         this.baseSize = Integer.parseInt(props.getProperty("rotation.base_size", ""+DEFAULT_WAL_SIZE)) * 1024;
-        this.stagedMerge = "true".equalsIgnoreCase(props.getProperty("rotation.staged_merge", "false"));
-        this.maxGens = Integer.parseInt(props.getProperty("rotation.max_gens", "8"));
         this.maxSize = Integer.parseInt(props.getProperty("rotation.max_size", "262144")) * 1024;
 
         this.executor = executor;
@@ -93,7 +88,6 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         executor.execute(this::runAllMaintenance);
     }
 
-    private final Object MAINTENANCE_LOCK = new Object();
 
     public boolean runAllMaintenance() {
         boolean rslt = true;
@@ -112,17 +106,12 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
         synchronized (MAINTENANCE_LOCK) {
             int tasksDone;
-            boolean arch = this.archived;
-
             log.debug("Starting maintenance cycle ...");
 
-            runRemovalCycle(arch);
-
+            runRemovalCycle();
             tasksDone = runCompressCycle(archived);
-
             tasksDone += runMergeCycle();
-
-            runRemovalCycle(arch);
+            runRemovalCycle();
 
             log.debug("Finishing maintenance cycle (tasksDone=" + tasksDone + ")");
 
@@ -130,15 +119,14 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         }
     }
 
+
     private int runMergeCycle() {
         int tasksDone = 0;
-        List<TextIndex> midx = stagedMerge
-                ? findMergeCandidate(getCState().getAllIndexes())
-                : findMergeCoalescing(getCState().getAllIndexes());
+        List<TextIndex> midx = findMergeCoalescing(getCState().getAllIndexes());
 
         if (midx != null) {
             try {
-                log.debug("Merging indexes (binary_merge = " + stagedMerge + "): " + midx);
+                log.debug("Merging indexes: " + midx);
                 changeState(store.mergeIndex(midx), true);
                 tasksDone++;
             } catch (Exception e) {
@@ -164,7 +152,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     }
 
 
-    public void runRemovalCycle(boolean archived) {
+    public void runRemovalCycle() {
         synchronized (MAINTENANCE_LOCK) {
             List<TextIndex> idxs = getCState().getAllIndexes();
 
@@ -174,12 +162,11 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
             List<TextIndex> removeWals = findRemoveWalIndexes(idxs);
             for (TextIndex idx : removeWals) {
-                if (archived || removeWals.size() > maxWals) {
-                    removeIndex(idx);
-                }
+                removeIndex(idx);
             }
         } // synchronized
     }
+
 
     private void removeIndex(TextIndex idx) {
         try {
@@ -213,17 +200,12 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     }
 
 
-    public boolean isArchived() {
-        return archived;
-    }
-
     public synchronized void archive() {
-
         log.info("Archiving index: " + store.getPath());
-
         archived = true;
         executor.execute(this::runAllMaintenance);
     }
+
 
     @Override
     public int add(byte[] buf, int offs, int len, boolean esc) {
@@ -277,6 +259,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     public String getPath() {
         return store.getPath();
     }
+
 
     @Override
     public int getIdBase() {
@@ -343,6 +326,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         return len;
     }
 
+
     @Override
     public void close() throws IOException {
         for (TextIndex idx : cstate.getAllIndexes()) {
@@ -350,13 +334,16 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         }
     }
 
-    public static int icmp(TextIndex x1, TextIndex x2) {
+
+    private static int icmp(TextIndex x1, TextIndex x2) {
         return x1.getIdBase() == x2.getIdBase() ? x2.getNWords() - x1.getNWords() : x1.getIdBase() - x2.getIdBase();
     }
+
 
     private static boolean isIndexOpen(TextIndex idx) {
         return idx != null && idx.isOpen();
     }
+
 
     /**
      * Filters out overlapping indexes (unnecessary for searches or lookups).
@@ -376,6 +363,10 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         }
     }
 
+
+    /**
+     *
+     */
     public List<TextIndex> filterIndexes(List<TextIndex> indexes, Predicate<? super TextIndex>...predicates) {
         Stream<TextIndex> stream = indexes.stream();
 
@@ -415,6 +406,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         return rslt;
     }
 
+
     public List<TextIndex> findLookupIndexesArchived(List<TextIndex> ax) {
         List<TextIndex> wx = filterIndexes(ax, TextIndex::isWritable, CompositeIndex::isIndexOpen);
         List<TextIndex> rx = filterIndexes(ax, TextIndex::isReadOnly, CompositeIndex::isIndexOpen);
@@ -434,6 +426,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
         return rslt;
     }
+
 
     /**
      * Finds all indexes suitable for general search operations and constructs properly ordered list of them.
@@ -465,6 +458,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
         return rslt;
     }
+
 
     /**
      * Finds all WAL indexes subject to compression. This covers only freshly rotated WAL indexes compressed for the
@@ -549,35 +543,6 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
         }
 
         return -1;
-    }
-
-
-    /**
-     * Looks for candidate for merge in normal working condition.
-     */
-    public List<TextIndex> findMergeCandidate(List<TextIndex> idxs) {
-        List<TextIndex> xs = filterIndexes(idxs, TextIndex::isReadOnly, CompositeIndex::isIndexOpen);
-
-        while (xs.size() > 1) {
-            TextIndex x1 = xs.get(xs.size()-2), x2 = xs.get(xs.size()-1);
-            int g1 = toGen(x1.getDatalen(), baseSize), g2 = toGen(x2.getDatalen(), baseSize);
-            if (g1 >= maxGens || g2 >= maxGens) {
-                // One of indexes has already reached maximum size
-                return null;
-            } else if (g1 == g2) {
-                // Two smaller indexes from the same generation are suitable for merge
-                return Arrays.asList(x1, x2);
-            } else if (g1 > g2) {
-                // Last index awaits for pair from its generation
-                xs.remove(xs.size()-1);
-            } else {
-                // This should not happen except for rare circumstances (bugs etc.).
-                // TODO log warning here
-                return Arrays.asList(x1, x2);
-            }
-        }
-
-        return null;
     }
 
 

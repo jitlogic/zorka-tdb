@@ -106,21 +106,6 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
     }
 
 
-    @Test
-    public void testFindMergeCandidates() {
-        CompositeIndex bs = new CompositeIndex(BS(),
-                ZicoUtil.props("rotation.base_size", "1", "rotation.max_gens", "4"),
-                new TestExecutor());
-        assertNull(bs.findMergeCandidate(I("R1", "W11")));
-        assertEquals(I("R1", "R11"), bs.findMergeCandidate(I("R1", "R11", "W11")));
-        assertNull(bs.findMergeCandidate(I("R1,10,2048", "R11")));
-        assertEquals(I("R1,10,2048", "R11,10,2048"),
-                bs.findMergeCandidate(I("R1,10,2048","R11,10,2048","R21,10,1024")));
-        assertEquals(I("R1,10,1024", "R11,10,2048"),
-                bs.findMergeCandidate(I("R1,10,1024", "R11,10,2048")));
-    }
-
-
     private void testInitState(CompositeIndexStore store, boolean runMaintenance, TextIndex c,
                                List<TextIndex> lidx, List<TextIndex> sidx) {
         TestExecutor executor = new TestExecutor();
@@ -147,9 +132,6 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
         assertEquals("lookupIndexes do not match", lidx, state.getLookupIndexes());
         assertEquals("searchIndexes do not match", sidx, state.getSearchIndexes());
         assertEquals(1, executor.getTasks().size());
-
-
-
     }
 
 

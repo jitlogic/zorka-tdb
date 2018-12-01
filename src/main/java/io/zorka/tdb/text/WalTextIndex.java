@@ -341,6 +341,9 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
 
     public synchronized void close() throws IOException {
+
+        if (buffer == null) return;
+
         lock.writeLock().lock();
 
         try {
