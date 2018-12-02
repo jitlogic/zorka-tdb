@@ -75,14 +75,15 @@ public class FmTextIndex extends AbstractTextIndex {
 
     @Override
     public byte[] get(int id) {
-
-        if (getState() != TextIndexState.OPEN) return null;
-
         byte[] rslt;
         lock.readLock().lock();
         try {
-            long range = locateById(id);
-            rslt = range != -1 ? TextIndexUtils.unescape(extractUntil(sp(range), RawDictCodec.MARK_ID1)) : null;
+            if (getState() == TextIndexState.OPEN) {
+                long range = locateById(id);
+                rslt = range != -1 ? TextIndexUtils.unescape(extractUntil(sp(range), RawDictCodec.MARK_ID1)) : null;
+            } else {
+                rslt = null;
+            }
         } finally {
             lock.readLock().unlock();
         }
@@ -91,13 +92,14 @@ public class FmTextIndex extends AbstractTextIndex {
 
     @Override
     public int get(byte[] buf, int offs, int len, boolean esc) {
-
-        if (getState() != TextIndexState.OPEN) return -1;
-
         int rslt;
         lock.readLock().lock();
         try {
-            rslt = getInternal(buf, offs, len, esc);
+            if (getState() == TextIndexState.OPEN) {
+                rslt = getInternal(buf, offs, len, esc);
+            } else {
+                rslt = -1;
+            }
         } finally {
             lock.readLock().unlock();
         }
@@ -295,29 +297,30 @@ public class FmTextIndex extends AbstractTextIndex {
 
     @Override
     public int searchIds(long tid, boolean deep, BitmapSet rslt) {
-        if (getState() != TextIndexState.OPEN) return 0;
         int cnt = 0;
         lock.readLock().lock();
         try {
-            int sptr;
-            int eptr;
-            byte[] buf = MetaIndexUtils.encodeMetaInt(TID_MARKER, (int) tid, deep ? FIDS_MARKER : TIDS_MARKER);
-            ZicoUtil.reverse(buf);
+            if (getState() == TextIndexState.OPEN) {
+                int sptr;
+                int eptr;
+                byte[] buf = MetaIndexUtils.encodeMetaInt(TID_MARKER, (int) tid, deep ? FIDS_MARKER : TIDS_MARKER);
+                ZicoUtil.reverse(buf);
 
-            long range = locateL(buf);
-            if (range != -1L) {
-                sptr = sp(range);
-                eptr = ep(range);
-            } else {
-                sptr = eptr = -1;
-            }
+                long range = locateL(buf);
+                if (range != -1L) {
+                    sptr = sp(range);
+                    eptr = ep(range);
+                } else {
+                    sptr = eptr = -1;
+                }
 
-            while (sptr >= 0 && sptr <= eptr) {
-                int pos = sptr++;
-                int id = extractId(pos);
-                if (id >= 0) {
-                    rslt.set(id);
-                    cnt++;
+                while (sptr >= 0 && sptr <= eptr) {
+                    int pos = sptr++;
+                    int id = extractId(pos);
+                    if (id >= 0) {
+                        rslt.set(id);
+                        cnt++;
+                    }
                 }
             }
         } finally {
@@ -329,11 +332,14 @@ public class FmTextIndex extends AbstractTextIndex {
 
     @Override
     public int search(SearchNode expr, BitmapSet rslt) {
-        if (getState() != TextIndexState.OPEN) return 0;
         int r;
         lock.readLock().lock();
         try {
-            r = searchInternal(expr, rslt);
+            if (getState() == TextIndexState.OPEN) {
+                r = searchInternal(expr, rslt);
+            } else {
+                r = 0;
+            }
         } finally {
             lock.readLock().unlock();
         }
