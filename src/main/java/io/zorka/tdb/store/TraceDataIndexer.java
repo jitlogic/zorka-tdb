@@ -361,6 +361,11 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         int excId = index.addException(classId, msgId, stackId, causeId);
         if (excId > 0) catchId(excId);
 
+        if (exIdSize >= localExIds.length) {
+            localExIds = Arrays.copyOf(localExIds, localExIds.length+EXC_DELTA);
+            agentExIds = Arrays.copyOf(agentExIds, agentExIds.length+EXC_DELTA);
+        }
+
         localExIds[exIdSize] = excId;
         agentExIds[exIdSize] = ex.id;
 
