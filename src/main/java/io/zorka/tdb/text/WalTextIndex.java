@@ -232,35 +232,37 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
      * @param rev reverse order (record-wise)
      * @return raw WAL data (suitable for BWT transform)
      */
-    public synchronized int getData(byte[] rslt, int offs, boolean lead, boolean term, boolean rev) {
+    public int getData(byte[] rslt, int offs, boolean lead, boolean term, boolean rev) {
         int dl = (int)getDatalen(), ll = lead ? 1 : 0, tl = term ? 1 : 0;
 
         lock.writeLock().lock();
 
         try {
-            if (getState() == TextIndexState.OPEN) {
-                buffer.position(WAL_HDR_SIZE);
+            synchronized (this) {
+                if (getState() == TextIndexState.OPEN) {
+                    buffer.position(WAL_HDR_SIZE);
 
-                if (rev) {
-                    int op = dl + ll, ip = WAL_HDR_SIZE, ep = ip + dl;
+                    if (rev) {
+                        int op = dl + ll, ip = WAL_HDR_SIZE, ep = ip + dl;
 
-                    while (ip < ep) {
-                        int p = ip;
-                        while (buffer.get(p) != RawDictCodec.MARK_ID2) p++;
-                        p++;
-                        int l = p - ip;
-                        buffer.get(rslt, offs + op - l, l);
-                        op -= l;
-                        ip = p;
+                        while (ip < ep) {
+                            int p = ip;
+                            while (buffer.get(p) != RawDictCodec.MARK_ID2) p++;
+                            p++;
+                            int l = p - ip;
+                            buffer.get(rslt, offs + op - l, l);
+                            op -= l;
+                            ip = p;
+                        }
+                    } else {
+                        buffer.get(rslt, offs + ll, dl);
                     }
-                } else {
-                    buffer.get(rslt, offs + ll, dl);
-                }
 
-                if (lead) rslt[offs] = RawDictCodec.MARK_ID2;
-                if (term) rslt[offs + dl + ll + tl - 1] = 0;
-            } else {
-                dl = 0;
+                    if (lead) rslt[offs] = RawDictCodec.MARK_ID2;
+                    if (term) rslt[offs + dl + ll + tl - 1] = 0;
+                } else {
+                    dl = 0;
+                }
             }
         } finally {
             lock.writeLock().unlock();
@@ -270,7 +272,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     }
 
 
-    public synchronized byte[] getData(boolean lead, boolean term, boolean rev) {
+    public byte[] getData(boolean lead, boolean term, boolean rev) {
         int dl = (int)getDatalen(), ll = lead ? 1 : 0, tl = term ? 1 : 0;
         byte[] rslt = new byte[ll+dl+tl];
 
@@ -347,20 +349,22 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
     }
 
 
-    public synchronized void close() throws IOException {
+    public void close() throws IOException {
         lock.writeLock().lock();
 
         try {
-            if (buffer != null) {
-                flush();
-                ZicoUtil.unmapBuffer(buffer);
-                channel.close();
-                raf.close();
-                channel = null;
-                raf = null;
-                buffer = null;
-                qmap = null;
-                setState(TextIndexState.CLOSED);
+            synchronized (this) {
+                if (buffer != null) {
+                    flush();
+                    ZicoUtil.unmapBuffer(buffer);
+                    channel.close();
+                    raf.close();
+                    channel = null;
+                    raf = null;
+                    buffer = null;
+                    qmap = null;
+                    setState(TextIndexState.CLOSED);
+                }
             }
         } finally {
             lock.writeLock().unlock();
@@ -375,7 +379,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
     public int add(byte[] buf, int offs, int len, boolean esc) {
         int rslt;
-        lock.writeLock().lock();
+        lock.readLock().lock();
         try {
             if (getState() == TextIndexState.OPEN) {
                 rslt = addInternal(buf, offs, len, esc);
@@ -383,7 +387,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
                 rslt = -1;
             }
         } finally {
-            lock.writeLock().unlock();
+            lock.readLock().unlock();
         }
         return rslt;
     }
@@ -455,13 +459,13 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
 
 
     public void archive(File newPath) {
-        lock.writeLock().lock();
+        lock.readLock().lock();
         try {
             this.file.renameTo(newPath); // TODO handle errors here
             this.file = newPath;
             // TODO some flag here
         } finally {
-            lock.writeLock().unlock();
+            lock.readLock().unlock();
         }
     }
 
@@ -481,7 +485,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         return jump(pos, RawDictCodec.MARK_ID1);
     }
 
-    private synchronized int scan(byte[] text, BitmapSet matches, boolean fetchTids) {
+    private int scan(byte[] text, BitmapSet matches, boolean fetchTids) {
         int rec = 0;
         int cnt = 0;
         int limit = fpos - text.length;
@@ -536,10 +540,12 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         int r;
         lock.readLock().lock();
         try {
-            if (getState() == TextIndexState.OPEN && expr instanceof TextNode) {
-                r = scan(((TextNode) expr).getText(), rslt, false);
-            } else {
-                r = 0;
+            synchronized (this) {
+                if (getState() == TextIndexState.OPEN && expr instanceof TextNode) {
+                    r = scan(((TextNode) expr).getText(), rslt, false);
+                } else {
+                    r = 0;
+                }
             }
         } finally {
             lock.readLock().unlock();
@@ -553,10 +559,12 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         int r;
         lock.readLock().lock();
         try {
-            if (getState() == TextIndexState.OPEN) {
-                r = scan(text, rslt, true);
-            } else {
-                r = 0;
+            synchronized (this) {
+                if (getState() == TextIndexState.OPEN) {
+                    r = scan(text, rslt, true);
+                } else {
+                    r = 0;
+                }
             }
         } finally {
             lock.readLock().unlock();
