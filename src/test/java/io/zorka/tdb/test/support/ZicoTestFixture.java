@@ -131,8 +131,7 @@ public class ZicoTestFixture {
         if (!baseDir.exists()) {
             assertTrue(baseDir.mkdirs());
         }
-        RotatingTraceStore store = new RotatingTraceStore(baseDir, new Properties(), s -> 1,
-                Runnable::run, Runnable::run, indexerCache);
+        RotatingTraceStore store = new RotatingTraceStore(baseDir, new Properties(), s -> 1, indexerCache);
         store.open();
         return store;
     }
@@ -141,7 +140,7 @@ public class ZicoTestFixture {
     protected SimpleTraceStore createSimpleStore(int id) throws Exception {
         File baseDir = new File(tmpDir, String.format("%06x", id));
         assertTrue(baseDir.mkdir());
-        return new SimpleTraceStore(baseDir, null, Runnable::run, Runnable::run, indexerCache, s->1);
+        return new SimpleTraceStore(baseDir, null, indexerCache, s->1);
     }
 
 

@@ -27,7 +27,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import static io.zorka.tdb.store.ConfigProps.*;
@@ -45,12 +44,6 @@ public class RotatingTraceStore implements TraceStore {
 
     private volatile RotatingTraceStoreState state = EMPTY;
 
-    /** WAL->FMI compression/indexing tasks are executed by this executor. */
-    private Executor indexerExecutor;
-
-    /** Cleanup tasks are executed by this executor. */
-    private Executor cleanerExecutor;
-
     private Properties props;
 
     private int storesMax;
@@ -66,11 +59,8 @@ public class RotatingTraceStore implements TraceStore {
 
 
     public RotatingTraceStore(File baseDir, Properties props, TraceTypeResolver traceTypeResolver,
-                              Executor indexerExecutor, Executor cleanerExecutor,
                               Map<String,TraceDataIndexer> indexerCache) {
         this.baseDir = baseDir;
-        this.indexerExecutor = indexerExecutor;
-        this.cleanerExecutor = cleanerExecutor;
 
         this.props = props;
 
@@ -84,6 +74,13 @@ public class RotatingTraceStore implements TraceStore {
         if (!baseDir.exists() || !baseDir.isDirectory()) {
             throw new ZicoException("Path " + baseDir + " does not exist or is not a directory.");
         }
+    }
+
+    public synchronized void configure(Properties props) {
+        checkOpen();
+        this.props = props;
+        SimpleTraceStore s = state.getCurrent();
+        if (s != null) s.configure(props);
     }
 
     @Override
@@ -156,7 +153,7 @@ public class RotatingTraceStore implements TraceStore {
         List<SimpleTraceStore> stores = new ArrayList<>(sdirs.size()+1);
 
         for (File af : sdirs) {
-            stores.add(new SimpleTraceStore(af, props, indexerExecutor, cleanerExecutor, indexerCache, traceTypeResolver));
+            stores.add(new SimpleTraceStore(af, props, indexerCache, traceTypeResolver));
         }
 
         RotatingTraceStoreState ts = RotatingTraceStoreState.init(stores);
@@ -277,8 +274,10 @@ public class RotatingTraceStore implements TraceStore {
     }
 
     @Override
-    public synchronized boolean runMaintenance() {
+    public boolean runMaintenance() {
         boolean rslt;
+
+        checkOpen();
 
         RotatingTraceStoreState ts = state;
 
@@ -372,7 +371,7 @@ public class RotatingTraceStore implements TraceStore {
             }
         } // TODO else what ?
 
-        SimpleTraceStore current = new SimpleTraceStore(root, props, indexerExecutor, cleanerExecutor, indexerCache, traceTypeResolver);
+        SimpleTraceStore current = new SimpleTraceStore(root, props, indexerCache, traceTypeResolver);
 
         current.open();
         current.setPostproc(postproc);
@@ -400,7 +399,12 @@ public class RotatingTraceStore implements TraceStore {
     }
 
 
+    public Map<String, TraceDataIndexer> getIndexerCache() {
+        return indexerCache;
+    }
+
+
     public SimpleTraceStore getCurrent() {
         return state.getCurrent();
     }
-} // class RotatingTraceStore { .. }
+}

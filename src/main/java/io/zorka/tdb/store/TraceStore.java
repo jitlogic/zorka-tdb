@@ -18,17 +18,15 @@ package io.zorka.tdb.store;
 
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.search.TraceSearchQuery;
-import io.zorka.tdb.search.SearchableStore;
+import io.zorka.tdb.util.ZicoMaintObject;
 
 import java.io.Closeable;
 import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.Executor;
 
 /**
  * API do trace storage.
  */
-public interface TraceStore extends Closeable {
+public interface TraceStore extends Closeable, ZicoMaintObject {
 
     /**
      * Handles trace data coming from agents.
@@ -78,8 +76,6 @@ public interface TraceStore extends Closeable {
      *  Rotating store will archive current simple store and start a new one.
      */
     void archive();
-
-    boolean runMaintenance();
 
     /** Returns session UUID for a given agent. */
     String getSession(String agentUUID);

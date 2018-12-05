@@ -17,7 +17,9 @@ public class StringCache {
         cache = new HashMap<>(limit);
     }
 
-    public void add(int id, String val) {
+    public synchronized void add(int id, String val) {
+        if (val == null || val.length() == 0) return;
+
         Node tmp = cache.get(val);
 
         if (tmp != null) {
@@ -44,7 +46,7 @@ public class StringCache {
         }
     }
 
-    public int get(String val) {
+    public synchronized int get(String val) {
         if (val == null || val.length() == 0) return -1;
 
         Node tmp = cache.get(val);
@@ -78,7 +80,7 @@ public class StringCache {
         mru = tmp;
     }
 
-    static class Node {
+    private static class Node {
         int id;
         String val;
         Node next;

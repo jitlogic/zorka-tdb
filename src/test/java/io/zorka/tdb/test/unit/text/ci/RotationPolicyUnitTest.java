@@ -37,7 +37,7 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
 
     @Test
     public void testFindLookupIndexes() {
-        CompositeIndex rs = new CompositeIndex(BS(), ZicoUtil.props(), new TestExecutor());
+        CompositeIndex rs = new CompositeIndex(BS(), ZicoUtil.props());
         assertEquals(I(), rs.findLookupIndexes(I()));
         assertEquals(I("W1"), rs.findLookupIndexes(I("W1")));
         assertEquals(I("W11", "R1"), rs.findLookupIndexes(I("R1", "W11")));
@@ -51,7 +51,7 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
 
     @Test
     public void testFindSearchIndexes() {
-        CompositeIndex rs = new CompositeIndex(BS(), ZicoUtil.props(), new TestExecutor());
+        CompositeIndex rs = new CompositeIndex(BS(), ZicoUtil.props());
         assertEquals(I(), rs.findSearchIndexes(I()));
         assertEquals(I("W1"), rs.findSearchIndexes(I("W1")));
         assertEquals(I("W11", "R1"), rs.findSearchIndexes(I("R1", "W11")));
@@ -65,7 +65,7 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
 
     @Test
     public void testFindCompressIndexes() {
-        CompositeIndex rs = new CompositeIndex(BS(), ZicoUtil.props(), new TestExecutor());
+        CompositeIndex rs = new CompositeIndex(BS(), ZicoUtil.props());
         assertEquals(I(), rs.findCompressIndexes(I(), false));
         assertEquals(I(), rs.findCompressIndexes(I("W1"), false));
         assertEquals(I("W1"), rs.findCompressIndexes(I("W1"), true));
@@ -75,7 +75,7 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
 
     @Test
     public void testRemoveFmIndexes() {
-        CompositeIndex rs = new CompositeIndex(BS(), ZicoUtil.props(), new TestExecutor());
+        CompositeIndex rs = new CompositeIndex(BS(), ZicoUtil.props());
         assertEquals(I(), rs.findRemoveFmIndexes(I()));
         assertEquals(I(), rs.findRemoveFmIndexes(I("W1")));
         assertEquals(I("R1", "R11"), rs.findRemoveFmIndexes(I("R1,20", "R1", "R11")));
@@ -85,7 +85,7 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
     @Test
     public void testRemoveWalIndexes() {
         // TODO test it after refactor
-        CompositeIndex rs = new CompositeIndex(BS(), ZicoUtil.props(), new TestExecutor());
+        CompositeIndex rs = new CompositeIndex(BS(), ZicoUtil.props());
         assertEquals(I(), rs.findRemoveWalIndexes(I()));
         assertEquals(I("W1"), rs.findRemoveWalIndexes(I("R1", "W1", "W11")));
     }
@@ -93,7 +93,7 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
 
     @Test
     public void testSizeToGenCalculation() {
-        CompositeIndex bs = new CompositeIndex(BS(), ZicoUtil.props(), new TestExecutor());
+        CompositeIndex bs = new CompositeIndex(BS(), ZicoUtil.props());
         assertEquals(0, bs.toGen(5, 10));
         assertEquals(1, bs.toGen(10, 10));
         assertEquals(1, bs.toGen(15, 10));
@@ -108,8 +108,7 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
 
     private void testInitState(CompositeIndexStore store, boolean runMaintenance, TextIndex c,
                                List<TextIndex> lidx, List<TextIndex> sidx) {
-        TestExecutor executor = new TestExecutor();
-        CompositeIndex index = new CompositeIndex(store, new Properties(), executor);
+        CompositeIndex index = new CompositeIndex(store, new Properties());
 
         if (runMaintenance) index.runMaintenance();
 
@@ -131,7 +130,6 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
 
         assertEquals("lookupIndexes do not match", lidx, state.getLookupIndexes());
         assertEquals("searchIndexes do not match", sidx, state.getSearchIndexes());
-        assertEquals(1, executor.getTasks().size());
     }
 
 
@@ -161,9 +159,8 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
 
     @Test
     public void testAddRecordWithEmptyIndexWithoutWalFiles() {
-        TestExecutor executor = new TestExecutor();
-        CompositeIndex idx = new CompositeIndex(BS() ,ZicoUtil.props(), executor);
-        executor.doAll();
+        CompositeIndex idx = new CompositeIndex(BS() ,ZicoUtil.props());
+        idx.runMaintenance();
         int id1 = idx.add("aaa"), id2 = idx.add("bbb");
         assertNotEquals(-1, id1);
         assertNotEquals(-1, id2);
@@ -171,9 +168,8 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
 
     @Test
     public void testAddRecordWithSingleWalRotation() {
-        TestExecutor executor = new TestExecutor();
-        CompositeIndex idx = new CompositeIndex(BS("W1"), ZicoUtil.props(), executor);
-        executor.doAll();
+        CompositeIndex idx = new CompositeIndex(BS("W1"), ZicoUtil.props());
+        idx.runMaintenance();
         int id1 = idx.add("aaa"), id2 = idx.add("bbb");
         assertNotEquals("Should receive unique identifiers.", id1, id2);
         assertNotEquals(-1, id1);
@@ -189,12 +185,11 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
         TextIndex idx2 = idx.getCState().getCurrentIndex();
 
         assertNotEquals(idx1, idx2);
-        assertTrue(executor.getTasks().size() > 0);
 
         assertTrue("Prior to compression last index in search indexes should point to WAL",
                 idx.getCState().getSearchIndexes().get(1).isWritable());
 
-        executor.doAll();
+        idx.runMaintenance(); // This needs to be invoked in regular basis.
 
         assertFalse("After compression last index in search indexes should point to FMI",
                 idx.getCState().getSearchIndexes().get(1).isWritable());
@@ -202,14 +197,13 @@ public class RotationPolicyUnitTest extends ZicoTestFixture {
 
     @Test
     public void addRecordsWithMerge() {
-        TestExecutor executor = new TestExecutor();
-        CompositeIndex idx = new CompositeIndex(BS("R1", "W11"), ZicoUtil.props(), executor);
-        executor.doAll();
+        CompositeIndex idx = new CompositeIndex(BS("R1", "W11"), ZicoUtil.props());
+        idx.runMaintenance();
 
         ((TextIndexW)(idx.getCState().getCurrentIndex())).setForceRotate(true);
         idx.add("a");
 
-        executor.doAll();
+        idx.runMaintenance();
         //assertEquals(I("W21,10,1024", "R1,21,2048"), idx.getCState().getSearchIndexes());
     }
 

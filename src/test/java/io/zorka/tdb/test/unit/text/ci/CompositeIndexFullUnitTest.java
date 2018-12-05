@@ -37,7 +37,7 @@ public class CompositeIndexFullUnitTest extends ZicoTestFixture {
         Properties props = ZicoUtil.props();
         CompositeIndexStore store = new CompositeIndexFileStore(tmpDir, "test", props);
         Executor executor = Runnable::run;
-        CompositeIndex ci = new CompositeIndex(store, props, executor);
+        CompositeIndex ci = new CompositeIndex(store, props);
         int idA = ci.add("A"), idB = ci.add("B");
         assertNotEquals(-1, idA);
         assertEquals(idA, ci.get("A"));
@@ -51,7 +51,7 @@ public class CompositeIndexFullUnitTest extends ZicoTestFixture {
         Properties props = ZicoUtil.props();
         CompositeIndexStore store = new CompositeIndexFileStore(tmpDir, "test", props);
         Executor executor = Runnable::run;
-        CompositeIndex ci = new CompositeIndex(store, props, executor);
+        CompositeIndex ci = new CompositeIndex(store, props);
 
         int idA = ci.add("A"), idB = ci.add("B");
 

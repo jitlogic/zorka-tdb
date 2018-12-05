@@ -213,6 +213,11 @@ public class AgentHandler implements AgentDataProcessor {
             stringRefs = Arrays.copyOf(stringRefs, len);
         }
 
+        if (s == null || s.length() == 0) {
+            s = " ";
+            log.warn("Empty string ref pased to agent " + agentUUID + " (session: " + sessionUUID + ")");
+        }
+
         stringRefs[remoteId] = sindex.addTyped(type, s.getBytes());
 
         return stringRefs[remoteId];

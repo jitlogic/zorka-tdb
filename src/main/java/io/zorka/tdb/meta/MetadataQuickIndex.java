@@ -18,7 +18,7 @@ package io.zorka.tdb.meta;
 
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.search.*;
-import io.zorka.tdb.store.TraceSearchResultItem;
+import io.zorka.tdb.util.ZicoMaintObject;
 import io.zorka.tdb.util.ZicoUtil;
 
 import java.io.Closeable;
@@ -30,7 +30,9 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -116,7 +118,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * W7, W8 - trace UUID (encoded)
  *
  */
-public class MetadataQuickIndex implements Closeable {
+public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
 
     private final static int DEFAULT_DELTA = 16 * 1024 * 1024;
     private final static int DEFAULT_FUZZ  = 1024;
@@ -152,6 +154,7 @@ public class MetadataQuickIndex implements Closeable {
     private final FileChannel channel;
 
     private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
+    private final Lock mlock = new ReentrantLock();
 
     private final File file;
 
@@ -625,4 +628,15 @@ public class MetadataQuickIndex implements Closeable {
         return idx;
     }
 
+    @Override
+    public boolean runMaintenance() {
+        if (mlock.tryLock()) {
+            try {
+                flush();
+            } finally {
+                mlock.unlock();
+            }
+        }
+        return false;
+    }
 }

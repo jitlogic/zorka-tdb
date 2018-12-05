@@ -84,7 +84,7 @@ public class SingleTextIndexSearchUnitTest extends ZicoTestFixture {
         } // type == WAL || type == FMI
         if (type == COMPOSITE) {
             CompositeIndexStore cs = new CompositeIndexFileStore(tmpDir, "test", new Properties());
-            CompositeIndex ci = new CompositeIndex(cs, new Properties(), Runnable::run);
+            CompositeIndex ci = new CompositeIndex(cs, new Properties());
             for (String s : samples) {
                 data.put(ci.add(s), s);
             }

@@ -22,18 +22,20 @@ import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WritableTextIndex;
 import io.zorka.tdb.util.BitmapSet;
+import io.zorka.tdb.util.ZicoMaintObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Executor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-public class CompositeIndex extends AbstractTextIndex implements WritableTextIndex {
+public class CompositeIndex extends AbstractTextIndex implements WritableTextIndex, ZicoMaintObject {
 
     private static final Logger log = LoggerFactory.getLogger(CompositeIndex.class);
 
@@ -41,26 +43,22 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     public static final int DEFAULT_WAL_SIZE = 4096;
     public static final int MAINT_CYCLES_MAX = 3;
 
-    private final Object MAINTENANCE_LOCK = new Object();
+    private final Lock mlock = new ReentrantLock();
 
     private volatile CompositeIndexState cstate;
     private volatile boolean archived;
     private final CompositeIndexStore store;
-    private final Executor executor;
 
     private final int baseSize;
     private final int maxSize;
 
-    public CompositeIndex(CompositeIndexStore store, Properties props,
-                          Executor executor) {
+    public CompositeIndex(CompositeIndexStore store, Properties props) {
 
         this.store = store;
         this.archived = "true".equalsIgnoreCase(props.getProperty("archived", "false"));
 
         this.baseSize = Integer.parseInt(props.getProperty("rotation.base_size", ""+DEFAULT_WAL_SIZE)) * 1024;
         this.maxSize = Integer.parseInt(props.getProperty("rotation.max_size", "262144")) * 1024;
-
-        this.executor = executor;
 
         open();
     }
@@ -85,26 +83,17 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
         cstate = new CompositeIndexState(allIndexes, lookupIndexes, searchIndexes, archived);
 
-        executor.execute(this::runAllMaintenance);
-    }
-
-
-    public boolean runAllMaintenance() {
-        boolean rslt = true;
-
-        for (int i = 0; rslt && i < MAINT_CYCLES_MAX; i++) {
-            rslt = runMaintenance();
-        }
-
-        return rslt;
     }
 
     /**
      * This method performs all background maintenance tasks: compression, merges, removal.
      */
+    @Override
     public boolean runMaintenance() {
 
-        synchronized (MAINTENANCE_LOCK) {
+        if (!mlock.tryLock()) return false;
+
+        try {
             int tasksDone;
             log.debug("Starting maintenance cycle ...");
 
@@ -116,6 +105,8 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
             log.debug("Finishing maintenance cycle (tasksDone=" + tasksDone + ")");
 
             return tasksDone > 0;
+        } finally {
+            mlock.unlock();
         }
     }
 
@@ -152,19 +143,17 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     }
 
 
-    public void runRemovalCycle() {
-        synchronized (MAINTENANCE_LOCK) {
-            List<TextIndex> idxs = getCState().getAllIndexes();
+    private void runRemovalCycle() {
+        List<TextIndex> idxs = getCState().getAllIndexes();
 
-            for (TextIndex idx : findRemoveFmIndexes(idxs)) {
-                removeIndex(idx);
-            }
+        for (TextIndex idx : findRemoveFmIndexes(idxs)) {
+            removeIndex(idx);
+        }
 
-            List<TextIndex> removeWals = findRemoveWalIndexes(idxs);
-            for (TextIndex idx : removeWals) {
-                removeIndex(idx);
-            }
-        } // synchronized
+        List<TextIndex> removeWals = findRemoveWalIndexes(idxs);
+        for (TextIndex idx : removeWals) {
+            removeIndex(idx);
+        }
     }
 
 
@@ -203,7 +192,6 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     public synchronized void archive() {
         log.info("Archiving index: " + store.getPath());
         archived = true;
-        executor.execute(this::runAllMaintenance);
     }
 
 
@@ -234,7 +222,7 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
             id = cidx.add(buf, offs, len, esc);
             if (id != -1) return id;
 
-            WritableTextIndex compressIdx = cidx;
+            cidx.flush();
 
             // Rotation required
             int idBase = cidx.getIdBase() + cidx.getNWords();
@@ -242,7 +230,6 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
             changeState(cidx, true);
 
             id = cidx.add(buf, offs, len, esc);
-            executor.execute(this::runAllMaintenance);
         }
 
         return id;

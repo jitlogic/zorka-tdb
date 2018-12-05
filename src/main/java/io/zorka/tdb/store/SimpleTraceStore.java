@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 
 import static io.zorka.tdb.store.TraceStoreUtil.*;
 
@@ -72,9 +71,6 @@ public class SimpleTraceStore implements TraceStore {
     private int tidxWalNum = 1;
     private int midxWalNum = 1;
 
-    private Executor indexerExecutor;
-    private Executor cleanerExecutor;
-
     private volatile int iFlags = 0;
 
     private volatile int dFlags = 0;
@@ -90,8 +86,8 @@ public class SimpleTraceStore implements TraceStore {
     private Properties props;
 
 
-    public SimpleTraceStore(File root, Properties props, Executor indexerExecutor, Executor cleanerExecutor,
-                            Map<String,TraceDataIndexer> indexerCache, TraceTypeResolver traceTypeResolver) {
+    public SimpleTraceStore(File root, Properties props, Map<String,TraceDataIndexer> indexerCache,
+                            TraceTypeResolver traceTypeResolver) {
         this.indexerCache = indexerCache;
         this.root = root;
         this.baseDir = this.root.getParentFile();
@@ -109,9 +105,6 @@ public class SimpleTraceStore implements TraceStore {
         if (props == null) {
             props = new Properties();
         }
-
-        this.indexerExecutor = indexerExecutor;
-        this.cleanerExecutor = cleanerExecutor;
 
         configure(props);
         configure(loadProps());
@@ -141,26 +134,30 @@ public class SimpleTraceStore implements TraceStore {
     }
 
 
-    private synchronized void saveProps() {
-        Properties props = new Properties();
+    public synchronized void saveProps() {
+        Properties p = new Properties();
 
-        props.setProperty(ConfigProps.TIDX_WAL_SIZE, ""+tidxWalSize);
-        props.setProperty(ConfigProps.TIDX_WAL_NUM, ""+tidxWalNum);
-        props.setProperty(ConfigProps.MIDX_WAL_SIZE, ""+midxWalSize);
-        props.setProperty(ConfigProps.MIDX_WAL_NUM, ""+midxWalNum);
+        for (String n : props.stringPropertyNames()) {
+            p.setProperty(n, props.getProperty(n));
+        }
 
-        props.setProperty(ConfigProps.IFLAGS, ""+ iFlags);
-        props.setProperty(ConfigProps.DFLAGS, ""+ dFlags);
+        p.setProperty(ConfigProps.TIDX_WAL_SIZE, ""+tidxWalSize);
+        p.setProperty(ConfigProps.TIDX_WAL_NUM, ""+tidxWalNum);
+        p.setProperty(ConfigProps.MIDX_WAL_SIZE, ""+midxWalSize);
+        p.setProperty(ConfigProps.MIDX_WAL_NUM, ""+midxWalNum);
+
+        p.setProperty(ConfigProps.IFLAGS, ""+ iFlags);
+        p.setProperty(ConfigProps.DFLAGS, ""+ dFlags);
 
         try (FileOutputStream fos = new FileOutputStream(new File(root, PROPS_FILE))) {
-            props.store(fos, "ZicoDB store properties saved at " + new Date());
+            p.store(fos, "ZicoDB store properties saved at " + new Date());
         } catch (IOException e) {
             log.error("Cannot save store properties for " + root, e);
         }
     }
 
 
-    private synchronized void configure(Properties props) {
+    public synchronized void configure(Properties props) {
         this.props = props;
         for (Map.Entry<Object,Object> e : props.entrySet()) {
             switch ((String)e.getKey()) {
@@ -196,7 +193,7 @@ public class SimpleTraceStore implements TraceStore {
 
         Properties ptext = ZicoUtil.props(); // TODO configure properties here
         CompositeIndexFileStore ftext = new CompositeIndexFileStore(root.getPath(), "text", ptext);
-        ctext = new CompositeIndex(ftext, ptext, indexerExecutor);
+        ctext = new CompositeIndex(ftext, ptext);
 
         if (0 == (iFlags & CTF_ARCHIVED)) {
             itext = new StructuredTextIndex(new CachingTextIndex(ctext, textCacheSize));
@@ -206,7 +203,7 @@ public class SimpleTraceStore implements TraceStore {
 
         Properties pmeta = ZicoUtil.props(); // TODO configure properties here
         CompositeIndexFileStore fmeta = new CompositeIndexFileStore(root.getPath(), "meta", pmeta);
-        cmeta = new CompositeIndex(fmeta, pmeta, indexerExecutor);
+        cmeta = new CompositeIndex(fmeta, pmeta);
 
         imeta = new MetadataTextIndex(cmeta);
 
@@ -367,6 +364,7 @@ public class SimpleTraceStore implements TraceStore {
             cmeta.archive();
             qindex.archive();
             itext = new StructuredTextIndex(ctext);
+            saveProps();
         }
     }
 
@@ -374,7 +372,7 @@ public class SimpleTraceStore implements TraceStore {
     public boolean runMaintenance() {
         checkOpen();
         cleanupSessions();
-        return ctext.runAllMaintenance() || cmeta.runAllMaintenance();
+        return qindex.runMaintenance() || ctext.runMaintenance() || cmeta.runMaintenance();
     }
 
     @Override

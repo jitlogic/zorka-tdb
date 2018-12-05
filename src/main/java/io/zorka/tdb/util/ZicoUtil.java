@@ -600,4 +600,12 @@ public class ZicoUtil {
         }
         return 0;
     }
+
+    public static void sleep(long interval) {
+        try {
+            Thread.sleep(interval);
+        } catch (InterruptedException e) {
+            // Nothing here
+        }
+    }
 }

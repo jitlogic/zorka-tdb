@@ -356,7 +356,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
     }
 
     public int getTuple(byte marker, int...ids) {
-        byte[] pbuf = new byte[10 * ids.length];
+        byte[] pbuf = new byte[12 * ids.length + 1];
         int pos = 0;
 
         pbuf[pos++] = marker;
@@ -369,7 +369,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
     }
 
     private int addTuple(byte marker, int...ids) {
-        byte[] pbuf = new byte[10 * ids.length];
+        byte[] pbuf = new byte[12 * ids.length + 1];
         int pos = 0;
 
         pbuf[pos++] = marker;

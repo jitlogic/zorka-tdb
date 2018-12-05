@@ -386,8 +386,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
 
     @Override
     public void commit() {
-        output.commit();
-        index.flush();
     }
 
 

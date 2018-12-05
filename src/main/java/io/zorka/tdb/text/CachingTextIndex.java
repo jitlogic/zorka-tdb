@@ -49,17 +49,13 @@ public class CachingTextIndex extends AbstractTextIndex implements WritableTextI
     public int get(String s) {
         int id;
 
-        synchronized (cache) {
-            id = cache.get(s);
-        }
+        id = cache.get(s);
 
         if (id >= 0) return id;
         id = idx.get(s);
         if (id < 0) return id;
 
-        synchronized (cache) {
-            cache.add(id, s);
-        }
+        cache.add(id, s);
 
         return id;
     }
@@ -70,17 +66,13 @@ public class CachingTextIndex extends AbstractTextIndex implements WritableTextI
 
         int id;
 
-        synchronized (cache) {
-            id = cache.get(s);
-        }
+        id = cache.get(s);
 
         if (id >= 0) return id;
         id = idx.get(buf);
         if (id < 0) return id;
 
-        synchronized (cache) {
-            cache.add(id, s);
-        }
+        cache.add(id, s);
 
         return id;
     }
@@ -90,17 +82,13 @@ public class CachingTextIndex extends AbstractTextIndex implements WritableTextI
         String s = new String(Arrays.copyOfRange(buf, offs, offs+len));
         int id;
 
-        synchronized (cache) {
-            id = cache.get(s);
-        }
+        id = cache.get(s);
 
         if (id >= 0) return id;
         id = idx.get(buf, offs, len, esc);
         if (id < 0) return id;
 
-        synchronized (cache) {
-            cache.add(id, s);
-        }
+        cache.add(id, s);
 
         return id;
     }
@@ -130,17 +118,13 @@ public class CachingTextIndex extends AbstractTextIndex implements WritableTextI
     public int add(String s) {
         int id;
 
-        synchronized (cache) {
-            id = cache.get(s);
-        }
+        id = cache.get(s);
 
         if (id >= 0) return id;
         id = idx.add(s);
         if (id < 0) return id;
 
-        synchronized (cache) {
-            cache.add(id, s);
-        }
+        cache.add(id, s);
 
         return id;
     }
@@ -151,17 +135,13 @@ public class CachingTextIndex extends AbstractTextIndex implements WritableTextI
 
         int id;
 
-        synchronized (cache) {
-            id = cache.get(s);
-        }
+        id = cache.get(s);
 
         if (id >= 0) return id;
         id = idx.add(buf);
         if (id < 0) return id;
 
-        synchronized (cache) {
-            cache.add(id, s);
-        }
+        cache.add(id, s);
 
         return id;
     }
@@ -171,17 +151,13 @@ public class CachingTextIndex extends AbstractTextIndex implements WritableTextI
         String s = new String(Arrays.copyOfRange(buf, offs, offs+len));
         int id;
 
-        synchronized (cache) {
-            id = cache.get(s);
-        }
+        id = cache.get(s);
 
         if (id >= 0) return id;
         id = idx.add(buf, offs, len, esc);
         if (id < 0) return id;
 
-        synchronized (cache) {
-            cache.add(id, s);
-        }
+        cache.add(id, s);
 
         return id;
     }
