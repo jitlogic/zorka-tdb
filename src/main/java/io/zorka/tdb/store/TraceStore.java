@@ -84,8 +84,6 @@ public interface TraceStore extends Closeable {
     /** Returns session UUID for a given agent. */
     String getSession(String agentUUID);
 
-    void configure(Properties props, Executor indexerExecutor, Executor cleanerExecutor);
-
     void setPostproc(ChunkMetadataProcessor postproc);
 
     long getTstart();

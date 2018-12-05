@@ -142,33 +142,26 @@ public class MetadataQuickIndex implements Closeable {
     private final static int W9_OFFS = 8 * WORD_SIZE;
 
 
-    private int flimit, delta;
+    private volatile int flimit, delta;
     private volatile int fpos;
+    private volatile long tstart, tstop;
 
-    private long tstart, tstop;
-
-    private int fuzz;
-
-    private RandomAccessFile raf;
-    private FileChannel channel;
     private volatile MappedByteBuffer buffer;
 
-    private ReadWriteLock rwlock = new ReentrantReadWriteLock();
+    private final RandomAccessFile raf;
+    private final FileChannel channel;
 
-    private File file;
+    private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
+
+    private final File file;
 
     public MetadataQuickIndex(File file) {
         this(file, DEFAULT_DELTA);
     }
 
     public MetadataQuickIndex(File file, int delta) {
-        this(file, delta, DEFAULT_FUZZ);
-    }
-
-    public MetadataQuickIndex(File file, int delta, int fuzz) {
         this.file = file;
         this.delta = delta;
-        this.fuzz = fuzz;
 
         try {
             raf = new RandomAccessFile(file.getPath(), "rw");
@@ -185,8 +178,10 @@ public class MetadataQuickIndex implements Closeable {
                 buffer.put("MQI0".getBytes(), OFFS_MAGIC, 4);
             }
             fpos = buffer.getInt(OFFS_FPOS);
-            tstart = buffer.get(OFFS_TSTART);
-            tstop = buffer.get(OFFS_TSTOP);
+            synchronized (this) {
+                tstart = buffer.get(OFFS_TSTART);
+                tstop = buffer.get(OFFS_TSTOP);
+            }
             if (fpos == 0) {
                 fpos = HEADER_SIZE;
             }
@@ -268,6 +263,7 @@ public class MetadataQuickIndex implements Closeable {
         return md | (Math.min(duration, 0xffff) << 32) | (Math.min(hostId, 0xffff) << 48);
     }
 
+
     public static void parse_W4(long w4, ChunkMetadata md) {
         if (0 != (w4 & 0x80000000L)) {
             md.setDescId((int)(w4 & 0x7fffffff));
@@ -279,27 +275,33 @@ public class MetadataQuickIndex implements Closeable {
         md.setHostId((int)((w4 >>> 48) & 0xffff));
     }
 
+
     public static int parse_W4_did(long w4) {
         return (int)w4 & 0x7fffffff;
     }
+
 
     public static long format_W5(int ftid, int ttid) {
         return (((long)ttid) << 32) | ftid;
     }
 
+
     public static int parse_W5_ttid(long w5) {
         return (int)(w5 >>> 32);
     }
 
+
     public static int parse_W5_ftid(long w5) {
         return (int)w5;
     }
+
 
     public static long format_W6(ChunkMetadata md) {
         int errH = md.getErrors() > 0x10000 ? 0xff : (md.getErrors() >> 8);
         int recs = md.getRecs() > 0x1000000 ? 0xffffff : md.getRecs();
         return ((long)md.getCalls()) | (((long)errH) << 32) | (((long)recs) << 40);
     }
+
 
     public static void parse_W6(long w6, ChunkMetadata md) {
         int errH = ((int)(w6 >>> 32)) & 0xff;
@@ -308,19 +310,23 @@ public class MetadataQuickIndex implements Closeable {
         md.setRecs((int)(w6 >>> 40));
     }
 
+
     public static long format_W9(int traceUUID, int traceTID) {
         return ((long)traceUUID) | (((long)traceTID) << 32);
     }
+
 
     public static long format_W9M(int dtraceUuid, int dtraceTid) {
         return (dtraceUuid != 0 ? 0xffffffffL : 0)
                 | (dtraceTid != 0 ? 0x7fffffff00000000L : 0);
     }
 
+
     public static void parse_W9(long w9, ChunkMetadata md) {
         md.setDtraceUUID((int)w9);
         md.setDtraceTID((int)(w9 >>> 32));
     }
+
 
     public synchronized int add(ChunkMetadata md) {
         long w1 = format_W1(md.getStartOffs(), md.getTstamp() / 1000);
@@ -334,39 +340,48 @@ public class MetadataQuickIndex implements Closeable {
             extend();
         }
 
-        buffer.putLong(fpos + W1_OFFS, w1);
-        buffer.putLong(fpos + W2_OFFS, w2);
-        buffer.putLong(fpos + W3_OFFS, w3);
-        buffer.putLong(fpos + W4_OFFS, w4);
-        // w5 will be filled separately
-        buffer.putLong(fpos + W6_OFFS, w6);
+        rwlock.readLock().lock();
 
-        if (md.getTraceUUID() != null) {
-            UUID uuid = UUID.fromString(md.getTraceUUID());
-            buffer.putLong(fpos + W7_OFFS, uuid.getMostSignificantBits());
-            buffer.putLong(fpos + W8_OFFS, uuid.getLeastSignificantBits());
-        }
+        int rslt;
 
-        buffer.putLong(fpos + W9_OFFS, w9);
+        try {
+            buffer.putLong(fpos + W1_OFFS, w1);
+            buffer.putLong(fpos + W2_OFFS, w2);
+            buffer.putLong(fpos + W3_OFFS, w3);
+            buffer.putLong(fpos + W4_OFFS, w4);
+            // w5 will be filled separately
+            buffer.putLong(fpos + W6_OFFS, w6);
 
-        int rslt = (fpos - HEADER_SIZE) / RECORD_SIZE;
-        fpos += RECORD_SIZE;
-        buffer.putInt(OFFS_FPOS, fpos);
+            if (md.getTraceUUID() != null) {
+                UUID uuid = UUID.fromString(md.getTraceUUID());
+                buffer.putLong(fpos + W7_OFFS, uuid.getMostSignificantBits());
+                buffer.putLong(fpos + W8_OFFS, uuid.getLeastSignificantBits());
+            }
 
-        long tst = md.getTstamp();
+            buffer.putLong(fpos + W9_OFFS, w9);
 
-        if (tstart == 0 || tst < tstart) {
-            tstart = tst;
-            buffer.putInt(OFFS_TSTART, (int)tst);
-        }
+            rslt = (fpos - HEADER_SIZE) / RECORD_SIZE;
+            fpos += RECORD_SIZE;
+            buffer.putInt(OFFS_FPOS, fpos);
 
-        if (tstop == 0 || tst > tstop) {
-            tstop = tst;
-            buffer.putInt(OFFS_TSTOP, (int)tst);
+            long tst = md.getTstamp();
+
+            if (tstart == 0 || tst < tstart) {
+                tstart = tst;
+                buffer.putInt(OFFS_TSTART, (int) tst);
+            }
+
+            if (tstop == 0 || tst > tstop) {
+                tstop = tst;
+                buffer.putInt(OFFS_TSTOP, (int) tst);
+            }
+        } finally {
+            rwlock.readLock().unlock();
         }
 
         return rslt;
     }
+
 
     public synchronized void setTids(int slotId, int ftid, int ttid) {
         long w5 = format_W5(ftid, ttid);
@@ -421,7 +436,7 @@ public class MetadataQuickIndex implements Closeable {
     }
 
 
-    public synchronized int getFlags(int slotId) {
+    public int getFlags(int slotId) {
         int pos = HEADER_SIZE + slotId * RECORD_SIZE + WORD_SIZE;
 
         if (pos >= fpos) {
@@ -493,11 +508,11 @@ public class MetadataQuickIndex implements Closeable {
         return (buffer.getLong(pos + 3 * WORD_SIZE) >>> 32) & 0xffff;
     }
 
-    public synchronized long getTstart() {
+    public long getTstart() {
         return tstart;
     }
 
-    public synchronized long getTstop() {
+    public long getTstop() {
         return tstop;
     }
 
@@ -539,18 +554,12 @@ public class MetadataQuickIndex implements Closeable {
         buffer.force();
     }
 
-    public boolean findNext(QmiNode qmi, TraceSearchResultItem rslt) {
-        return false;
-    }
-
     @Override
     public void close() throws IOException {
         flush();
         ZicoUtil.unmapBuffer(buffer);
         channel.close();
         raf.close();
-        channel = null;
-        raf = null;
         buffer = null;
     }
 

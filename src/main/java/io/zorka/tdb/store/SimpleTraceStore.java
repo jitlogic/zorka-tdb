@@ -55,32 +55,29 @@ public class SimpleTraceStore implements TraceStore {
 
     private long storeId;
 
-    private CompositeIndex ctext, cmeta;
     private volatile StructuredTextIndex itext;
-    private MetadataTextIndex imeta;
-    private MetadataQuickIndex qindex;
+    private volatile CompositeIndex ctext, cmeta;
+    private volatile MetadataTextIndex imeta;
+    private volatile MetadataQuickIndex qindex;
+    private volatile RawTraceDataFile fdata;
 
     private ChunkMetadataProcessor postproc;
 
-    private volatile RawTraceDataFile fdata;
 
+    // TODO factor out trace/agent data handling code to separate class
     private final Map<String,AgentHandler> handlers = new ConcurrentHashMap<>();
 
     private long tidxWalSize = 128;
-
     private long midxWalSize = 128;
-
     private int tidxWalNum = 1;
-
     private int midxWalNum = 1;
 
     private Executor indexerExecutor;
-
     private Executor cleanerExecutor;
 
-    private int iFlags = 0;
+    private volatile int iFlags = 0;
 
-    private int dFlags = 0;
+    private volatile int dFlags = 0;
 
     private int sessionTimeout = 90000;
 
@@ -109,26 +106,26 @@ public class SimpleTraceStore implements TraceStore {
         this.storeId = Integer.parseInt(this.root.getName(), 16);
 
 
-        // TODO this is too complicated, get rid of all variants except for
-
         if (props == null) {
             props = new Properties();
         }
 
-        configure(props, indexerExecutor, cleanerExecutor);
-        configure(loadProps(), indexerExecutor, cleanerExecutor);
+        this.indexerExecutor = indexerExecutor;
+        this.cleanerExecutor = cleanerExecutor;
 
+        configure(props);
+        configure(loadProps());
 
         if (!baseDir.isDirectory() && !baseDir.mkdir()) {
             throw new ZicoException("Cannot create directory " + root);
         }
     }
 
-    public Properties getProps() {
+    public synchronized Properties getProps() {
         return props;
     }
 
-    private Properties loadProps() {
+    private synchronized Properties loadProps() {
 
         File f = new File(root, PROPS_FILE);
 
@@ -144,7 +141,7 @@ public class SimpleTraceStore implements TraceStore {
     }
 
 
-    private void saveProps() {
+    private synchronized void saveProps() {
         Properties props = new Properties();
 
         props.setProperty(ConfigProps.TIDX_WAL_SIZE, ""+tidxWalSize);
@@ -163,11 +160,8 @@ public class SimpleTraceStore implements TraceStore {
     }
 
 
-    @Override
-    public void configure(Properties props, Executor indexerExecutor, Executor cleanerExecutor) {
+    private synchronized void configure(Properties props) {
         this.props = props;
-        this.indexerExecutor = indexerExecutor;
-        this.cleanerExecutor = cleanerExecutor;
         for (Map.Entry<Object,Object> e : props.entrySet()) {
             switch ((String)e.getKey()) {
                 case ConfigProps.TIDX_WAL_SIZE:
@@ -195,6 +189,7 @@ public class SimpleTraceStore implements TraceStore {
 
     public synchronized void open() {
 
+        // TODO writeLock here
         if (fdata != null) {
             return;
         }
@@ -221,64 +216,60 @@ public class SimpleTraceStore implements TraceStore {
             RawTraceDataFile.ZLIB_COMPRESSION | RawTraceDataFile.CRC32_CHECKSUM);
     }
 
-    public long getStoreId() {
+    public synchronized long getStoreId() {
         return storeId;
     }
 
-    public StructuredTextIndex getTextIndex() {
+    public synchronized StructuredTextIndex getTextIndex() {
         return itext;
     }
 
-    public MetadataTextIndex getMetaIndex() {
+    public synchronized MetadataTextIndex getMetaIndex() {
         return imeta;
     }
 
-    public MetadataQuickIndex getQuickIndex() {
+    public synchronized MetadataQuickIndex getQuickIndex() {
          return qindex;
     }
 
-    public RawTraceDataFile getDataFile() {
+    public synchronized RawTraceDataFile getDataFile() {
         return fdata;
     }
 
-    public Map<String,TraceDataIndexer> getIndexerCache() {
+    public synchronized Map<String,TraceDataIndexer> getIndexerCache() {
         return indexerCache;
     }
 
-    public ChunkMetadataProcessor getPostproc() {
+    public synchronized ChunkMetadataProcessor getPostproc() {
         return postproc;
     }
 
-    public void setPostproc(ChunkMetadataProcessor postproc) {
+    public synchronized void setPostproc(ChunkMetadataProcessor postproc) {
         this.postproc = postproc;
     }
 
     @Override
     public long getTstart() {
-        if (fdata == null) open();
-
+        checkOpen();
         return qindex.getTstart();
     }
 
     @Override
-    public long getTstop() {
-        if (fdata == null) open();
-
+    public synchronized long getTstop() {
+        checkOpen();
         return qindex.getTstop();
     }
 
-    private AgentHandler getHandler(String sessionUUID, String agentUUID) {
-        synchronized (handlers) {
-            AgentHandler agentHandler = handlers.get(agentUUID);
-            if (agentHandler == null || !agentHandler.getSessionUUID().equals(sessionUUID)) {
-                throw new MissingSessionException(sessionUUID, agentUUID);
-            }
-            return agentHandler;
+    private synchronized AgentHandler getHandler(String sessionUUID, String agentUUID) {
+        AgentHandler agentHandler = handlers.get(agentUUID);
+        if (agentHandler == null || !agentHandler.getSessionUUID().equals(sessionUUID)) {
+            throw new MissingSessionException(sessionUUID, agentUUID);
         }
+        return agentHandler;
     }
 
     public void retrieveRaw(long chunkId, ByteArrayOutputStream bos) {
-        if (fdata == null) open();
+        checkOpen();
 
         int slotId = parseSlotId(chunkId);
         long offs = qindex.getDataOffs(slotId);
@@ -290,13 +281,16 @@ public class SimpleTraceStore implements TraceStore {
         }
     }
 
+    private void checkOpen() {
+        if (fdata == null) open();
+    }
+
     public <T> void retrieveChunk(long chunkId, TraceDataRetriever<T> rtr) {
         retrieveChunk(chunkId, true, rtr);
     }
 
     public <T> void retrieveChunk(long chunkId, boolean first, TraceDataRetriever<T> rtr) {
-        if (fdata == null) open();
-
+        checkOpen();
         int slotId = parseSlotId(chunkId);
         ChunkMetadata md = qindex.getChunkMetadata(slotId);
         CborBufReader rdr = fdata.read(md.getDataOffs());
@@ -310,49 +304,44 @@ public class SimpleTraceStore implements TraceStore {
 
     @Override
     public String getTraceUUID(long chunkId) {
-        if (fdata == null) open();
-
+        checkOpen();
         return qindex.getChunkUUID(TraceStoreUtil.parseSlotId(chunkId));
     }
 
+
     @Override
     public long getTraceDuration(long chunkId) {
-        if (fdata == null) open();
-
+        checkOpen();
         return qindex.getTraceDuration(TraceStoreUtil.parseSlotId(chunkId));
     }
 
+
     @Override
     public String getDesc(long chunkId) {
-        if (fdata == null) open();
-
+        checkOpen();
         int did = qindex.getDid(TraceStoreUtil.parseSlotId(chunkId));
-
         return did > 0 ? itext.resolve(did) : null;
     }
 
 
     @Override
     public List<Long> getChunkIds(String traceUUID) {
-        if (fdata == null) open();
-
+        checkOpen();
         List<Long> rslt = new ArrayList<>();
         qindex.findChunkIds(rslt, (int)storeId, UUID.fromString(traceUUID));
-
         return rslt;
     }
 
     public void findChunkIds(List<Long> acc, UUID uuid) {
-        if (fdata == null) open();
+        checkOpen();
 
         qindex.findChunkIds(acc, (int)storeId, uuid);
     }
 
     @Override
     public ChunkMetadata getChunkMetadata(long chunkId) {
-        if (fdata == null) open();
-
         if (chunkId ==-1) return null;
+        checkOpen();
         int slotId = parseSlotId(chunkId);
         return qindex.getChunkMetadata(slotId);
     }
@@ -372,7 +361,7 @@ public class SimpleTraceStore implements TraceStore {
     @Override
     public synchronized void archive() {
         if (0 == (iFlags & CTF_ARCHIVED)) {
-            if (fdata == null) open();
+            checkOpen();
             iFlags |= CTF_ARCHIVED;
             ctext.archive();
             cmeta.archive();
@@ -382,11 +371,9 @@ public class SimpleTraceStore implements TraceStore {
     }
 
     @Override
-    public synchronized boolean runMaintenance() {
-        if (fdata == null) open();
-
+    public boolean runMaintenance() {
+        checkOpen();
         cleanupSessions();
-
         return ctext.runAllMaintenance() || cmeta.runAllMaintenance();
     }
 
@@ -410,7 +397,7 @@ public class SimpleTraceStore implements TraceStore {
 
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         ctext.close();
         cmeta.close();
         fdata.close();
@@ -420,10 +407,9 @@ public class SimpleTraceStore implements TraceStore {
 
     // TODO implement session timeout & cleanup functionality
 
-    private void cleanupSessions() {
 
+    private synchronized void cleanupSessions() {
         long tst = System.currentTimeMillis();
-
         synchronized (handlers) {
             handlers.values().stream()
                 .filter(ah -> tst - ah.getLastTstamp() > sessionTimeout)
@@ -432,11 +418,13 @@ public class SimpleTraceStore implements TraceStore {
         }
     }
 
+
     public static int SEARCH_QR_THRESHOLD = 512;
     public static int SEARCH_TX_THRESHOLD = 512;
 
+
     public long toChunkId(int slot) {
-        return slot >= 0 ? (((long)storeId) << 32) | slot : -1;
+        return slot >= 0 ? (storeId << 32) | slot : -1;
     }
 
 
@@ -445,6 +433,5 @@ public class SimpleTraceStore implements TraceStore {
         return new SimpleTraceStoreSearchResult(query, this);
     }
 
-
-} // class SimpleTraceStore { .. }
+}
 

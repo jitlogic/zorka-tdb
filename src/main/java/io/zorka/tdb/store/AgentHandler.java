@@ -113,10 +113,10 @@ public class AgentHandler implements AgentDataProcessor {
     }
 
 
-    public void handleTraceData(String traceUUID, String data, ChunkMetadata md) {
+    public synchronized void handleTraceData(String traceUUID, String data, ChunkMetadata md) {
         byte[] ibuf = DatatypeConverter.parseBase64Binary(data);
 
-        TraceDataIndexer translator =  indexerCache.get(traceUUID);
+        TraceDataIndexer translator = indexerCache.get(traceUUID);
         if (translator == null) {
             translator = new TraceDataIndexer(traceTypeResolver);
         } else {
@@ -185,7 +185,7 @@ public class AgentHandler implements AgentDataProcessor {
     }
 
 
-    public void handleAgentData(String data) {
+    public synchronized void handleAgentData(String data) {
         byte[] ibuf = DatatypeConverter.parseBase64Binary(data);
         AgentDataReader ar = new AgentDataReader(agentUUID, new CborBufReader(ibuf), this);
         ar.run();

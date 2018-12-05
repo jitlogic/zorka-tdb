@@ -131,8 +131,10 @@ public class ZicoTestFixture {
         if (!baseDir.exists()) {
             assertTrue(baseDir.mkdirs());
         }
-        return new RotatingTraceStore(baseDir, new Properties(), s -> 1,
-            Runnable::run, Runnable::run, indexerCache);
+        RotatingTraceStore store = new RotatingTraceStore(baseDir, new Properties(), s -> 1,
+                Runnable::run, Runnable::run, indexerCache);
+        store.open();
+        return store;
     }
 
 
