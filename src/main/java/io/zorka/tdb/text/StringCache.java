@@ -62,6 +62,8 @@ public class StringCache {
     private void promote(Node tmp) {
         // Remove tmp from current position in list
 
+        if (tmp == mru) return;
+
         if (tmp.prev != null) {
             tmp.prev.next = tmp.next;
         }
