@@ -37,7 +37,7 @@ public class TraceTestDataBuilder {
 
     public static class CborTestWriter extends CborDataWriter {
 
-        private List<String> results = new ArrayList<>();
+        private List<byte[]> results = new ArrayList<>();
 
         public CborTestWriter() {
             super(512, 512);
@@ -45,12 +45,12 @@ public class TraceTestDataBuilder {
 
         public void breakAndReset() {
             if (pos > 0) {
-                results.add(DatatypeConverter.printBase64Binary(Arrays.copyOf(buf, pos)));
+                results.add(Arrays.copyOf(buf, pos));
                 pos = 0;
             }
         }
 
-        public List<String> getResults() {
+        public List<byte[]> getResults() {
             return results;
         }
     } // CborTestWriter
@@ -250,7 +250,7 @@ public class TraceTestDataBuilder {
         return new StackData(classId, methodId, fileId, lineNum);
     }
 
-    public static List<String> str(List<WireObj> objs) {
+    public static List<byte[]> str(List<WireObj> objs) {
         CborTestWriter w = new CborTestWriter();
         for (WireObj to : objs) {
             to.serialize(w);
@@ -260,7 +260,7 @@ public class TraceTestDataBuilder {
     }
 
 
-    public static List<String> str(WireObj...objs) {
+    public static List<byte[]> str(WireObj...objs) {
         CborTestWriter w = new CborTestWriter();
         for (WireObj to : objs) {
             to.serialize(w);
@@ -291,7 +291,7 @@ public class TraceTestDataBuilder {
       "HTTP", "SQL", "LDAP", "SOAP", "URI", "STATUS", "MyClass.java", "Request.java", "Server.java"
     };
 
-    public static String agentData() {
+    public static byte[] agentData() {
         List<WireObj> syms = new ArrayList<>();
         for (int i = 0; i < TCV.length; i++) syms.add(sr(TCO+i, TCV[i], TC));
         for (int i = 0; i < TMV.length; i++) syms.add(sr(TMO+i, TMV[i], TM));
@@ -315,7 +315,7 @@ public class TraceTestDataBuilder {
         return 1000 + (ic * TCV.length + im) * TMV.length + is;
     }
 
-    public static String trc(int tst, int dur) {
+    public static byte[] trc(int tst, int dur) {
         return str(
             tr(true, mid(0,0,0), tst, tst + dur, 1,
                 ta("XXX", "YYY"),
@@ -324,7 +324,7 @@ public class TraceTestDataBuilder {
     }
 
 
-    public static String trc(int tst, int dur, String k, String v) {
+    public static byte[] trc(int tst, int dur, String k, String v) {
         return str(
             tr(true, mid(0,0,0), tst, tst + dur, 1,
                 ta(k, v),
@@ -333,7 +333,7 @@ public class TraceTestDataBuilder {
     }
 
 
-    public static String trc(int tst, int dur, String k1, String v1, String k2, String v2) {
+    public static byte[] trc(int tst, int dur, String k1, String v1, String k2, String v2) {
         return str(
             tr(true, mid(0,0,0), tst, tst + dur, 2,
                 tb(1500, 0),
@@ -344,7 +344,7 @@ public class TraceTestDataBuilder {
     }
 
 
-    public static String trc2(int tst, int dur) {
+    public static byte[] trc2(int tst, int dur) {
         return str(
             tr(true, mid(0,0,0), tst, tst + dur, 1,
                 ta("XXX", "YYY"),

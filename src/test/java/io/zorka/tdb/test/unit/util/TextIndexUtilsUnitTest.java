@@ -17,7 +17,6 @@
 package io.zorka.tdb.test.unit.util;
 
 import io.zorka.tdb.test.support.TestUtil;
-import io.zorka.tdb.test.support.TestUtil;
 import org.junit.Test;
 
 import javax.xml.bind.DatatypeConverter;

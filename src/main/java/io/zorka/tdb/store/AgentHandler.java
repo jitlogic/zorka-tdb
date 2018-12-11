@@ -27,7 +27,6 @@ import io.zorka.tdb.util.ZicoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +93,6 @@ public class AgentHandler implements AgentDataProcessor {
     }
 
 
-
     int methodRef(int methodId) {
         if (methodId < methodRefs.length && methodRefs[methodId] != 0) {
             return methodRefs[methodId];
@@ -113,8 +111,7 @@ public class AgentHandler implements AgentDataProcessor {
     }
 
 
-    public synchronized void handleTraceData(String traceUUID, String data, ChunkMetadata md) {
-        byte[] ibuf = DatatypeConverter.parseBase64Binary(data);
+    public synchronized void handleTraceData(String traceUUID, byte[] data, ChunkMetadata md) {
 
         TraceDataIndexer translator = indexerCache.get(traceUUID);
         if (translator == null) {
@@ -131,7 +128,7 @@ public class AgentHandler implements AgentDataProcessor {
             translator.setup(sindex, this, traceUUID, md.getChunkNum(), new TraceDataWriter(cborWriter), cborWriter);
 
             // Process trace data, translate symbol/string IDs etc.
-            TraceDataReader tdr = new TraceDataReader(new CborBufReader(ibuf), translator);
+            TraceDataReader tdr = new TraceDataReader(new CborBufReader(data), translator);
             cborWriter.reset();
             tdr.run();
 
@@ -185,9 +182,8 @@ public class AgentHandler implements AgentDataProcessor {
     }
 
 
-    public synchronized void handleAgentData(String data) {
-        byte[] ibuf = DatatypeConverter.parseBase64Binary(data);
-        AgentDataReader ar = new AgentDataReader(agentUUID, new CborBufReader(ibuf), this);
+    public synchronized void handleAgentData(byte[] data) {
+        AgentDataReader ar = new AgentDataReader(agentUUID, new CborBufReader(data), this);
         ar.run();
     }
 

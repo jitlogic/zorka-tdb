@@ -38,7 +38,7 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
     @Test
     public void testSubmitRetrieveFragmentedTraceRotatingStore() throws Exception {
         RotatingTraceStore store = openRotatingStore();
-        List<String> data = TraceTestDataBuilder.str(
+        List<byte[]> data = TraceTestDataBuilder.str(
             TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0,0,0), 100, 200, 1,
                 TraceTestDataBuilder.ta("XXX", "YYY"),
                 TraceTestDataBuilder.tb(1500, 0),
@@ -84,7 +84,7 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
 
         // Send second chunk
         md.setChunkNum(1);
-        String t1 = data.get(1);
+        byte[] t1 = data.get(1);
         store.handleTraceData(agentUUID, sessnUUID, traceUUID, t1, md);
 
         ChunkMetadata md2 = store.getChunkMetadata(store.getChunkIds(traceUUID).get(1));

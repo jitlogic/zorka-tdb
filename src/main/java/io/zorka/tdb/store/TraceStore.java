@@ -41,7 +41,7 @@ public interface TraceStore extends Closeable, ZicoMaintObject {
      *
      * @param md
      */
-    void handleTraceData(String agentUUID, String sessionUUID, String traceUUID, String data, ChunkMetadata md);
+    void handleTraceData(String agentUUID, String sessionUUID, String traceUUID, byte[] data, ChunkMetadata md);
 
     /**
      * Handles incoming agent state data.
@@ -52,7 +52,7 @@ public interface TraceStore extends Closeable, ZicoMaintObject {
      *
      * @param data Base64 encoded CBOR data
      */
-    void handleAgentData(String agentUUID, String sessionUUID, String data);
+    void handleAgentData(String agentUUID, String sessionUUID, byte[] data);
 
     /** Opens store. */
     void open();

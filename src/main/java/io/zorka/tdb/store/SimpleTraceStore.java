@@ -345,12 +345,12 @@ public class SimpleTraceStore implements TraceStore {
 
 
     @Override
-    public void handleTraceData(String agentUUID, String sessionUUID, String traceUUID, String data, ChunkMetadata md) {
+    public void handleTraceData(String agentUUID, String sessionUUID, String traceUUID, byte[] data, ChunkMetadata md) {
         getHandler(sessionUUID, agentUUID).handleTraceData(traceUUID, data, md);
     }
 
 
-    public void handleAgentData(String agentUUID, String sessionUUID, String data) {
+    public void handleAgentData(String agentUUID, String sessionUUID, byte[] data) {
         getHandler(sessionUUID, agentUUID).handleAgentData(data);
     }
 

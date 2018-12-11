@@ -299,7 +299,7 @@ public class RotatingTraceStore implements TraceStore {
 
 
     @Override
-    public void handleTraceData(String agentUUID, String sessionUUID, String traceUUID, String data, ChunkMetadata md) {
+    public void handleTraceData(String agentUUID, String sessionUUID, String traceUUID, byte[] data, ChunkMetadata md) {
 
         if (log.isDebugEnabled()) {
             log.debug("Got trace data from " + agentUUID + " (" + sessionUUID + ")");
@@ -315,7 +315,7 @@ public class RotatingTraceStore implements TraceStore {
 
 
     @Override
-    public void handleAgentData(String agentUUID, String sessionUUID, String data) {
+    public void handleAgentData(String agentUUID, String sessionUUID, byte[] data) {
 
         if (log.isDebugEnabled()) {
             log.debug("Got agent state from " + agentUUID + " (" + sessionUUID + ")");

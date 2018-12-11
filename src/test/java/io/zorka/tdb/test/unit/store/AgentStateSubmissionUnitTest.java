@@ -53,7 +53,7 @@ public class AgentStateSubmissionUnitTest extends ZicoTestFixture {
 
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
-        String agentData = str(aa("ENV", "UAT"), aa("APP", "PETSTORE")).get(0);
+        byte[] agentData = str(aa("ENV", "UAT"), aa("APP", "PETSTORE")).get(0);
 
         store.handleAgentData(agentUUID, sessnUUID, agentData);
 
@@ -73,7 +73,7 @@ public class AgentStateSubmissionUnitTest extends ZicoTestFixture {
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
 
-        String agentData = str(
+        byte[] agentData = str(
             sr(10, "com.myapp.MyClass", TC),
             sr(11, "myMethod", TM),
             sr(12, "()V", TS),
