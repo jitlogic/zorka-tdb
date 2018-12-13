@@ -43,7 +43,7 @@ public class AgentDataReader implements Runnable {
 
     private void checked(boolean cond, String msg) {
         if (!cond) {
-            throw new ZicoException(msg);
+            throw new ZicoException("At pos=" + reader.position() + ": " + msg);
         }
     }
 
