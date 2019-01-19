@@ -1,3 +1,13 @@
+Zorka 1.90.6 (2019-01-19)
+-------------------------
+
+* trace search code simplified and refactored;
+* fixes: concurrency handling race/deadlock conditions in text indexes;
+* improve concurrency in trace data ingestion code;
+* background indexing scheduling/code reworked;
+* zico2: switched to binary agent-collector protcol (no base64 anymore);
+
+
 Zorka 1.90.5 (2018-11-05)
 -------------------------
 
