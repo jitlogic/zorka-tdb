@@ -56,20 +56,17 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
 
         MetadataQuickIndex idx = new MetadataQuickIndex(new File(tmpDir, "test.mqi"));
 
-        idx.add(md(1, 2, 2, 4, 100000, 0, false, 100L,
+        idx.add(md(1, 2, 100000, 0, false, 100L,
                 42L, 24L, 0L, 1L, 0));
-        idx.add(md(2, 2, 3, 4, 110000, 0, false, 200L,
+        idx.add(md(2, 2, 110000, 0, false, 200L,
                 43L, 25L, 0L, 2L, 0));
-        idx.add(md(3, 2, 3, 4, 120000, 0, false, 300,
+        idx.add(md(3, 2, 120000, 0, false, 300,
                 44L, 26L, 0L, 3L, 0));
 
         assertEquals(3, idx.size());
 
         QmiNode q = QmiQueryBuilder.all().tstart(100000).tstop(120000).qmiNode();
         assertEquals(3, search(idx, q).size());
-
-        q.setAppId(3); assertEquals(2, search(idx, q).size());
-        q.setAppId(2); assertEquals(1, search(idx, q).size());
     }
 
     @Test
@@ -78,7 +75,7 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
         MetadataQuickIndex idx = new MetadataQuickIndex(new File(tmpDir, "test.mqi"), 128);
 
         for (int i = 0; i < 8; i++)
-            idx.add(md(i % 2, i % 2, i % 3, i % 2, 10000 * (i+10), i % 10, false, i * 100,
+            idx.add(md(i % 2, i % 2, 10000 * (i+10), i % 10, false, i * 100,
                     42L+i, 24L+i, 0L, 1L, 0));
 
         assertEquals(8, idx.size());
@@ -93,7 +90,7 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
         MetadataQuickIndex idx = new MetadataQuickIndex(new File(tmpDir, "test.mqi"), 128);
 
         for (int i = 0; i < 40; i++)
-            idx.add(md(i % 2, i % 2, i % 3, i % 2, 10000 * (i+10), i % 10, false, i * 100,
+            idx.add(md(i % 2, i % 2, 10000 * (i+10), i % 10, false, i * 100,
                     42L+i, 24L+i, 0, 1, 0));
 
         assertEquals(40, idx.size());
@@ -112,27 +109,6 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
     }
 
     @Test
-    public void testFilterByHost() {
-        MetadataQuickIndex idx = new MetadataQuickIndex(new File(tmpDir, "test.mqi"), 128);
-
-        for (int i = 0; i < 40; i++) {
-            ChunkMetadata cm = md(i % 2, i % 2, i % 3, i % 2, 10000 * (i+10), i % 10, false, i * 100,
-                    42L+i, 24L+i, 0L, 1L, 0);
-            cm.setHostId(i % 4);
-            idx.add(cm);
-        }
-
-        assertEquals(40, idx.size());
-
-        QmiNode q = QmiQueryBuilder.all().qmiNode();
-
-        q.setHostId(0); assertEquals(40, search(idx, q).size());
-        q.setHostId(1); assertEquals(10, search(idx, q).size());
-        q.setHostId(2); assertEquals(10, search(idx, q).size());
-        q.setHostId(3); assertEquals(10, search(idx, q).size());
-    }
-
-    @Test
     public void testFormatParseChunkId() {
         long chunkId = formatChunkId(1, 2, true, true);
         assertEquals(1, parseStoreId(chunkId));
@@ -146,9 +122,8 @@ public class MetadataQuickIndexUnitTest extends ZicoTestFixture {
         MetadataQuickIndex idx = new MetadataQuickIndex(new File(tmpDir, "test.mqi"), 128);
 
         for (int i = 0; i < 40; i++) {
-            ChunkMetadata cm = md(i % 2, i % 2, i % 3, i % 2, 10000 * (i+10), i % 10, false, i * 100,
+            ChunkMetadata cm = md(i % 2, i % 2, 10000 * (i+10), i % 10, false, i * 100,
                     42L+i, 24L+i, 0L, 1L, 0);
-            cm.setHostId(i % 4);
             idx.add(cm);
         }
 

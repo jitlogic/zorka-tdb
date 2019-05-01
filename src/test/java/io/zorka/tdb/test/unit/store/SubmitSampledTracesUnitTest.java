@@ -41,11 +41,8 @@ public class SubmitSampledTracesUnitTest extends ZicoTestFixture {
         DatatypeConverter.parseBase64Binary("yJ/KSAAAAQAAAAAA2CGCGwAAAV4I1MQSGCDJrMYBYS/GA2MyMDDGGQaZbmxvY2FsaG9zdDo4MDgwxhkGmmprZWVwLWFsaXZlxhkGm2huby1jYWNoZcYZBpxobm8tY2FjaGXGGQadYTHGGQaeeGlNb3ppbGxhLzUuMCAoWDExOyBMaW51eCB4ODZfNjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS82MC4wLjMxMTIuMTAxIFNhZmFyaS81MzcuMzbGGQafeFV0ZXh0L2h0bWwsYXBwbGljYXRpb24veGh0bWwreG1sLGFwcGxpY2F0aW9uL3htbDtxPTAuOSxpbWFnZS93ZWJwLGltYWdlL2FwbmcsKi8qO3E9MC44xhkGoGExxhkGoXFnemlwLCBkZWZsYXRlLCBicsYZBqJ4IGVuLVVTLGVuO3E9MC44LHBsO3E9MC42LHJ1O3E9MC40yJ/KSAAAAgAAAAAAyJ/KSAAAAwAAAAAAzEgAAAIAAAAAsf/In8pIAAAEAACxHPvIn8pIAAAFAACxHPvMSAAAAQAAsR08/8ifykgAAAYAAPLqR8xIAAABAADy6rP/yJ/KSAAABwABX4KCzEgAAAEAAV+Eq//MSAAABAAAsSBc/8xIAAALAAAABFL/zEgAAAwAAAAFWv8=")
     };
 
-    private ChunkMetadata cm(int envId, int appId) {
-        ChunkMetadata rslt = new ChunkMetadata(rand.nextLong(), rand.nextLong(), 0L, 1L, 0);
-        rslt.setEnvId(envId);
-        rslt.setAppId(appId);
-        return rslt;
+    private ChunkMetadata cm() {
+        return new ChunkMetadata(rand.nextLong(), rand.nextLong(), 0L, 1L, 0);
     }
 
     @Test @Ignore("Fix me.")
@@ -59,7 +56,7 @@ public class SubmitSampledTracesUnitTest extends ZicoTestFixture {
         // TODO fix input data, so trace ID is proper
 
         store.handleAgentData(sessnUUID, false, AGD_PACKETS[0]);
-        store.handleTraceData(sessnUUID, TRC_PACKETS[0], cm(1, 1));
+        store.handleTraceData(sessnUUID, TRC_PACKETS[0], cm());
 
         TraceSearchResult sr0 = store.searchTraces(QmiQueryBuilder.all().query());
         Set sl0 = drain(sr0);

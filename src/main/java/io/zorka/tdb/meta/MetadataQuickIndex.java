@@ -68,11 +68,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * +--------+--------+--------+--------+--------+--------+--------+--------+
  * |            tstamp                 |             startOffs             | W1
  * +--------+--------+--------+--------+--------+--------+--------+--------+
- * |e|tst-ms|  errL  |     typeId      |      envId      |     appId       | W2
+ * |e|tst-ms|  errL  |     typeId      |                 |                 | W2
  * +--------+--------+--------+--------+--------+--------+--------+--------+
  * |                          dataOffs                   |     chunkNum    | W3
  * +--------+--------+--------+--------+--------+--------+--------+--------+
- * |              did                  |    duration     |      hostId     | W4
+ * |              did                  |    duration     |                 | W4
  * +--------+--------+--------+--------+--------+--------+--------+--------+
  * |             ftid                  |               ttid                | W5
  * +--------+--------+--------+--------+--------+--------+--------+--------+
@@ -210,9 +210,7 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
 
     private static long format_W2(ChunkMetadata md) {
         int errL = md.getErrors() > 0x10000 ? 0xff : (md.getErrors() & 0xff);
-        return (((long)md.getAppId()) << 48)
-                | (((long)md.getEnvId()) << 32)
-                | (((long)md.getTypeId()) << 16)
+        return (((long)md.getTypeId()) << 16)
                 | errL << 8
                 | md.getFlags();
     }
@@ -221,8 +219,6 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
         md.setFlags((int)w2 & 0xff);
         md.setErrors((int)(w2 >> 8) & 0xff);
         md.setTypeId((int)(w2 >> 16) & 0xffff);
-        md.setEnvId((int)(w2 >> 32) & 0xffff);
-        md.setAppId((int)(w2 >> 48) & 0xffff);
     }
 
     private static int parse_W2_dur(long w2) {
@@ -234,10 +230,7 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
     }
 
     private static long format_W2M(ChunkMetadata md) {
-        return
-                (md.getAppId()  != 0 ? 0xffff000000000000L : 0L)
-                        | (md.getEnvId()  != 0 ? 0x0000ffff00000000L : 0L)
-                        | (md.getTypeId() != 0 ? 0x00000000ffff0000L : 0L)
+        return (md.getTypeId() != 0 ? 0x00000000ffff0000L : 0L)
                         | (md.getFlags()  != 0 ? 0x0000000000000001L : 0L);
     }
 
@@ -266,9 +259,9 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
         md.setChunkNum((int)(w3 >>> 48) & 0xffff);
     }
 
-    public static long format_W4(int mid, int did, long duration, long hostId) {
+    public static long format_W4(int mid, int did, long duration) {
         long md = did > 0 ? ((long) did) | 0x80000000L : mid;
-        return md | (Math.min(duration, 0xffff) << 32) | (Math.min(hostId, 0xffff) << 48);
+        return md | (Math.min(duration, 0xffff) << 32);
     }
 
 
@@ -280,7 +273,6 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
         }
 
         md.setDuration((w4 >>> 32) & 0xffff);
-        md.setHostId((int)((w4 >>> 48) & 0xffff));
     }
 
 
@@ -323,7 +315,7 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
         long w1 = format_W1(md.getStartOffs(), md.getTstamp() / 1000);
         long w2 = format_W2(md);
         long w3 = format_W3(md.getChunkNum(), md.getDataOffs());
-        long w4 = format_W4(md.getMethodId(), md.getDescId(), md.getDuration(), md.getHostId());
+        long w4 = format_W4(md.getMethodId(), md.getDescId(), md.getDuration());
         long w6 = format_W6(md);
 
         if (fpos > flimit - RECORD_SIZE) {

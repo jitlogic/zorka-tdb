@@ -32,12 +32,10 @@ public class AgentDataReader implements Runnable {
 
     private CborBufReader reader;
     private AgentDataProcessor output;
-    private String agentUUID;
 
-    public AgentDataReader(String agentUUID, CborBufReader reader, AgentDataProcessor output) {
+    public AgentDataReader(CborBufReader reader, AgentDataProcessor output) {
         this.reader = reader;
         this.output = output;
-        this.agentUUID = agentUUID;
     }
 
 
@@ -82,14 +80,6 @@ public class AgentDataReader implements Runnable {
                 int methodId = reader.readInt();
                 int signatureId = reader.readInt();
                 output.defMethodRef(remoteId, classId, methodId, signatureId);
-                break;
-            }
-            case TAG_AGENT_ATTR: {
-                int len = reader.readInt();
-                checked(len == 2, "Expected 2-item tuple.");
-                String key = reader.readStr();
-                String val = reader.readStr();
-                output.defAgentAttr(agentUUID, key, val);
                 break;
             }
             default:

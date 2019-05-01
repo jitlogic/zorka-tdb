@@ -28,20 +28,8 @@ import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
  */
 public class ChunkMetadata {
 
-    public static final int TID_FLAG = 0x80000000;
-    public static final int TID_MASK = 0x7fffffff;
-
     /** Trace type ID. This is resolved externally and is consistent across all stores. */
     private int typeId;
-
-    /** Application ID. This is resolved externally and is consistent across stores. */
-    private int appId;
-
-    /** Environment ID. This is resolved externally and is consistent across stores. */
-    private int envId;
-
-    /** Host ID. This is resolved externally and is consistent across stores. */
-    private int hostId;
 
     /** Trace flags. See com.jitlogic.zorka.cbor.TraceRecordFlags for reference. */
     private int tflags;
@@ -143,14 +131,6 @@ public class ChunkMetadata {
         this.tflags = tflags;
     }
 
-    public int getAppId() {
-        return appId;
-    }
-
-    public void setAppId(int appId) {
-        this.appId = appId;
-    }
-
     public long getTstamp() {
         return tstamp;
     }
@@ -206,14 +186,6 @@ public class ChunkMetadata {
 
     public int getTypeId() {
         return typeId;
-    }
-
-    public int getEnvId() {
-        return envId;
-    }
-
-    public void setEnvId(int envId) {
-        this.envId = envId;
     }
 
     public void setTypeId(int typeId) {
@@ -346,14 +318,6 @@ public class ChunkMetadata {
             this.tids.add(id);
         }
         this.fids.add(id);
-    }
-
-    public int getHostId() {
-        return hostId;
-    }
-
-    public void setHostId(int hostId) {
-        this.hostId = hostId;
     }
 
     public long getTraceId1() {

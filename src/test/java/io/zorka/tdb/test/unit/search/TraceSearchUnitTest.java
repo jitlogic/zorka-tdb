@@ -91,10 +91,10 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
 
         store.handleTraceData(sessnUUID,
                 TraceTestDataBuilder.trc(1L, 400, 100, "XXX", "YYY", "AAA", "UVW"),
-                md(traceId1, traceId2, 0, spanId, 0, 1, 2));
+                md(traceId1, traceId2, 0, spanId, 0));
         store.handleTraceData(sessnUUID,
                 TraceTestDataBuilder.trc(1L, 500, 200, "XXX", "XYZ", "CCC", "UVW"),
-                md(traceId1+1, traceId2+1, 0, spanId+1, 0, 1, 2));
+                md(traceId1+1, traceId2+1, 0, spanId+1, 0));
 
         if (archive) store.archive();
 

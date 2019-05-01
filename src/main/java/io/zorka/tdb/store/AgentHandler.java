@@ -17,14 +17,12 @@
 package io.zorka.tdb.store;
 
 import com.jitlogic.zorka.cbor.CborDataWriter;
-import com.jitlogic.zorka.common.util.ZorkaUtil;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.*;
 import io.zorka.tdb.util.CborBufReader;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataTextIndex;
 import io.zorka.tdb.meta.StructuredTextIndex;
-import io.zorka.tdb.util.ZicoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,10 +44,7 @@ public class AgentHandler implements AgentDataProcessor {
     private int[] stringRefs = new int[REF_DELTA];
     private int[] methodRefs = new int[REF_DELTA];
 
-
-    private String agentUUID;
-    private String sessionUUID;
-    private int hostId;
+    private String sessionId;
 
     private SimpleTraceStore store;
 
@@ -71,7 +66,7 @@ public class AgentHandler implements AgentDataProcessor {
 
     private TraceTypeResolver traceTypeResolver;
 
-    public AgentHandler(SimpleTraceStore store, String agentUUID, String sessionUUID, TraceTypeResolver traceTypeResolver) {
+    public AgentHandler(SimpleTraceStore store, String sessionUUID, TraceTypeResolver traceTypeResolver) {
         // TODO zrobić po prostu referencję do danego store'a
         this.store = store;
         this.mindex = store.getMetaIndex();
@@ -80,9 +75,7 @@ public class AgentHandler implements AgentDataProcessor {
         this.dataFile = store.getDataFile();
         this.indexerCache = store.getIndexerCache();
         this.postproc = store.getPostproc();
-        this.hostId = ZicoUtil.extractUuidSeq(agentUUID);
-        this.agentUUID = agentUUID;
-        this.sessionUUID = sessionUUID;
+        this.sessionId = sessionUUID;
         this.traceTypeResolver = traceTypeResolver;
         this.minDuration = Integer.parseInt(store.getProps().getProperty("ingest.min.duration", "1"));
 
@@ -149,9 +142,6 @@ public class AgentHandler implements AgentDataProcessor {
                 }
 
                 metadata.setDataOffs(dataOffs);
-                metadata.setAppId(md.getAppId());
-                metadata.setEnvId(md.getEnvId());
-                metadata.setHostId(hostId);
 
                 if (postproc != null) postproc.process(metadata, store);
 
@@ -181,19 +171,17 @@ public class AgentHandler implements AgentDataProcessor {
 
 
     public synchronized void handleAgentData(byte[] data) {
-        AgentDataReader ar = new AgentDataReader(agentUUID, new CborBufReader(data), this);
+        AgentDataReader ar = new AgentDataReader(new CborBufReader(data), this);
         ar.run();
     }
 
-    public String getSessionUUID() {
-        return sessionUUID;
+    public String getSessionId() {
+        return sessionId;
     }
 
     public long getLastTstamp() {
         return lastTstamp;
     }
-
-    public String getAgentUUID() { return agentUUID; }
 
     @Override
     public int defStringRef(int remoteId, String s, byte type) {
@@ -209,7 +197,7 @@ public class AgentHandler implements AgentDataProcessor {
 
         if (s == null || s.length() == 0) {
             s = " ";
-            log.warn("Empty string ref pased to agent " + agentUUID + " (session: " + sessionUUID + ")");
+            log.warn("Empty string ref pased to agent: " + sessionId);
         }
 
         stringRefs[remoteId] = sindex.addTyped(type, s.getBytes());
@@ -234,10 +222,4 @@ public class AgentHandler implements AgentDataProcessor {
 
         return methodRefs[remoteId];
     }
-
-    @Override
-    public void defAgentAttr(String agentUUID, String key, String val) {
-        sindex.addAgentAttr(agentUUID, key, val);
-    }
-
 }

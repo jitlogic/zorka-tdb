@@ -193,11 +193,6 @@ public class TraceTestDataBuilder {
 
 
     /** Generates agent attributes. */
-    public static WireObj aa(Object k, Object v) {
-        return new TaggedObjs(ARR_BASE, TAG_AGENT_ATTR, k, v);
-    }
-
-
     public static WireObj sr(int id, String s, int type) {
         return new TaggedObjs(ARR_BASE, TAG_STRING_DEF, id, s, type);
     }

@@ -58,7 +58,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
                 ta("XXX", "YYY"),
                 tb(1500, 0, 1L)
             )).get(0),
-            md(42L, 24L, 0L, 1L, 0, 1, 2));
+            md(42L, 24L, 0L, 1L, 0));
 
 
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
@@ -92,7 +92,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
                 ta("STATUS", "200"),
                 tf(TF_ERROR_MARK)
             )).get(0),
-            md(42L, 24L, 0L, 1L, 0,  1, 2));
+            md(42L, 24L, 0L, 1L, 0));
 
         ChunkMetadata md = store.getChunkMetadata(0);
         assertTrue(md.getDescId() != 0);
@@ -114,7 +114,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         store.handleAgentData(sessnUUID, true, agentData());
         store.handleTraceData(sessnUUID, trc(1L, 100, 200),
-                md(42L, 24L, 0L, 1L, 0, 1, 2));
+                md(42L, 24L, 0L, 1L, 0));
 
         TraceRecord rslt = store.retrieve(42L, 24L, 1L, rtr());
 
@@ -136,13 +136,13 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         store.handleAgentData(sessnUUID, true, agentData());
         store.handleTraceData(sessnUUID, trc(1L, 100, 200),
-                md(42L, 24L, 0L, 1L, 0, 1, 2));
+                md(42L, 24L, 0L, 1L, 0));
 
         store.archive();
 
         store.handleAgentData(sessnUUID, true, agentData());
         store.handleTraceData(sessnUUID, trc(1L, 100, 200),
-                md(45L, 25L, 0L, 1L, 0, 1, 2));
+                md(45L, 25L, 0L, 1L, 0));
 
         TraceRecord rslt1 = store.retrieve(42L, 24L, 1L, rtr());
         assertNotNull(rslt1);
@@ -163,13 +163,13 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         store.handleAgentData(sessnUUID, true, agentData());
         store.handleTraceData(sessnUUID, trc(1L, 100, 200),
-                md(42L, 24L, 0L, 1L, 0, 1, 2));
+                md(42L, 24L, 0L, 1L, 0));
 
         store.archive();
 
         store.handleAgentData(sessnUUID, true, agentData());
         store.handleTraceData(sessnUUID, trc(1L, 100, 200),
-                md(43L, 25L, 0L, 1L, 0, 1, 2));
+                md(43L, 25L, 0L, 1L, 0));
 
         store.close();
         store = openRotatingStore();
@@ -191,7 +191,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         store.handleAgentData(sessnUUID, true, agentData());
 
         store.handleTraceData(sessnUUID, trc2(1L,100, 200),
-                md(42L, 24L, 0L, 1L, 0, 1, 2));
+                md(42L, 24L, 0L, 1L, 0));
 
         byte [] tb0 = store.retrieveRaw(42L, 24L, 1L);
         TraceRecord tr0 = store.retrieve(42L, 24L, 1L, rtr());
@@ -227,7 +227,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
                 ta("URL", "http://127.0.0.1:8080/my/app"),
                 tb(1500, 0, 1L)
             )).get(0),
-            md(42L, 24L, 0L, 1L, 0, 1, 2));
+            md(42L, 24L, 0L, 1L, 0));
 
 
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
@@ -257,7 +257,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
                     sd(101, 201, 7, 24),
                     sd(102, 202, 8, 66)
                 ))).get(0),
-            md(42L, 24L, 0L, 1L, 0, 1, 2));
+            md(42L, 24L, 0L, 1L, 0));
 
 
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();

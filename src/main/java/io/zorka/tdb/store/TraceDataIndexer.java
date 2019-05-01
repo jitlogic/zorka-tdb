@@ -377,8 +377,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     public void commit() {
     }
 
-
-
     public List<ChunkMetadata> getTraceMetaData() {
         List<ChunkMetadata> rslt = new ArrayList<>();
         rslt.addAll(mrecs);
@@ -398,11 +396,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     @Override
     public int defMethodRef(int remoteId, int classId, int methodId, int signatureId) {
         return ah.defMethodRef(remoteId, classId, methodId, signatureId);
-    }
-
-    @Override
-    public void defAgentAttr(String agentUUID, String key, String val) {
-        ah.defAgentAttr(agentUUID, key, val);
     }
 
     public long getTstamp() {

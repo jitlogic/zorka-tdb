@@ -191,7 +191,7 @@ public class ZicoTestFixture {
     }
 
 
-    public static ChunkMetadata md(int startOffs, int typeId, int appId, int envId,
+    public static ChunkMetadata md(int startOffs, int typeId,
                                    long tstamp, int duration, boolean errorFlag,
                                    long dataOffs, long traceId1, long traceId2,
                                    long parentId, long spanId, int chunkNum) {
@@ -200,8 +200,6 @@ public class ZicoTestFixture {
 
         tm.setStartOffs(startOffs);
         tm.setTypeId(typeId);
-        tm.setAppId(appId);
-        tm.setEnvId(envId);
         tm.setTstamp(tstamp);
         tm.setDuration(duration);
         tm.setDataOffs(dataOffs);
@@ -212,10 +210,8 @@ public class ZicoTestFixture {
     }
 
 
-    public ChunkMetadata md(long traceId1, long traceId2, long parentId, long spanId, int chunkNum, int appId, int envId) {
+    public ChunkMetadata md(long traceId1, long traceId2, long parentId, long spanId, int chunkNum) {
         ChunkMetadata tm = new ChunkMetadata(traceId1, traceId2, parentId, spanId, chunkNum);
-        tm.setAppId(appId);
-        tm.setEnvId(envId);
         return tm;
     }
 

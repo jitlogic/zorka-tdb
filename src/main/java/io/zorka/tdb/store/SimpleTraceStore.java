@@ -264,7 +264,7 @@ public class SimpleTraceStore implements TraceStore {
         }
 
         if (agentHandler == null) {
-            agentHandler = new AgentHandler(this, sessionId, sessionId, traceTypeResolver);
+            agentHandler = new AgentHandler(this, sessionId, traceTypeResolver);
             handlers.put(sessionId, agentHandler);
         }
 
@@ -398,7 +398,7 @@ public class SimpleTraceStore implements TraceStore {
         synchronized (handlers) {
             handlers.values().stream()
                 .filter(ah -> tst - ah.getLastTstamp() > sessionTimeout)
-                .map(AgentHandler::getSessionUUID)
+                .map(AgentHandler::getSessionId)
                 .forEach(handlers::remove);
         }
     }

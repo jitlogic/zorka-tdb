@@ -13,12 +13,6 @@ public class TraceSearchResultItem {
 
     private int typeId;
 
-    private int appId;
-
-    private int envId;
-
-    private int hostId;
-
     private int tflags;
 
     private int recs;
@@ -47,9 +41,6 @@ public class TraceSearchResultItem {
         this.tstamp = cm.getTstamp();
         this.duration = cm.getDuration();
         this.typeId = cm.getTypeId();
-        this.appId = cm.getAppId();
-        this.envId = cm.getEnvId();
-        this.hostId = cm.getHostId();
 
         // TODO tflags
 
@@ -96,30 +87,6 @@ public class TraceSearchResultItem {
 
     public void setTypeId(int typeId) {
         this.typeId = typeId;
-    }
-
-    public int getAppId() {
-        return appId;
-    }
-
-    public void setAppId(int appId) {
-        this.appId = appId;
-    }
-
-    public int getEnvId() {
-        return envId;
-    }
-
-    public void setEnvId(int envId) {
-        this.envId = envId;
-    }
-
-    public int getHostId() {
-        return hostId;
-    }
-
-    public void setHostId(int hostId) {
-        this.hostId = hostId;
     }
 
     public int getTflags() {

@@ -24,6 +24,4 @@ public interface AgentDataProcessor {
     int defStringRef(int remoteId, String s, byte type);
 
     int defMethodRef(int remoteId, int classId, int methodId, int signatureId);
-
-    void defAgentAttr(String agentUUID, String key, String val);
 }

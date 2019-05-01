@@ -71,7 +71,7 @@ public class HLSearchUnitTest extends ZicoTestFixture {
             store.handleTraceData(sessnUUID,
                     TraceTestDataBuilder.trc(sid, 100+i*50, 100 + (i*200) % 5000,
                             "XXX", "YYY"+(i % 3), "AAA", "UVW"+(i % 7)),
-                    md(42L+(i%4), 24L+(i%4), 0, sid, 0, i%4+1, i%2+1));
+                    md(42L+(i%4), 24L+(i%4), 0, sid, 0));
         }
 
         if (archive) store.archive();
