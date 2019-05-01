@@ -70,8 +70,6 @@ public interface TraceStore extends Closeable, ZicoMaintObject {
      */
     void archive();
 
-    void setPostproc(ChunkMetadataProcessor postproc);
-
     long getTstart();
 
     long getTstop();

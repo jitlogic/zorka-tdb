@@ -59,9 +59,6 @@ public class SimpleTraceStore implements TraceStore {
     private volatile MetadataQuickIndex qindex;
     private volatile RawTraceDataFile fdata;
 
-    private ChunkMetadataProcessor postproc;
-
-
     // TODO factor out trace/agent data handling code to separate class
     private final Map<String,AgentHandler> handlers = new ConcurrentHashMap<>();
 
@@ -234,14 +231,6 @@ public class SimpleTraceStore implements TraceStore {
 
     public synchronized Map<String,TraceDataIndexer> getIndexerCache() {
         return indexerCache;
-    }
-
-    public synchronized ChunkMetadataProcessor getPostproc() {
-        return postproc;
-    }
-
-    public synchronized void setPostproc(ChunkMetadataProcessor postproc) {
-        this.postproc = postproc;
     }
 
     @Override

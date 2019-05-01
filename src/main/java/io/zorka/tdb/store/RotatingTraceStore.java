@@ -52,8 +52,6 @@ public class RotatingTraceStore implements TraceStore {
 
     private Map<String,TraceDataIndexer> indexerCache;
 
-    private volatile ChunkMetadataProcessor postproc = null;
-
     private TraceTypeResolver traceTypeResolver;
 
 
@@ -81,17 +79,6 @@ public class RotatingTraceStore implements TraceStore {
         this.props = props;
         SimpleTraceStore s = state.getCurrent();
         if (s != null) s.configure(props);
-    }
-
-    @Override
-    public void setPostproc(ChunkMetadataProcessor postproc) {
-        synchronized (this) {
-            this.postproc = postproc;
-        }
-        RotatingTraceStoreState ts = state;
-        if (ts != null && ts.getCurrent() != null) {
-            ts.getCurrent().setPostproc(postproc);
-        }
     }
 
     @Override
@@ -355,7 +342,6 @@ public class RotatingTraceStore implements TraceStore {
         SimpleTraceStore current = new SimpleTraceStore(root, props, indexerCache, traceTypeResolver);
 
         current.open();
-        current.setPostproc(postproc);
 
         state = RotatingTraceStoreState.extend(state, current);
         if (ts.getCurrent() != null)

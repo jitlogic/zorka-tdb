@@ -64,10 +64,6 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
         store.retrieveChunk(0, rtr);
         assertNotNull(rtr.getResult());
-
-        ChunkMetadata md = store.getChunkMetadata(0);
-        assertTrue(md.getMethodId() != 0);
-        //assertTrue(md.getDescId() != 0);
     }
 
     public final static int TICKS_IN_SECOND = 1000000000/65536;
@@ -76,10 +72,6 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
     public void testSubmitSimpleTraceAndCheckForFormatting() throws Exception {
         SimpleTraceStore store = createSimpleStore(1);
         store.open();
-
-        TemplatingMetadataProcessor tmp = new TemplatingMetadataProcessor();
-        tmp.putTemplate(1, "${URI} -> ${STATUS}");
-        store.setPostproc(tmp);
 
         String sessnUUID = UUID.randomUUID().toString();
 
@@ -95,8 +87,6 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
             md(42L, 24L, 0L, 1L, 0));
 
         ChunkMetadata md = store.getChunkMetadata(0);
-        assertTrue(md.getDescId() != 0);
-        assertEquals("/my/app -> 200", store.getTextIndex().resolve(md.getDescId()));
 
         assertEquals(1, md.getRecs());
         assertEquals(42, md.getCalls());
@@ -233,10 +223,6 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
         store.retrieveChunk(0, rtr);
         assertNotNull(rtr.getResult());
-
-        ChunkMetadata md = store.getChunkMetadata(0);
-        assertTrue(md.getMethodId() != 0);
-        //assertTrue(md.getDescId() != 0);
     }
 
     @Test

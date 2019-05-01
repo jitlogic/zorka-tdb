@@ -54,8 +54,6 @@ public class AgentHandler implements AgentDataProcessor {
 
     private MetadataQuickIndex qindex;
 
-    private ChunkMetadataProcessor postproc;
-
     private CborDataWriter cborWriter;
 
     private Map<String,TraceDataIndexer> indexerCache;
@@ -74,7 +72,6 @@ public class AgentHandler implements AgentDataProcessor {
         this.qindex = store.getQuickIndex();
         this.dataFile = store.getDataFile();
         this.indexerCache = store.getIndexerCache();
-        this.postproc = store.getPostproc();
         this.sessionId = sessionUUID;
         this.traceTypeResolver = traceTypeResolver;
         this.minDuration = Integer.parseInt(store.getProps().getProperty("ingest.min.duration", "1"));
@@ -142,8 +139,6 @@ public class AgentHandler implements AgentDataProcessor {
                 }
 
                 metadata.setDataOffs(dataOffs);
-
-                if (postproc != null) postproc.process(metadata, store);
 
                 int slotId = qindex.add(metadata);
 

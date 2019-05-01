@@ -50,7 +50,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     private CborDataWriter writer;
     private AgentHandler ah;
 
-    private int lastPos = -1, lastMethod = -1;
+    private int lastPos = -1;
 
     private int[] lastIds = new int[64];
     private int lastIdsSize = -1;   // -1 -- collecting last IDs disabled, > 0 -- collecting lastIDs enabled, points to first free slot
@@ -195,7 +195,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         md.setStackDepth(stackDepth);
         md.markFlag(TF_CHUNK_FIRST);
         md.setStartOffs(lastPos);
-        md.setMethodId(lastMethod);
         md.setTstamp(lastTstamp);
         md.setTstart(tstart);
 
@@ -203,7 +202,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         md.addRecs(1);
         mpush(md);
 
-        catchId(lastMethod);
         flushLastIds();
 
         return mtop.catchTypeId(typeId);
@@ -236,7 +234,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 break;
             case TI_METHOD:
                 v = methodRef((int)v);
-                lastMethod = (int)v;
                 break;
             case TI_CALLS:
                 if (mtop != null) {

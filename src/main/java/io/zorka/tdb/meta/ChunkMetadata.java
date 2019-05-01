@@ -51,12 +51,6 @@ public class ChunkMetadata {
 
     private int zeroLevel = 1;
 
-    /** Top level method (resolved via text index). */
-    private int methodId;
-
-    /** Trace description (resolved via text index). */
-    private int descId;
-
     /** Initial stack depth (should be 0 for top level traces, more than 0 for all embedded traces). */
     private int stackDepth;
 
@@ -98,7 +92,7 @@ public class ChunkMetadata {
 
     @Override
     public String toString() {
-        return "ChunkMetadata(dataOffs=" + dataOffs + ", startOffs=" + startOffs + ", methodId=" + methodId
+        return "ChunkMetadata(dataOffs=" + dataOffs + ", startOffs=" + startOffs
             + ", tstamp=" + tstamp + ", typeId=" + typeId + ")";
     }
 
@@ -214,22 +208,6 @@ public class ChunkMetadata {
 
     public void setStartOffs(int startOffs) {
         this.startOffs = startOffs;
-    }
-
-    public int getMethodId() {
-        return methodId;
-    }
-
-    public void setMethodId(int methodId) {
-        this.methodId = methodId;
-    }
-
-    public int getDescId() {
-        return descId;
-    }
-
-    public void setDescId(int descId) {
-        this.descId = descId;
     }
 
     public int catchTypeId(int typeId) {

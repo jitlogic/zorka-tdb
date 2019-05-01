@@ -211,8 +211,7 @@ public class ZicoTestFixture {
 
 
     public ChunkMetadata md(long traceId1, long traceId2, long parentId, long spanId, int chunkNum) {
-        ChunkMetadata tm = new ChunkMetadata(traceId1, traceId2, parentId, spanId, chunkNum);
-        return tm;
+        return new ChunkMetadata(traceId1, traceId2, parentId, spanId, chunkNum);
     }
 
 
