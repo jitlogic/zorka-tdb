@@ -59,12 +59,11 @@ public class QmiNode {
     /** Minimum and maximum number of errors. */
     private long minErrs = 0, maxErrs = Long.MAX_VALUE;
 
-    /** Trace UUID */
-    private String uuid;
+    private long traceId1 = 0, traceId2 = 0;
 
-    private String dtraceUuid, dtraceTid;
+    private long spanId = 0;
 
-    private int dtraceUuidId, dtraceTidId;
+    private long parentId = 0;
 
     public QmiNode() {
 
@@ -87,11 +86,8 @@ public class QmiNode {
         this.maxRecs = other.maxRecs;
         this.minErrs = other.minErrs;
         this.maxErrs = other.maxErrs;
-        this.uuid = other.uuid;
-        this.dtraceUuid = other.dtraceUuid;
-        this.dtraceTid = other.dtraceTid;
-        this.dtraceUuidId = other.dtraceUuidId;
-        this.dtraceTidId = other.dtraceTidId;
+        this.traceId1 = other.traceId1;
+        this.traceId2 = other.traceId2;
     }
 
     public int getAppId() {
@@ -206,14 +202,6 @@ public class QmiNode {
         this.maxErrs = maxErrs;
     }
 
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
-
     public StringSearchNode getDesc() {
         return desc;
     }
@@ -230,36 +218,36 @@ public class QmiNode {
         this.hostId = hostId;
     }
 
-    public String getDtraceUuid() {
-        return dtraceUuid;
+    public long getTraceId1() {
+        return traceId1;
     }
 
-    public void setDtraceUuid(String dtraceUuid) {
-        this.dtraceUuid = dtraceUuid;
+    public void setTraceId1(long traceId1) {
+        this.traceId1 = traceId1;
     }
 
-    public String getDtraceTid() {
-        return dtraceTid;
+    public long getTraceId2() {
+        return traceId2;
     }
 
-    public void setDtraceTid(String dtraceTid) {
-        this.dtraceTid = dtraceTid;
+    public void setTraceId2(long traceId2) {
+        this.traceId2 = traceId2;
     }
 
-    public int getDtraceUuidId() {
-        return dtraceUuidId;
+    public long getSpanId() {
+        return spanId;
     }
 
-    public void setDtraceUuidId(int dtraceUuidId) {
-        this.dtraceUuidId = dtraceUuidId;
+    public void setSpanId(long spanId) {
+        this.spanId = spanId;
     }
 
-    public int getDtraceTidId() {
-        return dtraceTidId;
+    public long getParentId() {
+        return parentId;
     }
 
-    public void setDtraceTidId(int dtraceTidId) {
-        this.dtraceTidId = dtraceTidId;
+    public void setParentId(long parentId) {
+        this.parentId = parentId;
     }
 
     @Override
@@ -281,10 +269,11 @@ public class QmiNode {
                 maxRecs == that.maxRecs &&
                 minErrs == that.minErrs &&
                 maxErrs == that.maxErrs &&
-                Objects.equals(desc, that.desc) &&
-                Objects.equals(uuid, that.uuid) &&
-                Objects.equals(dtraceTid, that.dtraceUuid) &&
-                Objects.equals(dtraceUuid, that.dtraceUuid);
+                traceId1 == that.traceId1 &&
+                traceId2 == that.traceId2 &&
+                spanId == that.spanId &&
+                parentId == that.parentId &&
+                Objects.equals(desc, that.desc);
     }
 
     @Override
@@ -293,7 +282,7 @@ public class QmiNode {
                 appId, envId, typeId,
                 minDuration, maxDuration, tstart, tstop,
                 minCalls, maxCalls, minRecs, maxRecs, minErrs, maxErrs,
-                errorFlag, uuid, desc);
+                errorFlag, traceId1, traceId2, parentId, spanId, desc);
     }
 }
 

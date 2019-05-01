@@ -85,14 +85,17 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
 
+        long traceId1 = rand.nextLong(), traceId2 = rand.nextLong();
+        long spanId = rand.nextLong();
+
         store.handleAgentData(agentUUID, sessnUUID, TraceTestDataBuilder.agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, UUID.randomUUID().toString(),
-                TraceTestDataBuilder.trc(400, 100, "XXX", "YYY", "AAA", "UVW"),
-                md(1, 2));
-        store.handleTraceData(agentUUID, sessnUUID, UUID.randomUUID().toString(),
-                TraceTestDataBuilder.trc(500, 200, "XXX", "XYZ", "CCC", "UVW"),
-                md(1, 2));
+        store.handleTraceData(agentUUID, sessnUUID,
+                TraceTestDataBuilder.trc(1L, 400, 100, "XXX", "YYY", "AAA", "UVW"),
+                md(traceId1, traceId2, 0, spanId, 0, 1, 2));
+        store.handleTraceData(agentUUID, sessnUUID,
+                TraceTestDataBuilder.trc(1L, 500, 200, "XXX", "XYZ", "CCC", "UVW"),
+                md(traceId1+1, traceId2+1, 0, spanId+1, 0, 1, 2));
 
         if (archive) store.archive();
 

@@ -42,7 +42,7 @@ public class SubmitSampledTracesUnitTest extends ZicoTestFixture {
     };
 
     private ChunkMetadata cm(int envId, int appId) {
-        ChunkMetadata rslt = new ChunkMetadata();
+        ChunkMetadata rslt = new ChunkMetadata(rand.nextLong(), rand.nextLong(), 0L, 1L, 0);
         rslt.setEnvId(envId);
         rslt.setAppId(appId);
         return rslt;
@@ -60,7 +60,7 @@ public class SubmitSampledTracesUnitTest extends ZicoTestFixture {
         // TODO fix input data, so trace ID is proper
 
         store.handleAgentData(agentUUID, sessnUUID, AGD_PACKETS[0]);
-        store.handleTraceData(agentUUID, sessnUUID, trc01UUID, TRC_PACKETS[0], cm(1, 1));
+        store.handleTraceData(agentUUID, sessnUUID, TRC_PACKETS[0], cm(1, 1));
 
         TraceSearchResult sr0 = store.searchTraces(QmiQueryBuilder.all().query());
         Set sl0 = drain(sr0);

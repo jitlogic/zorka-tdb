@@ -300,13 +300,6 @@ public class SimpleTraceStore implements TraceStore {
 
 
     @Override
-    public String getTraceUUID(long chunkId) {
-        checkOpen();
-        return qindex.getChunkUUID(TraceStoreUtil.parseSlotId(chunkId));
-    }
-
-
-    @Override
     public long getTraceDuration(long chunkId) {
         checkOpen();
         return qindex.getTraceDuration(TraceStoreUtil.parseSlotId(chunkId));
@@ -322,17 +315,17 @@ public class SimpleTraceStore implements TraceStore {
 
 
     @Override
-    public List<Long> getChunkIds(String traceUUID) {
+    public List<Long> getChunkIds(long traceId1, long traceId2, long spanId) {
         checkOpen();
         List<Long> rslt = new ArrayList<>();
-        qindex.findChunkIds(rslt, (int)storeId, UUID.fromString(traceUUID));
+        qindex.findChunkIds(rslt, (int)storeId, traceId1, traceId2, spanId);
         return rslt;
     }
 
-    public void findChunkIds(List<Long> acc, UUID uuid) {
+    public void findChunkIds(List<Long> acc, long traceId1, long traceId2, long spanId) {
         checkOpen();
 
-        qindex.findChunkIds(acc, (int)storeId, uuid);
+        qindex.findChunkIds(acc, (int)storeId, traceId1, traceId2, spanId);
     }
 
     @Override
@@ -345,8 +338,8 @@ public class SimpleTraceStore implements TraceStore {
 
 
     @Override
-    public void handleTraceData(String agentUUID, String sessionUUID, String traceUUID, byte[] data, ChunkMetadata md) {
-        getHandler(sessionUUID, agentUUID).handleTraceData(traceUUID, data, md);
+    public void handleTraceData(String agentUUID, String sessionUUID, byte[] data, ChunkMetadata md) {
+        getHandler(sessionUUID, agentUUID).handleTraceData(data, md);
     }
 
 

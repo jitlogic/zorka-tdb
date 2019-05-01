@@ -29,10 +29,7 @@ import io.zorka.tdb.store.RotatingTraceStore;
 import org.junit.Before;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.Assert.*;
@@ -53,6 +50,7 @@ public class ZicoTestFixture {
     public static final String tmpDir;
 
     protected TestStrGen randStrGen;
+    protected Random rand = new Random();
 
     protected Map<String,TraceDataIndexer> indexerCache = new ConcurrentHashMap<>();
 
@@ -195,9 +193,10 @@ public class ZicoTestFixture {
 
     public static ChunkMetadata md(int startOffs, int typeId, int appId, int envId,
                                    long tstamp, int duration, boolean errorFlag,
-                                   long dataOffs, int chunkNum) {
+                                   long dataOffs, long traceId1, long traceId2,
+                                   long parentId, long spanId, int chunkNum) {
 
-        ChunkMetadata tm = new ChunkMetadata();
+        ChunkMetadata tm = new ChunkMetadata(traceId1, traceId2, parentId, spanId, chunkNum);
 
         tm.setStartOffs(startOffs);
         tm.setTypeId(typeId);
@@ -213,8 +212,8 @@ public class ZicoTestFixture {
     }
 
 
-    public ChunkMetadata md(int appId, int envId) {
-        ChunkMetadata tm = new ChunkMetadata();
+    public ChunkMetadata md(long traceId1, long traceId2, long parentId, long spanId, int chunkNum, int appId, int envId) {
+        ChunkMetadata tm = new ChunkMetadata(traceId1, traceId2, parentId, spanId, chunkNum);
         tm.setAppId(appId);
         tm.setEnvId(envId);
         return tm;

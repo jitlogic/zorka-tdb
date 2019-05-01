@@ -32,11 +32,13 @@ public class TraceSearchResultItem {
 
     private String description;
 
-    private String uuid;
+    private long traceId1;
 
-    private String dtraceUuid;
+    private long traceId2;
 
-    private String dtraceTid;
+    private long spanId;
+
+    private long parentId;
 
     private boolean dtraceOut;
 
@@ -56,7 +58,6 @@ public class TraceSearchResultItem {
         this.dataOffs = cm.getDataOffs();
         this.startOffs = cm.getStartOffs();
 
-        this.dtraceOut = 0 != (cm.getDtraceTID() & ChunkMetadata.TID_FLAG);
     }
 
     @Override
@@ -176,35 +177,43 @@ public class TraceSearchResultItem {
         this.description = description;
     }
 
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
-
-    public String getDtraceUuid() {
-        return dtraceUuid;
-    }
-
-    public void setDtraceUuid(String dtraceUuid) {
-        this.dtraceUuid = dtraceUuid;
-    }
-
-    public String getDtraceTid() {
-        return dtraceTid;
-    }
-
-    public void setDtraceTid(String dtraceTid) {
-        this.dtraceTid = dtraceTid;
-    }
-
     public boolean isDtraceOut() {
         return dtraceOut;
     }
 
     public void setDtraceOut(boolean dtraceOut) {
         this.dtraceOut = dtraceOut;
+    }
+
+    public long getTraceId1() {
+        return traceId1;
+    }
+
+    public void setTraceId1(long traceId1) {
+        this.traceId1 = traceId1;
+    }
+
+    public long getTraceId2() {
+        return traceId2;
+    }
+
+    public void setTraceId2(long traceId2) {
+        this.traceId2 = traceId2;
+    }
+
+    public long getSpanId() {
+        return spanId;
+    }
+
+    public void setSpanId(long spanId) {
+        this.spanId = spanId;
+    }
+
+    public long getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(long parentId) {
+        this.parentId = parentId;
     }
 }

@@ -35,13 +35,11 @@ public interface TraceStore extends Closeable, ZicoMaintObject {
      *
      * @param sessionUUID session UUID
      *
-     * @param traceUUID trace UUID (each trace must have unique ID)
-     *
      * @param data Base64 encoded CBOR data.
      *
      * @param md
      */
-    void handleTraceData(String agentUUID, String sessionUUID, String traceUUID, byte[] data, ChunkMetadata md);
+    void handleTraceData(String agentUUID, String sessionUUID, byte[] data, ChunkMetadata md);
 
     /**
      * Handles incoming agent state data.
@@ -57,9 +55,6 @@ public interface TraceStore extends Closeable, ZicoMaintObject {
     /** Opens store. */
     void open();
 
-    /** Returns trace UUID based on local ID. */
-    String getTraceUUID(long chunkId);
-
     /** Returns trace duration */
     long getTraceDuration(long chunkId);
 
@@ -67,7 +62,7 @@ public interface TraceStore extends Closeable, ZicoMaintObject {
     String getDesc(long chunkId);
 
     /** Returns IDs of all chunks associated with trace UUID */
-    List<Long> getChunkIds(String traceUUID);
+    List<Long> getChunkIds(long traceId1, long traceId2, long spanId);
 
     ChunkMetadata getChunkMetadata(long chunkId);
 

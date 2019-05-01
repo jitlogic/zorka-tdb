@@ -54,12 +54,16 @@ added if thrown by method. Trace can mix arbitrary
 TraceBegin structure marks beginning of a trace. 
 
 ```
-(TAG=33)[clock,traceId]
+(TAG=33)[clock,ttypeId,spanId,parentId]
 ```
 
 * `clock` - current time (as from `System.currentTimeMillis()`);
 
-* `traceId` - trace ID (as an integer) - string ref;
+* `ttypeId` - trace type ID (as an integer) - string ref;
+
+* `spanId` - span ID (optional, 64-bit long int);
+
+* `parentId` - parent ID (optional, 64-bit long int);
 
 
 ## TraceAttr

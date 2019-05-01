@@ -21,6 +21,7 @@ import io.zorka.tdb.store.*;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import io.zorka.tdb.store.RecursiveTraceDataRetriever;
@@ -34,14 +35,20 @@ import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 
 public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
 
+    private Random rand = new Random();
 
     @Test
     public void testSubmitRetrieveFragmentedTraceRotatingStore() throws Exception {
+
+        long traceId1 = rand.nextLong();
+        long traceId2 = rand.nextLong();
+        long spanId = rand.nextLong();
+
         RotatingTraceStore store = openRotatingStore();
         List<byte[]> data = TraceTestDataBuilder.str(
             TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0,0,0), 100, 200, 1,
                 TraceTestDataBuilder.ta("XXX", "YYY"),
-                TraceTestDataBuilder.tb(1500, 0),
+                TraceTestDataBuilder.tb(1500, 0, spanId),
                 TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0, 0, 0), 100, 120, 1),
                 TraceTestDataBuilder.brk(),
                 TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0, 0, 0), 120, 140, 1)
@@ -49,30 +56,28 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
 
         assertEquals(2, data.size());
 
-
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
-        String traceUUID = UUID.randomUUID().toString();
 
         store.handleAgentData(agentUUID, sessnUUID, TraceTestDataBuilder.agentData());
 
-        ChunkMetadata md = new ChunkMetadata();
+        ChunkMetadata md = new ChunkMetadata(traceId1, traceId2, 0, spanId, 0);
 
         // Send first chunk
-        md.setChunkNum(0);
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID, data.get(0), md);
+        store.handleTraceData(agentUUID, sessnUUID, data.get(0), md);
 
-        TraceDataIndexer tdi = indexerCache.get(traceUUID);
+        String tidSid = md.getTraceIdHex() + md.getSpanIdHex();
+        TraceDataIndexer tdi = indexerCache.get(tidSid);
         assertNotNull(tdi);
         assertEquals(1, tdi.getStackDepth());
 
-        ChunkMetadata md1 = store.getChunkMetadata(store.getChunkIds(traceUUID).get(0));
+        ChunkMetadata md1 = store.getChunkMetadata(store.getChunkIds(traceId1, traceId2, spanId).get(0));
         assertTrue(0 != (md1.getFlags() & TF_CHUNK_ENABLED));
         assertTrue(0 != (md1.getFlags() & TF_CHUNK_FIRST));
         assertTrue(0 == (md1.getFlags() & TF_CHUNK_LAST));
 
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
-        TraceRecord rslt1 = store.retrieve(traceUUID, rtr);
+        TraceRecord rslt1 = store.retrieve(traceId1, traceId2, spanId, rtr);
 
         assertNotNull(rslt1);
         assertNotNull(rslt1.getChildren());
@@ -85,15 +90,15 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
         // Send second chunk
         md.setChunkNum(1);
         byte[] t1 = data.get(1);
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID, t1, md);
+        store.handleTraceData(agentUUID, sessnUUID, t1, md);
 
-        ChunkMetadata md2 = store.getChunkMetadata(store.getChunkIds(traceUUID).get(1));
+        ChunkMetadata md2 = store.getChunkMetadata(store.getChunkIds(traceId1, traceId2, spanId).get(1));
         assertTrue(0 != (md2.getFlags() & TF_CHUNK_ENABLED));
         assertTrue(0 == (md2.getFlags() & TF_CHUNK_FIRST));
         assertTrue(0 != (md2.getFlags() & TF_CHUNK_LAST));
 
         rtr.clear();
-        TraceRecord rslt2 = store.retrieve(traceUUID, rtr);
+        TraceRecord rslt2 = store.retrieve(traceId1, traceId2, spanId, rtr);
         assertNotNull(rslt2);
 
         assertNotNull(rslt2.getChildren());

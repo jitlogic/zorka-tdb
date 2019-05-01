@@ -44,18 +44,6 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
             qmi = new QmiNode();
         }
 
-        if (qmi.getDtraceUuid() != null || qmi.getDtraceTid() != null) {
-            qmi = new QmiNode(qmi);
-        }
-
-        if (qmi.getDtraceUuid() != null) {
-            qmi.setDtraceUuidId(itext.get(qmi.getDtraceUuid()));
-        }
-
-        if (qmi.getDtraceTid() != null) {
-            qmi.setDtraceTidId(itext.get(qmi.getDtraceTid()));
-        }
-
         int limit = Integer.max(256, query.getLimit() * 4 + query.getOffset());
 
         results = new KVSortingHeap(limit, true);
@@ -103,7 +91,8 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
                 int id = results.next();
 
                 if (id >= 0) {
-                    String uuid = store.getTraceUUID(id);
+                    ChunkMetadata md = store.getChunkMetadata(id);
+                    String uuid = md.getTraceIdHex() + md.getSpanIdHex();
                     if (!uuids.contains(uuid)) {
                         uuids.add(uuid);
                         c -= 1;
@@ -155,32 +144,18 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
         itm.setChunkId(chunkId);
         itm.setDescription(store.getDesc(chunkId));
 
-        if (md.getDtraceUUID() > 0) {
-            itm.setDtraceUuid(itext.resolve(md.getDtraceUUID()));
-        }
-
-        int tid = md.getDtraceTID() & ChunkMetadata.TID_MASK;
-
-        if (tid > 0) {
-            itm.setDtraceTid(itext.resolve(tid));
-        }
-
-        itm.setDtraceOut(0 != (md.getDtraceTID() & ChunkMetadata.TID_FLAG));
-
         return itm;
     }
 
     @Override
     public TraceSearchResultItem nextItem() {
         for (int id = results.next(); id >= 0; id = results.next()) {
-            String uuid = store.getTraceUUID(id);
+            ChunkMetadata md = store.getChunkMetadata(id);
+            String uuid = md.getTraceIdHex() + md.getSpanIdHex();
             if (!uuids.contains(uuid)) {
                 uuids.add(uuid);
 
-                TraceSearchResultItem itm = extractChunkMetadata(id);
-                itm.setUuid(uuid);
-
-                return itm;
+                return extractChunkMetadata(id);
             }
 
             // TODO ponowne wykonanie runSearch() jeżeli jednak zabraknie danych wejściowych

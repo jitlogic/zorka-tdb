@@ -17,6 +17,7 @@
 package io.zorka.tdb.store;
 
 import com.jitlogic.zorka.cbor.CborDataWriter;
+import com.jitlogic.zorka.common.util.ZorkaUtil;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.*;
 import io.zorka.tdb.util.CborBufReader;
@@ -111,9 +112,11 @@ public class AgentHandler implements AgentDataProcessor {
     }
 
 
-    public synchronized void handleTraceData(String traceUUID, byte[] data, ChunkMetadata md) {
+    public synchronized void handleTraceData(byte[] data, ChunkMetadata md) {
 
-        TraceDataIndexer translator = indexerCache.get(traceUUID);
+
+        String tid = md.getTraceIdHex() + md.getSpanIdHex();
+        TraceDataIndexer translator = indexerCache.get(tid);
         if (translator == null) {
             translator = new TraceDataIndexer(traceTypeResolver);
         } else {
@@ -124,8 +127,7 @@ public class AgentHandler implements AgentDataProcessor {
         }
 
         synchronized (translator) {
-
-            translator.setup(sindex, this, traceUUID, md.getChunkNum(), new TraceDataWriter(cborWriter), cborWriter);
+            translator.setup(sindex, this, md.getTraceId1(), md.getTraceId2(), md.getChunkNum(), new TraceDataWriter(cborWriter), cborWriter);
 
             // Process trace data, translate symbol/string IDs etc.
             TraceDataReader tdr = new TraceDataReader(new CborBufReader(data), translator);
@@ -163,7 +165,7 @@ public class AgentHandler implements AgentDataProcessor {
                     log.debug("Indexed: " + metadata + " -> " + slotId);
                 }
 
-                mindex.addTraceChunkDesc(slotId, metadata.getTraceUUID());
+                mindex.addTraceChunkDesc(slotId, metadata.getTraceIdHex()+metadata.getSpanIdHex());
 
                 int ftid = mindex.addTextMetaData(slotId, metadata.getFids(), true);
                 int ttid = mindex.addTextMetaData(slotId, metadata.getTids(), false);
@@ -171,10 +173,10 @@ public class AgentHandler implements AgentDataProcessor {
                 qindex.setTids(slotId, ftid, ttid);
             }
 
-            indexerCache.remove(traceUUID);
+            indexerCache.remove(tid);
 
             if (translator.getStackDepth() > 0) {
-                indexerCache.put(traceUUID, translator);
+                indexerCache.put(tid, translator);
             }
         }
 

@@ -16,6 +16,8 @@
 
 package io.zorka.tdb.meta;
 
+import com.jitlogic.zorka.common.util.ZorkaUtil;
+
 import java.util.*;
 
 import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
@@ -85,17 +87,17 @@ public class ChunkMetadata {
     /** End timestamp (ticks since trace stop). */
     private long tstop;
 
-    /** Trace UUID (low word) */
-    private long uuidLSB;
+    /** Trace ID (high word) */
+    private long traceId1;
 
-    /** Trace UUID (high word) */
-    private long uuidMSB;
+    /** Trace ID (low word) */
+    private long traceId2;
 
-    /** Distributed trace UUID (common across all components) */
-    private int dtraceUUID;
+    /** Span ID */
+    private long spanId;
 
-    /** Distributed trace TID (unique to each component in distributed trace)  */
-    private int dtraceTID;
+    /** Parent ID */
+    private long parentId;
 
     /** Full search IDs */
     private Set<Integer> fids = null;
@@ -112,15 +114,12 @@ public class ChunkMetadata {
             + ", tstamp=" + tstamp + ", typeId=" + typeId + ")";
     }
 
-    public ChunkMetadata() { }
-
-    public ChunkMetadata(String traceUUID) {
-        setTraceUUID(traceUUID);
-    }
-
-    public ChunkMetadata(long uuidLSB, long uuidMSB) {
-        this.uuidLSB = uuidLSB;
-        this.uuidMSB = uuidMSB;
+    public ChunkMetadata(long traceId1, long traceId2, long parentId, long spanId, int chunkNum) {
+        this.traceId1 = traceId1;
+        this.traceId2 = traceId2;
+        this.parentId = parentId;
+        this.chunkNum = chunkNum;
+        this.spanId = spanId;
     }
 
     public ChunkMetadata(int zeroLevel) {
@@ -160,16 +159,7 @@ public class ChunkMetadata {
         this.tstamp = tstamp;
     }
 
-    public String getTraceUUID() {
-        UUID uuid = new UUID(uuidMSB, uuidLSB);
-        return uuid.toString();
-    }
 
-    public void setTraceUUID(String traceUUID) {
-        UUID uuid = UUID.fromString(traceUUID);
-        uuidLSB = uuid.getLeastSignificantBits();
-        uuidMSB = uuid.getMostSignificantBits();
-    }
 
     public long catchTstamp(long tstamp) {
         this.tstamp = tstamp;
@@ -358,22 +348,6 @@ public class ChunkMetadata {
         this.fids.add(id);
     }
 
-    public long getUuidLSB() {
-        return uuidLSB;
-    }
-
-    public void setUuidLSB(long uuidLSB) {
-        this.uuidLSB = uuidLSB;
-    }
-
-    public long getUuidMSB() {
-        return uuidMSB;
-    }
-
-    public void setUuidMSB(long uuidMSB) {
-        this.uuidMSB = uuidMSB;
-    }
-
     public int getHostId() {
         return hostId;
     }
@@ -382,19 +356,47 @@ public class ChunkMetadata {
         this.hostId = hostId;
     }
 
-    public int getDtraceUUID() {
-        return dtraceUUID;
+    public long getTraceId1() {
+        return traceId1;
     }
 
-    public void setDtraceUUID(int dtraceUUID) {
-        this.dtraceUUID = dtraceUUID;
+    public void setTraceId1(long traceId1) {
+        this.traceId1 = traceId1;
     }
 
-    public int getDtraceTID() {
-        return dtraceTID;
+    public long getTraceId2() {
+        return traceId2;
     }
 
-    public void setDtraceTID(int dtraceTID) {
-        this.dtraceTID = dtraceTID;
+    public void setTraceId2(long traceId2) {
+        this.traceId2 = traceId2;
+    }
+
+    public String getTraceIdHex() {
+        return traceId2 != 0 ? ZorkaUtil.hex(traceId1, traceId2) : ZorkaUtil.hex(traceId1);
+    }
+
+    public long getSpanId() {
+        return spanId;
+    }
+
+    public String getSpanIdHex() {
+        return spanId != 0 ? ZorkaUtil.hex(spanId) : null;
+    }
+
+    public void setSpanId(long spanId) {
+        this.spanId = spanId;
+    }
+
+    public long getParentId() {
+        return parentId;
+    }
+
+    public String getParentIdHex() {
+        return parentId != 0 ? ZorkaUtil.hex(parentId) : null;
+    }
+
+    public void setParentId(long parentId) {
+        this.parentId = parentId;
     }
 }

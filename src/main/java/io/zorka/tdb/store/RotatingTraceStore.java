@@ -165,9 +165,9 @@ public class RotatingTraceStore implements TraceStore {
     }
 
 
-    public byte[] retrieveRaw(String traceUUID) {
+    public byte[] retrieveRaw(long traceId1, long traceId2, long spanId) {
         RotatingTraceStoreState ts = state;
-        List<Long> chunkIds = getChunkIds(ts, traceUUID);
+        List<Long> chunkIds = getChunkIds(ts, traceId1, traceId2, spanId);
 
         if (chunkIds.isEmpty()) return null;
 
@@ -188,13 +188,13 @@ public class RotatingTraceStore implements TraceStore {
     }
 
 
-    public <T> T retrieve(String traceUUID, TraceDataRetriever<T> rtr) {
+    public <T> T retrieve(long traceId1, long traceId2, long spanId, TraceDataRetriever<T> rtr) {
 
         checkOpen();
 
         RotatingTraceStoreState ts = state;
 
-        List<Long> chunkIds = getChunkIds(ts, traceUUID);
+        List<Long> chunkIds = getChunkIds(ts, traceId1, traceId2, spanId);
 
         for (int i = 0; i < chunkIds.size(); i++) {
             long chunkId = chunkIds.get(i);
@@ -209,13 +209,6 @@ public class RotatingTraceStore implements TraceStore {
 
         rtr.commit();
         return rtr.getResult();
-    }
-
-
-    @Override
-    public String getTraceUUID(long chunkId) {
-        SimpleTraceStore s = state.get(parseStoreId(chunkId));
-        return s != null ? s.getTraceUUID(chunkId) : null;
     }
 
 
@@ -235,19 +228,18 @@ public class RotatingTraceStore implements TraceStore {
 
 
     @Override
-    public List<Long> getChunkIds(String traceUUID) {
+    public List<Long> getChunkIds(long traceId1, long traceId2, long spanId) {
         checkOpen();
-        return getChunkIds(state, traceUUID);
+        return getChunkIds(state, traceId1, traceId2, spanId);
     }
 
-    private List<Long> getChunkIds(RotatingTraceStoreState state, String traceUUID) {
-        List<Long> rslt = state.getCurrent().getChunkIds(traceUUID);
-        UUID uuid = UUID.fromString(traceUUID);
+    private List<Long> getChunkIds(RotatingTraceStoreState state, long traceId1, long traceId2, long spanId) {
+        List<Long> rslt = state.getCurrent().getChunkIds(traceId1, traceId2, spanId);
 
         List<SimpleTraceStore> as = state.getArchived();
 
         for (int i = as.size() - 1; i >= 0 && !containsStartChunk(rslt); i--) {
-            as.get(i).findChunkIds(rslt, uuid);
+            as.get(i).findChunkIds(rslt, traceId1, traceId2, spanId);
         }
 
         rslt.sort(Comparator.comparingLong(o -> o & (CH_SE_MASK)));
@@ -299,7 +291,7 @@ public class RotatingTraceStore implements TraceStore {
 
 
     @Override
-    public void handleTraceData(String agentUUID, String sessionUUID, String traceUUID, byte[] data, ChunkMetadata md) {
+    public void handleTraceData(String agentUUID, String sessionUUID, byte[] data, ChunkMetadata md) {
 
         if (log.isDebugEnabled()) {
             log.debug("Got trace data from " + agentUUID + " (" + sessionUUID + ")");
@@ -310,7 +302,7 @@ public class RotatingTraceStore implements TraceStore {
         // Single store is big, so it takes at least several minutes to overflow again,
         // so no practical chance of race condition here
         // TODO proper impl
-        state.getCurrent().handleTraceData(agentUUID, sessionUUID, traceUUID, data, md);
+        state.getCurrent().handleTraceData(agentUUID, sessionUUID, data, md);
     }
 
 

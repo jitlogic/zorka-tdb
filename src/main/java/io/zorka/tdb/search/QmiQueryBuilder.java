@@ -113,8 +113,19 @@ public class QmiQueryBuilder {
         return this;
     }
 
-    public QmiQueryBuilder uuid(String uuid) {
-        qmi.setUuid(uuid);
+    public QmiQueryBuilder traceId(long traceId1, long traceId2) {
+        qmi.setTraceId1(traceId1);
+        qmi.setTraceId2(traceId2);
+        return this;
+    }
+
+    public QmiQueryBuilder parentId(long parentId) {
+        qmi.setParentId(parentId);
+        return this;
+    }
+
+    public QmiQueryBuilder spanId(long spanId) {
+        qmi.setSpanId(spanId);
         return this;
     }
 

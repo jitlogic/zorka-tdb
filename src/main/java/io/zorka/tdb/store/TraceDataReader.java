@@ -200,8 +200,6 @@ public class TraceDataReader implements Runnable {
                 int methodId = (int) (v >>> 40);
                 output.traceInfo(TI_TSTART, tstart);
                 output.traceInfo(TI_METHOD, methodId);
-                // TODO immediately check for TRACE_BEGIN tag here
-                // TODO ewentualnie przejść na bardziej efektywny TRACE_PROLOG i TRACE_EPILOG aby nie było 2xTRACE_INFO
                 break;
             }
             case TAG_EPILOG_BE:
@@ -234,13 +232,22 @@ public class TraceDataReader implements Runnable {
                 break;
             }
             case TAG_TRACE_BEGIN: {
-                checked(reader.peek() == 0x82,
+                int prefix = reader.peek();
+                checked(prefix >= 0x82 && prefix <= 0x84,
                     "Trace begin marker should be 2-element array.");
                 reader.read();
-                long tstamp = reader.readLong();
-                int tid = reader.readInt();
-                output.traceInfo(TI_TSTAMP, tstamp);
-                output.traceInfo(TI_TYPE, tid);
+                // Timestamp (mandatory)
+                output.traceInfo(TI_TSTAMP, reader.readLong());
+                // TraceType (mandatory)
+                output.traceInfo(TI_TYPE, reader.readInt());
+                // SpanID (optional)
+                if (prefix >= 0x83) {
+                    output.traceInfo(TI_SPAN, reader.readLong());
+                }
+                // ParentID (optional)
+                if (prefix >= 0x84) {
+                    output.traceInfo(TI_PARENT, reader.readLong());
+                }
                 break;
             }
             case TAG_EXCEPTION: {

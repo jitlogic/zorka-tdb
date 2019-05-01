@@ -29,7 +29,6 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -79,12 +78,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * +--------+--------+--------+--------+--------+--------+--------+--------+
  * |             calls                 |  errH  |     recs                 | W6
  * +--------+--------+--------+--------+--------+--------+--------+--------+
- * |                                 UUID (high word)                      | W7
- * |                                 UUID (low word)                       | W8
+ * |                                traceId1                               | W7
  * +--------+--------+--------+--------+--------+--------+--------+--------+
- * |            dtraceUUID             |             dtraceTID             | W9
+ * |                                traceId2                               | W8
  * +--------+--------+--------+--------+--------+--------+--------+--------+
- * |                                reserved                               | W10...W12
+ * |                               parentId                                | W9
+ * +--------+--------+--------+--------+--------+--------+--------+--------+
+ * |                                spanId                                 | W10
+ * +--------+--------+--------+--------+--------+--------+--------+--------+
+ * |                                reserved                               | W11
+ * +--------+--------+--------+--------+--------+--------+--------+--------+
+ * |                                reserved                               | W12
  * +--------+--------+--------+--------+--------+--------+--------+--------+
  *
  * W1 - timestamp and offset
@@ -139,9 +143,10 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
     private final static int W4_OFFS = 3 * WORD_SIZE;
     private final static int W5_OFFS = 4 * WORD_SIZE;
     private final static int W6_OFFS = 5 * WORD_SIZE;
-    private final static int W7_OFFS = 6 * WORD_SIZE;
-    private final static int W8_OFFS = 7 * WORD_SIZE;
-    private final static int W9_OFFS = 8 * WORD_SIZE;
+    private final static int W7_TID1 = 6 * WORD_SIZE;
+    private final static int W8_TID2 = 7 * WORD_SIZE;
+    private final static int W9_PID  = 8 * WORD_SIZE;
+    private final static int W10_SID = 9 * WORD_SIZE;
 
 
     private volatile int flimit, delta;
@@ -314,30 +319,12 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
     }
 
 
-    public static long format_W9(int traceUUID, int traceTID) {
-        return ((long)traceUUID) | (((long)traceTID) << 32);
-    }
-
-
-    public static long format_W9M(int dtraceUuid, int dtraceTid) {
-        return (dtraceUuid != 0 ? 0xffffffffL : 0)
-                | (dtraceTid != 0 ? 0x7fffffff00000000L : 0);
-    }
-
-
-    public static void parse_W9(long w9, ChunkMetadata md) {
-        md.setDtraceUUID((int)w9);
-        md.setDtraceTID((int)(w9 >>> 32));
-    }
-
-
     public synchronized int add(ChunkMetadata md) {
         long w1 = format_W1(md.getStartOffs(), md.getTstamp() / 1000);
         long w2 = format_W2(md);
         long w3 = format_W3(md.getChunkNum(), md.getDataOffs());
         long w4 = format_W4(md.getMethodId(), md.getDescId(), md.getDuration(), md.getHostId());
         long w6 = format_W6(md);
-        long w9 = format_W9(md.getDtraceUUID(), md.getDtraceTID());
 
         if (fpos > flimit - RECORD_SIZE) {
             extend();
@@ -355,13 +342,10 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
             // w5 will be filled separately
             buffer.putLong(fpos + W6_OFFS, w6);
 
-            if (md.getTraceUUID() != null) {
-                UUID uuid = UUID.fromString(md.getTraceUUID());
-                buffer.putLong(fpos + W7_OFFS, uuid.getMostSignificantBits());
-                buffer.putLong(fpos + W8_OFFS, uuid.getLeastSignificantBits());
-            }
-
-            buffer.putLong(fpos + W9_OFFS, w9);
+            buffer.putLong(fpos + W7_TID1, md.getTraceId1());
+            buffer.putLong(fpos + W8_TID2, md.getTraceId2());
+            buffer.putLong(fpos + W9_PID, md.getParentId());
+            buffer.putLong(fpos + W10_SID, md.getSpanId());
 
             rslt = (fpos - HEADER_SIZE) / RECORD_SIZE;
             fpos += RECORD_SIZE;
@@ -457,7 +441,12 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
             return null;
         }
 
-        ChunkMetadata md = new ChunkMetadata();
+        ChunkMetadata md = new ChunkMetadata(
+                buffer.getLong(pos + W7_TID1),
+                buffer.getLong(pos + W8_TID2),
+                buffer.getLong(pos + W9_PID),
+                buffer.getLong(pos + W10_SID),
+                0);
 
         parse_W1(buffer.getLong(pos), md);
         parse_W2(buffer.getLong(pos+WORD_SIZE), md);
@@ -465,40 +454,22 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
         parse_W4(buffer.getLong(pos+3*WORD_SIZE), md);
         // TODO where is w5 ?
         parse_W6(buffer.getLong(pos+5*WORD_SIZE), md);
-        parse_W9(buffer.getLong(pos+W9_OFFS), md);
-        md.setUuidMSB(buffer.getLong(pos + 6 * WORD_SIZE));
-        md.setUuidLSB(buffer.getLong(pos + 7 * WORD_SIZE));
 
         return md;
     }
 
 
-    public synchronized void setChunkUUID(int chunkIdx, String traceUUID) {
-        int pos = HEADER_SIZE + chunkIdx * RECORD_SIZE;
-        if (pos >= fpos) { return; }
-        UUID uuid = UUID.fromString(traceUUID);
-        buffer.putLong(pos + 6 * WORD_SIZE, uuid.getMostSignificantBits());
-        buffer.putLong(pos + 7 * WORD_SIZE, uuid.getLeastSignificantBits());
-    }
-
-    public void findChunkIds(List<Long> acc, int storeId, UUID uuid) {
-        long l = uuid.getLeastSignificantBits(), h = uuid.getMostSignificantBits();
+    public void findChunkIds(List<Long> acc, int storeId, long traceId1, long traceId2, long spanId) {
         long mask = (long)(storeId) << 32;
-        for (int pos = HEADER_SIZE + 6 * WORD_SIZE, i = 0; pos < fpos; pos += RECORD_SIZE, i++) {
-            if (h == buffer.getLong(pos) && l == buffer.getLong(pos+WORD_SIZE)) {
+        for (int pos = HEADER_SIZE, i = 0; pos < fpos; pos += RECORD_SIZE, i++) {
+            long w7 = buffer.getLong(pos + W7_TID1);
+            long w8 = buffer.getLong(pos + W8_TID2);
+            long w10 = buffer.getLong(pos + W10_SID);
+            if (traceId1 == w7 && traceId2 == w8 &&
+                spanId == w10) {
                 acc.add(mask | i);
             }
         }
-    }
-
-    public String getChunkUUID(int chunkIdx) {
-        int pos = HEADER_SIZE + chunkIdx * RECORD_SIZE;
-
-        if (pos >= fpos) {
-            return null;
-        }
-
-        return new UUID(buffer.getLong(pos + 6 * WORD_SIZE), buffer.getLong(pos + 7 * WORD_SIZE)).toString();
     }
 
     public long getTraceDuration(int chunkIdx) {
@@ -578,9 +549,10 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
         long d0 = query.getMinDuration();
         long d1 = query.getMaxDuration();
         long hostId = query.getHostId();
-
-        long w9v = format_W9(query.getDtraceUuidId(), query.getDtraceTidId());
-        long w9m = format_W9M(query.getDtraceUuidId(), query.getDtraceTidId());
+        long tid1 = query.getTraceId1();
+        long tid2 = query.getTraceId2();
+        long sid = query.getSpanId();
+        long pid = query.getParentId();
 
         ByteBuffer bb = buffer;
         rwlock.readLock().lock();
@@ -590,12 +562,16 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
                 long w1 = bb.getLong(pos);
                 long w2 = bb.getLong(pos + WORD_SIZE);
                 long w4 = bb.getLong(pos + WORD_SIZE * 3);
-                long w9 = bb.getLong(pos + W9_OFFS);
+                long w7 = bb.getLong(pos + W7_TID1);
+                long w8 = bb.getLong(pos + W8_TID2);
+                long w9 = bb.getLong(pos + W9_PID);
+                long w10 = bb.getLong(pos + W10_SID);
                 long wd = (w4 >>> 32) & 0xffff;
                 long hd = (w4 >>> 48) & 0xffff;
                 long t = w1 & 0xffffffffL;
-                if (w2v == (w2 & w2m) && t >= t0 && t <= t1 && wd >= d0 && wd < d1
-                        && (hostId == 0 || hostId == hd) && w9v == (w9 & w9m)) {
+                if (w2v == (w2 & w2m) && t >= t0 && t <= t1 && wd >= d0 && wd < d1 && (hostId == 0 || hostId == hd) &&
+                        ((tid1 == 0 && tid2 == 0) || (tid1 == w7 && tid2 == w8)) &&
+                        (sid == 0 || sid == w10) && (pid == 0 || pid == w9)) {
                     ids[idx] = blk;
                     switch (sortOrder) {
                         case NONE:

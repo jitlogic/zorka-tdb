@@ -39,7 +39,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     private int[] localExIds = new int[EXC_DELTA], agentExIds = new int[EXC_DELTA];
     private int exIdSize = 0;
 
-    private String traceUUID;
+    private long traceId1, traceId2;
     private int chnum;
 
     /** This attribute tracks call stack depth.  */
@@ -61,8 +61,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
 
     private TraceTypeResolver traceTypeResolver;
 
-    private int dtraceUuidKey, dtraceInKey, dtraceOutKey;
-
     // TODO indeksowanie methodId na 'czubku' trace'a
 
     // TODO aktualizacja duration po uwzględnieniu kolejnych fragmentów trace'a
@@ -78,12 +76,13 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     }
 
 
-    public void setup(StructuredTextIndex index, AgentHandler ah, String traceUUID, int chnum,
+    public void setup(StructuredTextIndex index, AgentHandler ah, long traceId1, long traceId2, int chnum,
                       StatelessDataProcessor output, CborDataWriter writer) {
         this.index = index;
         this.output = output;
         this.ah = ah;
-        this.traceUUID = traceUUID;
+        this.traceId1 = traceId1;
+        this.traceId2 = traceId2;
         this.chnum = chnum;
         this.writer = writer;
         this.lastPos = -1;
@@ -93,9 +92,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 md.clearFlag(TF_CHUNK_FIRST);
             }
         }
-        this.dtraceUuidKey = index.add(STRING_TYPE, "DTRACE_UUID");
-        this.dtraceInKey = index.add(STRING_TYPE, "DTRACE_IN");
-        this.dtraceOutKey = index.add(STRING_TYPE, "DTRACE_OUT");
     }
 
 
@@ -195,10 +191,8 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     private int traceBegin(int tid) {
         int typeId = traceTypeResolver.resolve(index.gets(stringRef(tid)));
 
-        ChunkMetadata md = new ChunkMetadata();
+        ChunkMetadata md = new ChunkMetadata(traceId1, traceId2, 0, 0, chnum);
         md.setStackDepth(stackDepth);
-        md.setChunkNum(chnum);
-        md.setTraceUUID(mtop == null ? traceUUID : UUID.randomUUID().toString());
         md.markFlag(TF_CHUNK_FIRST);
         md.setStartOffs(lastPos);
         md.setMethodId(lastMethod);
@@ -249,6 +243,12 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                     mtop.addCalls((int)v);
                 }
                 break;
+            case TI_PARENT:
+                mtop.setParentId(v);
+                break;
+            case TI_SPAN:
+                mtop.setSpanId(v);
+                break;
         }
 
         output.traceInfo(k, v); // TODO some values may need to be translated
@@ -279,17 +279,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 Object v = translate(e.getValue());
                 if (k instanceof ObjectRef) {
                     if (v instanceof ObjectRef) {
-                        if (mtop != null) {
-                            int idk = ((ObjectRef)k).id;
-                            int idv = ((ObjectRef)v).id;
-                            if (idk == dtraceUuidKey) {
-                                mtop.setDtraceUUID(idv);
-                            } else if (idk == dtraceInKey) {
-                                mtop.setDtraceTID(idv);
-                            } else if (idk == dtraceOutKey) {
-                                mtop.setDtraceTID(idv | ChunkMetadata.TID_FLAG);
-                            }
-                        }
                         catchId(index.addKRPair(((ObjectRef) k).id, ((ObjectRef) v).id));
                     } else if (v instanceof Integer || v instanceof Long || v instanceof Boolean) {
                         catchId(index.addKVPair(((ObjectRef) k).id, ""+v));

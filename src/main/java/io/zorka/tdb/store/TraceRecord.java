@@ -63,6 +63,8 @@ public class TraceRecord {
 
     private long tpos, toffs;
 
+    private long spanId, parentId;
+
     private ExceptionData exceptionData;
 
     public TraceRecord(int pos) {
@@ -235,5 +237,21 @@ public class TraceRecord {
 
     public boolean hasError() {
         return 0 != (flags & TF_ERROR_MARK);
+    }
+
+    public long getSpanId() {
+        return spanId;
+    }
+
+    public void setSpanId(long spanId) {
+        this.spanId = spanId;
+    }
+
+    public long getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(long parentId) {
+        this.parentId = parentId;
     }
 }

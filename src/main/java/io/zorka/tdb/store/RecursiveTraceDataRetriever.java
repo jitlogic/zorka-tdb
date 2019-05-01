@@ -138,6 +138,12 @@ public class RecursiveTraceDataRetriever<T> implements TraceDataRetriever<T> {
             case TI_METHOD:
                 tr.setMid((int)v);
                 break;
+            case TI_PARENT:
+                tr.setParentId(v);
+                break;
+            case TI_SPAN:
+                tr.setSpanId(v);
+                break;
             default:
                 throw new ZicoException("Unexpected TraceInfo attribute: " + k);
         }

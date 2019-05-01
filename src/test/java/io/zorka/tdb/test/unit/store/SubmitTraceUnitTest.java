@@ -51,16 +51,15 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
-        String traceUUID = UUID.randomUUID().toString();
 
         store.handleAgentData(agentUUID, sessnUUID, agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID, str(
+        store.handleTraceData(agentUUID, sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 200, 1,
                 ta("XXX", "YYY"),
-                tb(1500, 0)
+                tb(1500, 0, 1L)
             )).get(0),
-            md(1, 2));
+            md(42L, 24L, 0L, 1L, 0, 1, 2));
 
 
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
@@ -70,38 +69,6 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         ChunkMetadata md = store.getChunkMetadata(0);
         assertTrue(md.getMethodId() != 0);
         //assertTrue(md.getDescId() != 0);
-    }
-
-    @Test
-    public void testSubmitTraceWithDtraceAttributes() throws Exception {
-        SimpleTraceStore store = createSimpleStore(1);
-        store.open();
-
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
-        String traceUUID = UUID.randomUUID().toString();
-
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
-
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID, str(
-                tr(true, mid(0, 0, 0), 100, 200, 1,
-                        tb(1500, 0),
-                        ta("DTRACE_UUID", "1234-5678-9012"),
-                        ta("DTRACE_IN", "1234-5678-9012/22/33")
-                )).get(0),
-                md(1, 2));
-
-
-        RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
-        store.retrieveChunk(0, rtr);
-        assertNotNull(rtr.getResult());
-
-        ChunkMetadata md = store.getChunkMetadata(0);
-        assertTrue(md.getMethodId() != 0);
-        assertTrue("Distributed trace UUID ref should be recorded in quick index.", md.getDtraceUUID() != 0);
-        assertEquals("1234-5678-9012", store.getTextIndex().gets(md.getDtraceUUID()));
-        assertTrue("Distributed trace TID ref should be recorded in quick index.", md.getDtraceTID() != 0);
-        assertEquals("1234-5678-9012/22/33", store.getTextIndex().gets(md.getDtraceTID()));
     }
 
     public final static int TICKS_IN_SECOND = 1000000000/65536;
@@ -117,18 +84,17 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
-        String traceUUID = UUID.randomUUID().toString();
 
         store.handleAgentData(agentUUID, sessnUUID, agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID, str(
+        store.handleTraceData(agentUUID, sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 100+100*TICKS_IN_SECOND, 42,
-                tb(1500, 1),
+                tb(1500, 1, 1L),
                 ta(ti(TAG_STRING_REF, sid("URI")), "/my/app"),
                 ta("STATUS", "200"),
                 tf(TF_ERROR_MARK)
             )).get(0),
-            md(1, 2));
+            md(42L, 24L, 0L, 1L, 0,  1, 2));
 
         ChunkMetadata md = store.getChunkMetadata(0);
         assertTrue(md.getDescId() != 0);
@@ -148,24 +114,21 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
-        String traceUUID = UUID.randomUUID().toString();
 
 
         store.handleAgentData(agentUUID, sessnUUID, agentData());
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID, trc(100, 200), md(1, 2));
+        store.handleTraceData(agentUUID, sessnUUID, trc(1L, 100, 200),
+                md(42L, 24L, 0L, 1L, 0, 1, 2));
 
-        TraceRecord rslt = store.retrieve(traceUUID, rtr());
+        TraceRecord rslt = store.retrieve(42L, 24L, 1L, rtr());
 
         assertNotNull(rslt);
         assertEquals("void com.myapp.MyClass.myMethod()", rslt.getMethod());
         assertEquals(200, rslt.getTstop() - rslt.getTstart());
         assertEquals(200, rslt.getDuration());
 
-        List<Long> tids = store.getChunkIds(traceUUID);
+        List<Long> tids = store.getChunkIds(42L, 24L, 1L);
         assertTrue(tids.size() > 0);
-
-        String uuid = store.getTraceUUID(tids.get(0));
-        assertEquals(traceUUID, uuid);
     }
 
     @Test
@@ -175,22 +138,22 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
-        String traceUUID1 = UUID.randomUUID().toString();
-        String traceUUID2 = UUID.randomUUID().toString();
 
         store.handleAgentData(agentUUID, sessnUUID, agentData());
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID1, trc(100, 200), md(1, 2));
+        store.handleTraceData(agentUUID, sessnUUID, trc(1L, 100, 200),
+                md(42L, 24L, 0L, 1L, 0, 1, 2));
 
         store.archive();
 
         sessnUUID = store.getSession(agentUUID);
         store.handleAgentData(agentUUID, sessnUUID, agentData());
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID2, trc(100, 200), md(1, 2));
+        store.handleTraceData(agentUUID, sessnUUID, trc(1L, 100, 200),
+                md(45L, 25L, 0L, 1L, 0, 1, 2));
 
-        TraceRecord rslt1 = store.retrieve(traceUUID1, rtr());
+        TraceRecord rslt1 = store.retrieve(42L, 24L, 1L, rtr());
         assertNotNull(rslt1);
 
-        TraceRecord rslt2 = store.retrieve(traceUUID2, rtr());
+        TraceRecord rslt2 = store.retrieve(45L, 25L, 1L, rtr());
         assertNotNull(rslt2);
 
     }
@@ -204,26 +167,26 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
-        String traceUUID1 = UUID.randomUUID().toString();
-        String traceUUID2 = UUID.randomUUID().toString();
 
         store.handleAgentData(agentUUID, sessnUUID, agentData());
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID1, trc(100, 200), md(1, 2));
+        store.handleTraceData(agentUUID, sessnUUID, trc(1L, 100, 200),
+                md(42L, 24L, 0L, 1L, 0, 1, 2));
 
         store.archive();
 
         sessnUUID = store.getSession(agentUUID);
         store.handleAgentData(agentUUID, sessnUUID, agentData());
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID2, trc(100, 200), md(1, 2));
+        store.handleTraceData(agentUUID, sessnUUID, trc(1L, 100, 200),
+                md(43L, 25L, 0L, 1L, 0, 1, 2));
 
         store.close();
         store = openRotatingStore();
 
 
-        TraceRecord rslt1 = store.retrieve(traceUUID1, rtr());
+        TraceRecord rslt1 = store.retrieve(42L, 24L, 1L, rtr());
         assertNotNull(rslt1);
 
-        TraceRecord rslt2 = store.retrieve(traceUUID2, rtr());
+        TraceRecord rslt2 = store.retrieve(43L, 25L, 1L, rtr());
         assertNotNull(rslt2);
     }
 
@@ -233,14 +196,14 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
-        String traceUUID1 = UUID.randomUUID().toString();
 
         store.handleAgentData(agentUUID, sessnUUID, agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID1, trc2(100, 200), md(1, 2));
+        store.handleTraceData(agentUUID, sessnUUID, trc2(1L,100, 200),
+                md(42L, 24L, 0L, 1L, 0, 1, 2));
 
-        byte [] tb0 = store.retrieveRaw(traceUUID1);
-        TraceRecord tr0 = store.retrieve(traceUUID1, rtr());
+        byte [] tb0 = store.retrieveRaw(42L, 24L, 1L);
+        TraceRecord tr0 = store.retrieve(42L, 24L, 1L, rtr());
 
         assertNotNull(tr0.getChildren());
         assertEquals(0, tr0.getPos());
@@ -266,16 +229,15 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
-        String traceUUID = UUID.randomUUID().toString();
 
         store.handleAgentData(agentUUID, sessnUUID, agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID, str(
+        store.handleTraceData(agentUUID, sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 200, 1,
                 ta("URL", "http://127.0.0.1:8080/my/app"),
-                tb(1500, 0)
+                tb(1500, 0, 1L)
             )).get(0),
-            md(1, 2));
+            md(42L, 24L, 0L, 1L, 0, 1, 2));
 
 
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
@@ -294,20 +256,19 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String agentUUID = UUID.randomUUID().toString();
         String sessnUUID = store.getSession(agentUUID);
-        String traceUUID = UUID.randomUUID().toString();
 
         store.handleAgentData(agentUUID, sessnUUID, agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, traceUUID, str(
+        store.handleTraceData(agentUUID, sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 200, 1,
                 ta("URL", "http://127.0.0.1:8080/my/app"),
-                tb(1500, 0),
+                tb(1500, 0, 1L),
                 ex(1, 101, "This is error",
                     sd(100, 200, 6, 42),
                     sd(101, 201, 7, 24),
                     sd(102, 202, 8, 66)
                 ))).get(0),
-            md(1, 2));
+            md(42L, 24L, 0L, 1L, 0, 1, 2));
 
 
         RecursiveTraceDataRetriever<TraceRecord> rtr = rtr();
