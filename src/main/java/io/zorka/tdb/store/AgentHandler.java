@@ -50,8 +50,6 @@ public class AgentHandler implements AgentDataProcessor {
     private String agentUUID;
     private String sessionUUID;
     private int hostId;
-    private int agentId;
-    private long storeId;
 
     private SimpleTraceStore store;
 
@@ -76,14 +74,12 @@ public class AgentHandler implements AgentDataProcessor {
     public AgentHandler(SimpleTraceStore store, String agentUUID, String sessionUUID, TraceTypeResolver traceTypeResolver) {
         // TODO zrobić po prostu referencję do danego store'a
         this.store = store;
-        this.storeId = store.getStoreId();
         this.mindex = store.getMetaIndex();
         this.sindex = store.getTextIndex();
         this.qindex = store.getQuickIndex();
         this.dataFile = store.getDataFile();
         this.indexerCache = store.getIndexerCache();
         this.postproc = store.getPostproc();
-        this.agentId = sindex.addTyped(StructuredTextIndex.UUID_TYPE, agentUUID);
         this.hostId = ZicoUtil.extractUuidSeq(agentUUID);
         this.agentUUID = agentUUID;
         this.sessionUUID = sessionUUID;

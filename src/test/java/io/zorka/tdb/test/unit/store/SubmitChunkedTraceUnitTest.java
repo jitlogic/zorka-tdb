@@ -56,15 +56,14 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
 
         assertEquals(2, data.size());
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(agentUUID, sessnUUID, TraceTestDataBuilder.agentData());
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
 
         ChunkMetadata md = new ChunkMetadata(traceId1, traceId2, 0, spanId, 0);
 
         // Send first chunk
-        store.handleTraceData(agentUUID, sessnUUID, data.get(0), md);
+        store.handleTraceData(sessnUUID, data.get(0), md);
 
         String tidSid = md.getTraceIdHex() + md.getSpanIdHex();
         TraceDataIndexer tdi = indexerCache.get(tidSid);
@@ -84,13 +83,12 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
         assertEquals(1, rslt1.getChildren().size());
 
         store.archive();
-        sessnUUID = store.getSession(agentUUID);
-        store.handleAgentData(agentUUID, sessnUUID, TraceTestDataBuilder.agentData());
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
 
         // Send second chunk
         md.setChunkNum(1);
         byte[] t1 = data.get(1);
-        store.handleTraceData(agentUUID, sessnUUID, t1, md);
+        store.handleTraceData(sessnUUID, t1, md);
 
         ChunkMetadata md2 = store.getChunkMetadata(store.getChunkIds(traceId1, traceId2, spanId).get(1));
         assertTrue(0 != (md2.getFlags() & TF_CHUNK_ENABLED));

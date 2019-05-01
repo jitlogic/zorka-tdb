@@ -31,26 +31,24 @@ public interface TraceStore extends Closeable, ZicoMaintObject {
     /**
      * Handles trace data coming from agents.
      *
-     * @param agentUUID agent UUID
-     *
      * @param sessionUUID session UUID
      *
      * @param data Base64 encoded CBOR data.
      *
      * @param md
      */
-    void handleTraceData(String agentUUID, String sessionUUID, byte[] data, ChunkMetadata md);
+    void handleTraceData(String sessionUUID, byte[] data, ChunkMetadata md);
 
     /**
      * Handles incoming agent state data.
      *
-     * @param agentUUID agent UUID
+     * @param sessionId session ID
      *
-     * @param sessionUUID session UUID
+     * @param reset if true, session state will be reset
      *
      * @param data Base64 encoded CBOR data
      */
-    void handleAgentData(String agentUUID, String sessionUUID, byte[] data);
+    void handleAgentData(String sessionId, boolean reset, byte[] data);
 
     /** Opens store. */
     void open();
@@ -71,9 +69,6 @@ public interface TraceStore extends Closeable, ZicoMaintObject {
      *  Rotating store will archive current simple store and start a new one.
      */
     void archive();
-
-    /** Returns session UUID for a given agent. */
-    String getSession(String agentUUID);
 
     void setPostproc(ChunkMetadataProcessor postproc);
 

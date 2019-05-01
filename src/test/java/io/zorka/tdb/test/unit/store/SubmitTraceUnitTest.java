@@ -49,12 +49,11 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         SimpleTraceStore store = createSimpleStore(1);
         store.open();
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
+        store.handleAgentData(sessnUUID, true, agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, str(
+        store.handleTraceData(sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 200, 1,
                 ta("XXX", "YYY"),
                 tb(1500, 0, 1L)
@@ -82,12 +81,11 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         tmp.putTemplate(1, "${URI} -> ${STATUS}");
         store.setPostproc(tmp);
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
+        store.handleAgentData(sessnUUID, true, agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, str(
+        store.handleTraceData(sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 100+100*TICKS_IN_SECOND, 42,
                 tb(1500, 1, 1L),
                 ta(ti(TAG_STRING_REF, sid("URI")), "/my/app"),
@@ -112,12 +110,10 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         RotatingTraceStore store = openRotatingStore();
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
-
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
-        store.handleTraceData(agentUUID, sessnUUID, trc(1L, 100, 200),
+        store.handleAgentData(sessnUUID, true, agentData());
+        store.handleTraceData(sessnUUID, trc(1L, 100, 200),
                 md(42L, 24L, 0L, 1L, 0, 1, 2));
 
         TraceRecord rslt = store.retrieve(42L, 24L, 1L, rtr());
@@ -136,18 +132,16 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         RotatingTraceStore store = openRotatingStore();
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
-        store.handleTraceData(agentUUID, sessnUUID, trc(1L, 100, 200),
+        store.handleAgentData(sessnUUID, true, agentData());
+        store.handleTraceData(sessnUUID, trc(1L, 100, 200),
                 md(42L, 24L, 0L, 1L, 0, 1, 2));
 
         store.archive();
 
-        sessnUUID = store.getSession(agentUUID);
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
-        store.handleTraceData(agentUUID, sessnUUID, trc(1L, 100, 200),
+        store.handleAgentData(sessnUUID, true, agentData());
+        store.handleTraceData(sessnUUID, trc(1L, 100, 200),
                 md(45L, 25L, 0L, 1L, 0, 1, 2));
 
         TraceRecord rslt1 = store.retrieve(42L, 24L, 1L, rtr());
@@ -165,18 +159,16 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         RotatingTraceStore store = openRotatingStore();
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
-        store.handleTraceData(agentUUID, sessnUUID, trc(1L, 100, 200),
+        store.handleAgentData(sessnUUID, true, agentData());
+        store.handleTraceData(sessnUUID, trc(1L, 100, 200),
                 md(42L, 24L, 0L, 1L, 0, 1, 2));
 
         store.archive();
 
-        sessnUUID = store.getSession(agentUUID);
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
-        store.handleTraceData(agentUUID, sessnUUID, trc(1L, 100, 200),
+        store.handleAgentData(sessnUUID, true, agentData());
+        store.handleTraceData(sessnUUID, trc(1L, 100, 200),
                 md(43L, 25L, 0L, 1L, 0, 1, 2));
 
         store.close();
@@ -194,12 +186,11 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
     public void testRetrieveTraceAndCheckOffsets() throws Exception {
         RotatingTraceStore store = openRotatingStore();
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
+        store.handleAgentData(sessnUUID, true, agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, trc2(1L,100, 200),
+        store.handleTraceData(sessnUUID, trc2(1L,100, 200),
                 md(42L, 24L, 0L, 1L, 0, 1, 2));
 
         byte [] tb0 = store.retrieveRaw(42L, 24L, 1L);
@@ -227,12 +218,11 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         SimpleTraceStore store = createSimpleStore(1);
         store.open();
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
+        store.handleAgentData(sessnUUID, true, agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, str(
+        store.handleTraceData(sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 200, 1,
                 ta("URL", "http://127.0.0.1:8080/my/app"),
                 tb(1500, 0, 1L)
@@ -254,12 +244,11 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         SimpleTraceStore store = createSimpleStore(1);
         store.open();
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(agentUUID, sessnUUID, agentData());
+        store.handleAgentData(sessnUUID, true, agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID, str(
+        store.handleTraceData(sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 200, 1,
                 ta("URL", "http://127.0.0.1:8080/my/app"),
                 tb(1500, 0, 1L),

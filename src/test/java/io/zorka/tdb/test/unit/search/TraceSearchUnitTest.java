@@ -82,18 +82,17 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
     private RotatingTraceStore createAndPopulateStore() throws Exception {
         RotatingTraceStore store = openRotatingStore();
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
         long traceId1 = rand.nextLong(), traceId2 = rand.nextLong();
         long spanId = rand.nextLong();
 
-        store.handleAgentData(agentUUID, sessnUUID, TraceTestDataBuilder.agentData());
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
 
-        store.handleTraceData(agentUUID, sessnUUID,
+        store.handleTraceData(sessnUUID,
                 TraceTestDataBuilder.trc(1L, 400, 100, "XXX", "YYY", "AAA", "UVW"),
                 md(traceId1, traceId2, 0, spanId, 0, 1, 2));
-        store.handleTraceData(agentUUID, sessnUUID,
+        store.handleTraceData(sessnUUID,
                 TraceTestDataBuilder.trc(1L, 500, 200, "XXX", "XYZ", "CCC", "UVW"),
                 md(traceId1+1, traceId2+1, 0, spanId+1, 0, 1, 2));
 

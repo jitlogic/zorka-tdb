@@ -62,14 +62,13 @@ public class HLSearchUnitTest extends ZicoTestFixture {
         SimpleTraceStore store = createSimpleStore(1);
         store.open();
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(agentUUID, sessnUUID, TraceTestDataBuilder.agentData());
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
 
         for (int i = 0; i < 16; i++) {
             long sid = 31L + i;
-            store.handleTraceData(agentUUID, sessnUUID,
+            store.handleTraceData(sessnUUID,
                     TraceTestDataBuilder.trc(sid, 100+i*50, 100 + (i*200) % 5000,
                             "XXX", "YYY"+(i % 3), "AAA", "UVW"+(i % 7)),
                     md(42L+(i%4), 24L+(i%4), 0, sid, 0, i%4+1, i%2+1));

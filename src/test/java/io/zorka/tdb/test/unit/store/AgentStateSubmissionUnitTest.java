@@ -48,30 +48,9 @@ public class AgentStateSubmissionUnitTest extends ZicoTestFixture {
 
 
     @Test
-    public void testSubmitAgentAttrs() {
-        assertEquals(24, store.length());
-
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
-        byte[] agentData = str(aa("ENV", "UAT"), aa("APP", "PETSTORE")).get(0);
-
-        store.handleAgentData(agentUUID, sessnUUID, agentData);
-
-        assertEquals(
-            map("ENV", "UAT", "APP", "PETSTORE", "_UUID", agentUUID),
-            store.getTextIndex().getAgentInfo(agentUUID));
-
-        assertEquals(
-            map(agentUUID, Arrays.asList("ENV", "APP")),
-            store.getTextIndex().getAgentAttrs());
-    }
-
-
-    @Test
     public void testSubmitStringRefs() {
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
         byte[] agentData = str(
             sr(10, "com.myapp.MyClass", TC),
@@ -79,7 +58,7 @@ public class AgentStateSubmissionUnitTest extends ZicoTestFixture {
             sr(12, "()V", TS),
             mr(13, 10, 11, 12)).get(0);
 
-        store.handleAgentData(agentUUID, sessnUUID, agentData);
+        store.handleAgentData(sessnUUID, true, agentData);
 
         int cid = store.getTextIndex().getTyped(TC, "com.myapp.MyClass");
         int mid = store.getTextIndex().getTyped(TM, "myMethod");

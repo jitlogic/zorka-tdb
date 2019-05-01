@@ -16,7 +16,6 @@
 
 package io.zorka.tdb.store;
 
-import io.zorka.tdb.MissingSessionException;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.*;
 import io.zorka.tdb.search.*;
@@ -257,11 +256,18 @@ public class SimpleTraceStore implements TraceStore {
         return qindex.getTstop();
     }
 
-    private synchronized AgentHandler getHandler(String sessionUUID, String agentUUID) {
-        AgentHandler agentHandler = handlers.get(agentUUID);
-        if (agentHandler == null || !agentHandler.getSessionUUID().equals(sessionUUID)) {
-            throw new MissingSessionException(sessionUUID, agentUUID);
+    private synchronized AgentHandler getHandler(String sessionId, boolean reset) {
+        AgentHandler agentHandler = handlers.get(sessionId);
+
+        if (agentHandler == null && !reset) {
+            throw new ZicoException("No such session: " + sessionId);
         }
+
+        if (agentHandler == null) {
+            agentHandler = new AgentHandler(this, sessionId, sessionId, traceTypeResolver);
+            handlers.put(sessionId, agentHandler);
+        }
+
         return agentHandler;
     }
 
@@ -338,13 +344,15 @@ public class SimpleTraceStore implements TraceStore {
 
 
     @Override
-    public void handleTraceData(String agentUUID, String sessionUUID, byte[] data, ChunkMetadata md) {
-        getHandler(sessionUUID, agentUUID).handleTraceData(data, md);
+    public void handleTraceData(String sessionUUID, byte[] data, ChunkMetadata md) {
+        getHandler(sessionUUID, false).handleTraceData(data, md);
     }
 
 
-    public void handleAgentData(String agentUUID, String sessionUUID, byte[] data) {
-        getHandler(sessionUUID, agentUUID).handleAgentData(data);
+    @Override
+    public void handleAgentData(String sessionUUID, boolean reset, byte[] data) {
+        AgentHandler handler = getHandler(sessionUUID, reset);
+        handler.handleAgentData(data);
     }
 
 
@@ -367,20 +375,6 @@ public class SimpleTraceStore implements TraceStore {
         cleanupSessions();
         return qindex.runMaintenance() || ctext.runMaintenance() || cmeta.runMaintenance();
     }
-
-    @Override
-    public synchronized String getSession(String agentUUID) {
-        AgentHandler handler = handlers.get(agentUUID);
-        if (handler != null) {
-            return handler.getSessionUUID();
-        } else {
-            String sessionUUID = UUID.randomUUID().toString();
-            handler = new AgentHandler(this, agentUUID, sessionUUID, traceTypeResolver);
-            handlers.put(agentUUID, handler);
-            return sessionUUID;
-        }
-    }
-
 
     public long length() {
         return fdata.length() + ctext.length() + cmeta.length();

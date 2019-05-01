@@ -283,18 +283,10 @@ public class RotatingTraceStore implements TraceStore {
 
 
     @Override
-    public String getSession(String agentUUID) {
-        checkOpen();
-        RotatingTraceStoreState ts = this.state;
-        return ts.getCurrent().getSession(agentUUID);
-    }
-
-
-    @Override
-    public void handleTraceData(String agentUUID, String sessionUUID, byte[] data, ChunkMetadata md) {
+    public void handleTraceData(String sessionUUID, byte[] data, ChunkMetadata md) {
 
         if (log.isDebugEnabled()) {
-            log.debug("Got trace data from " + agentUUID + " (" + sessionUUID + ")");
+            log.debug("Got trace data from for session " + sessionUUID);
         }
 
         checkRotate();
@@ -302,24 +294,21 @@ public class RotatingTraceStore implements TraceStore {
         // Single store is big, so it takes at least several minutes to overflow again,
         // so no practical chance of race condition here
         // TODO proper impl
-        state.getCurrent().handleTraceData(agentUUID, sessionUUID, data, md);
+        state.getCurrent().handleTraceData(sessionUUID, data, md);
     }
 
 
     @Override
-    public void handleAgentData(String agentUUID, String sessionUUID, byte[] data) {
+    public void handleAgentData(String sessionId, boolean reset, byte[] data) {
 
         if (log.isDebugEnabled()) {
-            log.debug("Got agent state from " + agentUUID + " (" + sessionUUID + ")");
+            log.debug("Got agent state for session " + sessionId + " (reset=" + reset + ")");
         }
 
 
         checkRotate();
 
-        // Single store is big, so it takes at least several minutes to overflow again,
-        // so no practical chance of race condition here
-        // TODO proper impl
-        state.getCurrent().handleAgentData(agentUUID, sessionUUID, data);
+        state.getCurrent().handleAgentData(sessionId, reset, data);
     }
 
     private void checkOpen() {

@@ -52,15 +52,14 @@ public class SubmitSampledTracesUnitTest extends ZicoTestFixture {
     public void testSubmitTomcatOldTracerSinglePkt() throws Exception {
         RotatingTraceStore store = openRotatingStore();
 
-        String agentUUID = UUID.randomUUID().toString();
-        String sessnUUID = store.getSession(agentUUID);
+        String sessnUUID = UUID.randomUUID().toString();
 
         String trc01UUID = UUID.randomUUID().toString();
 
         // TODO fix input data, so trace ID is proper
 
-        store.handleAgentData(agentUUID, sessnUUID, AGD_PACKETS[0]);
-        store.handleTraceData(agentUUID, sessnUUID, TRC_PACKETS[0], cm(1, 1));
+        store.handleAgentData(sessnUUID, false, AGD_PACKETS[0]);
+        store.handleTraceData(sessnUUID, TRC_PACKETS[0], cm(1, 1));
 
         TraceSearchResult sr0 = store.searchTraces(QmiQueryBuilder.all().query());
         Set sl0 = drain(sr0);
