@@ -1,5 +1,6 @@
 package io.zorka.tdb.store;
 
+import com.jitlogic.zorka.common.util.ZorkaUtil;
 import io.zorka.tdb.meta.ChunkMetadata;
 
 public class TraceSearchResultItem {
@@ -216,4 +217,17 @@ public class TraceSearchResultItem {
     public void setParentId(long parentId) {
         this.parentId = parentId;
     }
+
+    public String getTraceIdHex() {
+        return traceId2 != 0 ? ZorkaUtil.hex(traceId1, traceId2) : ZorkaUtil.hex(traceId1);
+    }
+
+    public String getSpanIdHex() {
+        return spanId != 0 ? ZorkaUtil.hex(spanId) : null;
+    }
+
+    public String getParentIdHex() {
+        return parentId != 0 ? ZorkaUtil.hex(parentId) : null;
+    }
+
 }

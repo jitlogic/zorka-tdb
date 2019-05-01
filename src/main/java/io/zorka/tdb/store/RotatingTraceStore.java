@@ -384,7 +384,7 @@ public class RotatingTraceStore implements TraceStore {
             state = EMPTY;
         }
 
-        ts.getCurrent().close();
+        if (ts.getCurrent() != null) ts.getCurrent().close();
 
         for (SimpleTraceStore s : ts.getArchived()) s.close();
 

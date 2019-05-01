@@ -143,6 +143,10 @@ public class SimpleTraceStoreSearchResult implements TraceSearchResult {
 
         itm.setChunkId(chunkId);
         itm.setDescription(store.getDesc(chunkId));
+        itm.setTraceId1(md.getTraceId1());
+        itm.setTraceId2(md.getTraceId2());
+        itm.setParentId(md.getParentId());
+        itm.setSpanId(md.getSpanId());
 
         return itm;
     }
