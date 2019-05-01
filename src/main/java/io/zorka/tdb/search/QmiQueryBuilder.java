@@ -27,27 +27,6 @@ public class QmiQueryBuilder {
         return new QmiQueryBuilder();
     }
 
-    public QmiQueryBuilder env(int envId) {
-        qmi.setEnvId(envId);
-        return this;
-    }
-
-    public QmiQueryBuilder app(int appId) {
-        qmi.setAppId(appId);
-        return this;
-    }
-
-    public QmiQueryBuilder type(int typeId) {
-        qmi.setTypeId(typeId);
-        return this;
-    }
-
-    public QmiQueryBuilder envApp(int envId, int appId) {
-        qmi.setEnvId(envId);
-        qmi.setAppId(appId);
-        return this;
-    }
-
     public QmiQueryBuilder minDuration(long min) {
         qmi.setMinDuration(min);
         return this;
@@ -126,16 +105,6 @@ public class QmiQueryBuilder {
 
     public QmiQueryBuilder spanId(long spanId) {
         qmi.setSpanId(spanId);
-        return this;
-    }
-
-    public QmiQueryBuilder desc(String desc) {
-        qmi.setDesc(new TextNode(desc.getBytes(), true, true));
-        return this;
-    }
-
-    public QmiQueryBuilder desc(StringSearchNode node) {
-        qmi.setDesc(node);
         return this;
     }
 

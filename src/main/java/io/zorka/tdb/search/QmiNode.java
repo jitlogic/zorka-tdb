@@ -26,18 +26,6 @@ import java.util.Objects;
  */
 public class QmiNode {
 
-    /** Application ID (0 to skip search by appId) */
-    private int appId;
-
-    /** Environment ID (0 to skip search by envId) */
-    private int envId;
-
-    /** Trace type */
-    private int typeId;
-
-    /** Host ID */
-    private int hostId;
-
     /** Trace duration (milliseconds) */
     private long minDuration = 0, maxDuration = Long.MAX_VALUE;
 
@@ -46,9 +34,6 @@ public class QmiNode {
 
     /** All traces or only errors */
     private boolean errorFlag = false;
-
-    /** Looking for records with specific description ID (useful for some forms of grouping). */
-    private StringSearchNode desc;
 
     /** Minimum and maximum number of calls registered by tracer. */
     private long minCalls = 0, maxCalls = Long.MAX_VALUE;
@@ -70,16 +55,11 @@ public class QmiNode {
     }
 
     public QmiNode(QmiNode other) {
-        this.appId = other.appId;
-        this.envId = other.envId;
-        this.typeId = other.typeId;
-        this.hostId = other.hostId;
         this.minDuration = other.minDuration;
         this.maxDuration = other.maxDuration;
         this.tstart = other.tstart;
         this.tstop = other.tstop;
         this.errorFlag = other.errorFlag;
-        this.desc = other.desc;
         this.minCalls = other.minCalls;
         this.maxCalls = other.maxCalls;
         this.minRecs = other.minRecs;
@@ -88,30 +68,6 @@ public class QmiNode {
         this.maxErrs = other.maxErrs;
         this.traceId1 = other.traceId1;
         this.traceId2 = other.traceId2;
-    }
-
-    public int getAppId() {
-        return appId;
-    }
-
-    public void setAppId(int appId) {
-        this.appId = appId;
-    }
-
-    public int getEnvId() {
-        return envId;
-    }
-
-    public void setEnvId(int envId) {
-        this.envId = envId;
-    }
-
-    public int getTypeId() {
-        return typeId;
-    }
-
-    public void setTypeId(int typeId) {
-        this.typeId = typeId;
     }
 
     public long getMinDuration() {
@@ -202,22 +158,6 @@ public class QmiNode {
         this.maxErrs = maxErrs;
     }
 
-    public StringSearchNode getDesc() {
-        return desc;
-    }
-
-    public void setDesc(StringSearchNode desc) {
-        this.desc = desc;
-    }
-
-    public int getHostId() {
-        return hostId;
-    }
-
-    public void setHostId(int hostId) {
-        this.hostId = hostId;
-    }
-
     public long getTraceId1() {
         return traceId1;
     }
@@ -255,10 +195,7 @@ public class QmiNode {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         QmiNode that = (QmiNode) o;
-        return appId == that.appId &&
-                envId == that.envId &&
-                typeId == that.typeId &&
-                minDuration == that.minDuration &&
+        return minDuration == that.minDuration &&
                 maxDuration == that.maxDuration &&
                 tstart == that.tstart &&
                 tstop == that.tstop &&
@@ -272,17 +209,15 @@ public class QmiNode {
                 traceId1 == that.traceId1 &&
                 traceId2 == that.traceId2 &&
                 spanId == that.spanId &&
-                parentId == that.parentId &&
-                Objects.equals(desc, that.desc);
+                parentId == that.parentId;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-                appId, envId, typeId,
                 minDuration, maxDuration, tstart, tstop,
                 minCalls, maxCalls, minRecs, maxRecs, minErrs, maxErrs,
-                errorFlag, traceId1, traceId2, parentId, spanId, desc);
+                errorFlag, traceId1, traceId2, parentId, spanId);
     }
 }
 

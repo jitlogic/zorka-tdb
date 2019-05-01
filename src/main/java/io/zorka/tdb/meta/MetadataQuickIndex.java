@@ -235,18 +235,11 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
     }
 
     private long format_W2(QmiNode md) {
-        return (((long)md.getAppId()) << 48)
-                | (((long)md.getEnvId()) << 32)
-                | (((long)md.getTypeId()) << 16)
-                | (md.isErrorFlag() ? 1 : 0);
+        return (md.isErrorFlag() ? 1 : 0);
     }
 
     private long format_W2M(QmiNode md) {
-        return
-                (md.getAppId()  != 0 ? 0xffff000000000000L : 0L)
-                        | (md.getEnvId()  != 0 ? 0x0000ffff00000000L : 0L)
-                        | (md.getTypeId() != 0 ? 0x00000000ffff0000L : 0L)
-                        | (md.isErrorFlag() ? 0x0000000000000001L : 0L);
+        return md.isErrorFlag() ? 0x0000000000000001L : 0L;
     }
 
 
@@ -533,7 +526,6 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
         long w2m = format_W2M(query);
         long d0 = query.getMinDuration();
         long d1 = query.getMaxDuration();
-        long hostId = query.getHostId();
         long tid1 = query.getTraceId1();
         long tid2 = query.getTraceId2();
         long sid = query.getSpanId();
@@ -552,9 +544,8 @@ public class MetadataQuickIndex implements Closeable, ZicoMaintObject {
                 long w9 = bb.getLong(pos + W9_PID);
                 long w10 = bb.getLong(pos + W10_SID);
                 long wd = (w4 >>> 32) & 0xffff;
-                long hd = (w4 >>> 48) & 0xffff;
                 long t = w1 & 0xffffffffL;
-                if (w2v == (w2 & w2m) && t >= t0 && t <= t1 && wd >= d0 && wd < d1 && (hostId == 0 || hostId == hd) &&
+                if (w2v == (w2 & w2m) && t >= t0 && t <= t1 && wd >= d0 && wd < d1 &&
                         ((tid1 == 0 && tid2 == 0) || (tid1 == w7 && tid2 == w8)) &&
                         (sid == 0 || sid == w10) && (pid == 0 || pid == w9)) {
                     ids[idx] = blk;
