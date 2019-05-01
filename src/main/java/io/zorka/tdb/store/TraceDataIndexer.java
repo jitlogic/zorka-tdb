@@ -188,8 +188,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         output.traceEnd();
     }
 
-    private int traceBegin(int tid) {
-        int typeId = traceTypeResolver.resolve(index.gets(stringRef(tid)));
+    private void traceBegin() {
 
         ChunkMetadata md = new ChunkMetadata(traceId1, traceId2, 0, 0, chnum);
         md.setStackDepth(stackDepth);
@@ -198,13 +197,10 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         md.setTstamp(lastTstamp);
         md.setTstart(tstart);
 
-        md.setTypeId(typeId);
         md.addRecs(1);
         mpush(md);
 
         flushLastIds();
-
-        return mtop.catchTypeId(typeId);
     }
 
     @Override
@@ -212,6 +208,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
 
         switch (k) {
             case TI_TSTAMP:
+                traceBegin();
                 if (mtop != null) mtop.catchTstamp(v);
                 lastTstamp = v;
                 break;
@@ -223,9 +220,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 break;
             case TI_TSTOP:
                 tstop = v;
-                break;
-            case TI_TYPE:
-                v = traceBegin((int)v);
                 break;
             case TI_FLAGS:
                 if (0 != (v & TF_ERROR_MARK)) {
@@ -241,10 +235,10 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 }
                 break;
             case TI_PARENT:
-                mtop.setParentId(v);
+                if (mtop != null) mtop.setParentId(v);
                 break;
             case TI_SPAN:
-                mtop.setSpanId(v);
+                if (mtop != null) mtop.setSpanId(v);
                 break;
         }
 

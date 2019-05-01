@@ -199,7 +199,6 @@ public class ZicoTestFixture {
         ChunkMetadata tm = new ChunkMetadata(traceId1, traceId2, parentId, spanId, chunkNum);
 
         tm.setStartOffs(startOffs);
-        tm.setTypeId(typeId);
         tm.setTstamp(tstamp);
         tm.setDuration(duration);
         tm.setDataOffs(dataOffs);

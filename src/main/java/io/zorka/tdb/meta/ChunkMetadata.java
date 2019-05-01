@@ -28,9 +28,6 @@ import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
  */
 public class ChunkMetadata {
 
-    /** Trace type ID. This is resolved externally and is consistent across all stores. */
-    private int typeId;
-
     /** Trace flags. See com.jitlogic.zorka.cbor.TraceRecordFlags for reference. */
     private int tflags;
 
@@ -93,7 +90,7 @@ public class ChunkMetadata {
     @Override
     public String toString() {
         return "ChunkMetadata(dataOffs=" + dataOffs + ", startOffs=" + startOffs
-            + ", tstamp=" + tstamp + ", typeId=" + typeId + ")";
+            + ", tstamp=" + tstamp + ")";
     }
 
     public ChunkMetadata(long traceId1, long traceId2, long parentId, long spanId, int chunkNum) {
@@ -178,14 +175,6 @@ public class ChunkMetadata {
         }
     }
 
-    public int getTypeId() {
-        return typeId;
-    }
-
-    public void setTypeId(int typeId) {
-        this.typeId = typeId;
-    }
-
     public int getChunkNum() {
         return chunkNum;
     }
@@ -208,11 +197,6 @@ public class ChunkMetadata {
 
     public void setStartOffs(int startOffs) {
         this.startOffs = startOffs;
-    }
-
-    public int catchTypeId(int typeId) {
-        this.typeId = typeId;
-        return typeId;
     }
 
     public int getStackDepth() {

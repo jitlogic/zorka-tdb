@@ -40,7 +40,7 @@ public class TraceSearchResultItem {
     public TraceSearchResultItem(long chunkId, ChunkMetadata cm) {
         this.tstamp = cm.getTstamp();
         this.duration = cm.getDuration();
-        this.typeId = cm.getTypeId();
+        this.chunkId = chunkId;
 
         // TODO tflags
 

@@ -48,7 +48,7 @@ public class SubmitChunkedTraceUnitTest extends ZicoTestFixture {
         List<byte[]> data = TraceTestDataBuilder.str(
             TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0,0,0), 100, 200, 1,
                 TraceTestDataBuilder.ta("XXX", "YYY"),
-                TraceTestDataBuilder.tb(1500, 0, spanId),
+                TraceTestDataBuilder.tb(1500, spanId),
                 TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0, 0, 0), 100, 120, 1),
                 TraceTestDataBuilder.brk(),
                 TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0, 0, 0), 120, 140, 1)

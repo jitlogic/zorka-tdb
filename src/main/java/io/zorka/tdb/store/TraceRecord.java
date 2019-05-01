@@ -54,9 +54,6 @@ public class TraceRecord {
 
     private int flags;
 
-    /** Trace type ID */
-    private int type;
-
     private int level;
 
     private long recs, errors;
@@ -169,14 +166,6 @@ public class TraceRecord {
 
     public void setDuration(long duration) {
         this.duration = duration;
-    }
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
     }
 
     public int getEid() {

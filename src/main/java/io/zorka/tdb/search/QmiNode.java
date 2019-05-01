@@ -16,8 +16,6 @@
 
 package io.zorka.tdb.search;
 
-import io.zorka.tdb.search.ssn.StringSearchNode;
-
 import java.util.Objects;
 
 /**

@@ -56,7 +56,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         store.handleTraceData(sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 200, 1,
                 ta("XXX", "YYY"),
-                tb(1500, 0, 1L)
+                tb(1500, 1L)
             )).get(0),
             md(42L, 24L, 0L, 1L, 0));
 
@@ -79,7 +79,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         store.handleTraceData(sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 100+100*TICKS_IN_SECOND, 42,
-                tb(1500, 1, 1L),
+                tb(1500, 1L),
                 ta(ti(TAG_STRING_REF, sid("URI")), "/my/app"),
                 ta("STATUS", "200"),
                 tf(TF_ERROR_MARK)
@@ -215,7 +215,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         store.handleTraceData(sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 200, 1,
                 ta("URL", "http://127.0.0.1:8080/my/app"),
-                tb(1500, 0, 1L)
+                tb(1500, 1L)
             )).get(0),
             md(42L, 24L, 0L, 1L, 0));
 
@@ -237,7 +237,7 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
         store.handleTraceData(sessnUUID, str(
             tr(true, mid(0, 0, 0), 100, 200, 1,
                 ta("URL", "http://127.0.0.1:8080/my/app"),
-                tb(1500, 0, 1L),
+                tb(1500, 1L),
                 ex(1, 101, "This is error",
                     sd(100, 200, 6, 42),
                     sd(101, 201, 7, 24),

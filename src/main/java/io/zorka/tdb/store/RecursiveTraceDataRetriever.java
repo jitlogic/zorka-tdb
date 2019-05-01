@@ -114,9 +114,6 @@ public class RecursiveTraceDataRetriever<T> implements TraceDataRetriever<T> {
             case TI_DURATION:
                 tr.setDuration(v);
                 break;
-            case TI_TYPE:
-                tr.setType((int)v);
-                break;
             case TI_RECS:
                 tr.setRecs((int)v);
                 break;

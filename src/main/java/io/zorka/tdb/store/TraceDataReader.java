@@ -233,19 +233,17 @@ public class TraceDataReader implements Runnable {
             }
             case TAG_TRACE_BEGIN: {
                 int prefix = reader.peek();
-                checked(prefix >= 0x82 && prefix <= 0x84,
+                checked(prefix >= 0x81 && prefix <= 0x83,
                     "Trace begin marker should be 2-element array.");
                 reader.read();
                 // Timestamp (mandatory)
                 output.traceInfo(TI_TSTAMP, reader.readLong());
-                // TraceType (mandatory)
-                output.traceInfo(TI_TYPE, reader.readInt());
                 // SpanID (optional)
-                if (prefix >= 0x83) {
+                if (prefix >= 0x82) {
                     output.traceInfo(TI_SPAN, reader.readLong());
                 }
                 // ParentID (optional)
-                if (prefix >= 0x84) {
+                if (prefix >= 0x83) {
                     output.traceInfo(TI_PARENT, reader.readLong());
                 }
                 break;

@@ -204,8 +204,8 @@ public class TraceTestDataBuilder {
 
 
     /** Generates trace begin marker. */
-    public static WireObj tb(long clock, int tid, long sid) {
-        return new TaggedObjs(ARR_BASE, TAG_TRACE_BEGIN, clock, tid, sid);
+    public static WireObj tb(long clock, long sid) {
+        return new TaggedObjs(ARR_BASE, TAG_TRACE_BEGIN, clock, sid);
     }
 
 
@@ -314,7 +314,7 @@ public class TraceTestDataBuilder {
         return str(
             tr(true, mid(0,0,0), tst, tst + dur, 1,
                 ta("XXX", "YYY"),
-                tb(1500, 0, sid)
+                tb(1500, sid)
             )).get(0);
     }
 
@@ -322,7 +322,7 @@ public class TraceTestDataBuilder {
     public static byte[] trc(long sid, int tst, int dur, String k1, String v1, String k2, String v2) {
         return str(
             tr(true, mid(0,0,0), tst, tst + dur, 2,
-                tb(1500, 0, sid),
+                tb(1500, sid),
                 ta(k1, v1),
                 tr(true, mid(1, 1, 1), tst, tst+dur/2, 1,
                     ta(k2, v2))
@@ -334,7 +334,7 @@ public class TraceTestDataBuilder {
         return str(
             tr(true, mid(0,0,0), tst, tst + dur, 1,
                 ta("XXX", "YYY"),
-                tb(1500, 0, sid),
+                tb(1500, sid),
                 tr(true, mid(0, 0, 0), 100, 120, 1),
                 tr(true, mid(0, 0, 0), 120, 140, 1)
             )).get(0);
