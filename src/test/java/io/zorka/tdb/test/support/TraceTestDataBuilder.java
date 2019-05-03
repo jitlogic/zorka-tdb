@@ -16,8 +16,8 @@
 
 package io.zorka.tdb.test.support;
 
-import com.jitlogic.zorka.cbor.CborDataWriter;
 import io.zorka.tdb.meta.StructuredTextIndex;
+import com.jitlogic.zorka.cbor.CborDataWriter;
 import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
 

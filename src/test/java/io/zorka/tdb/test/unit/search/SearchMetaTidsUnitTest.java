@@ -17,18 +17,17 @@
 package io.zorka.tdb.test.unit.search;
 
 import io.zorka.tdb.meta.MetadataTextIndex;
-import io.zorka.tdb.test.support.WritableIndexWrapper;
-import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.TextIndexType;
 import io.zorka.tdb.text.WalTextIndex;
+import io.zorka.tdb.text.fm.FmTextIndex;
+import io.zorka.tdb.test.support.WritableIndexWrapper;
+import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.fm.FmCompressionLevel;
 import io.zorka.tdb.text.fm.FmIndexFileStore;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
-import io.zorka.tdb.text.fm.FmTextIndex;
 import io.zorka.tdb.util.BitmapSet;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -39,17 +38,14 @@ import java.util.Collection;
 
 import static org.junit.Assert.*;
 
-import static io.zorka.tdb.text.TextIndexType.FMI;
-import static io.zorka.tdb.text.TextIndexType.WAL;
-
 @RunWith(Parameterized.class)
 public class SearchMetaTidsUnitTest extends ZicoTestFixture {
 
     @Parameterized.Parameters(name="{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                {FMI},
-                {WAL}
+                {TextIndexType.FMI},
+                {TextIndexType.WAL}
         });
     }
 
@@ -75,7 +71,7 @@ public class SearchMetaTidsUnitTest extends ZicoTestFixture {
         mti.addTextMetaData(13, Arrays.asList(3, 4), false);
         mti.addTextMetaData(13, Arrays.asList(3, 4, 5, 6), true);
 
-        if (type == WAL) {
+        if (type == TextIndexType.WAL) {
             this.index = mti;
         } else {
             File fmf = new File(tmpDir, "test.ifm");

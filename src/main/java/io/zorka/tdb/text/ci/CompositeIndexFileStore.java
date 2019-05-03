@@ -16,13 +16,13 @@
 
 package io.zorka.tdb.text.ci;
 
+import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.text.fm.BWT;
 import io.zorka.tdb.text.fm.FmCompressionLevel;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
 import io.zorka.tdb.text.fm.FmTextIndex;
 import io.zorka.tdb.text.WalTextIndex;
-import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WritableTextIndex;
 
 import java.io.File;

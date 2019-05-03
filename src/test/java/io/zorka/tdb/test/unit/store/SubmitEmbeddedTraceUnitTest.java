@@ -20,7 +20,6 @@ import io.zorka.tdb.test.support.ZicoTestFixture;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 public class SubmitEmbeddedTraceUnitTest extends ZicoTestFixture {
 

@@ -19,9 +19,6 @@ package io.zorka.tdb.test.unit.util;
 import io.zorka.tdb.util.BitUtils;
 import org.junit.Assert;
 import org.junit.Test;
-import static org.junit.Assert.*;
-
-import static io.zorka.tdb.util.BitUtils.*;
 
 import java.nio.ByteBuffer;
 

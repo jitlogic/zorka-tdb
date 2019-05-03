@@ -16,10 +16,10 @@
 
 package io.zorka.tdb.test.support;
 
-import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.TextIndexState;
 import io.zorka.tdb.text.WritableTextIndex;
+import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.util.BitmapSet;
 
 import java.io.IOException;

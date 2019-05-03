@@ -18,12 +18,13 @@ package io.zorka.tdb.test.unit.text.ci;
 
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.TextIndexState;
-import io.zorka.tdb.text.ci.CompositeIndexState;
-import io.zorka.tdb.text.ci.CompositeIndexStore;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
+import io.zorka.tdb.text.ci.CompositeIndexState;
+import io.zorka.tdb.text.ci.CompositeIndexStore;
 import io.zorka.tdb.util.ZicoUtil;
 
+import org.junit.Assert;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -65,7 +66,7 @@ public class CompositeIndexFullUnitTest extends ZicoTestFixture {
                 1, cs.getLookupIndexes().size());
         assertTrue("Expected FM index in lookup list.",
                 cs.getLookupIndexes().get(0).isReadOnly());
-        assertEquals("FM index should be open.",
+        Assert.assertEquals("FM index should be open.",
                 TextIndexState.OPEN, cs.getAllIndexes().get(0).getState());
         assertEquals(1, cs.getSearchIndexes().size());
         assertTrue(cs.getSearchIndexes().get(0).isReadOnly());

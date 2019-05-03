@@ -17,13 +17,13 @@
 package io.zorka.tdb.search;
 
 import io.zorka.tdb.ZicoException;
+import io.zorka.tdb.search.ssn.StringSearchNode;
+import io.zorka.tdb.search.tsn.KeyValSearchNode;
 import io.zorka.tdb.search.lsn.AndExprNode;
 import io.zorka.tdb.search.lsn.OrExprNode;
 import io.zorka.tdb.search.lsn.SeqExprNode;
 import io.zorka.tdb.search.ssn.CharClassNode;
-import io.zorka.tdb.search.ssn.StringSearchNode;
 import io.zorka.tdb.search.ssn.TextNode;
-import io.zorka.tdb.search.tsn.KeyValSearchNode;
 
 import java.util.ArrayList;
 import java.util.List;

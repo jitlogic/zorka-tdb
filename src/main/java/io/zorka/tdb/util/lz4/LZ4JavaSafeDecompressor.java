@@ -20,7 +20,6 @@ package io.zorka.tdb.util.lz4;
 // Using this copy for general purposes is not recommended.
 // Please use original version that is properly maintained and not tailored for ZICO purposes.
 
-import static io.zorka.tdb.util.lz4.LZ4Utils.*;
 import static io.zorka.tdb.util.lz4.Utils.checkRange;
 
 /**
@@ -32,8 +31,8 @@ public final class LZ4JavaSafeDecompressor extends LZ4Decompressor {
     public static final LZ4Decompressor INSTANCE = new LZ4JavaSafeDecompressor();
 
     public int decompress(byte[] src, final int srcOff, byte[] dest, final int destOff, int destLen) {
-        checkRange(src, srcOff);
-        checkRange(dest, destOff, destLen);
+        Utils.checkRange(src, srcOff);
+        Utils.checkRange(dest, destOff, destLen);
 
         if (destLen == 0) {
             if (src[srcOff] != 0) {

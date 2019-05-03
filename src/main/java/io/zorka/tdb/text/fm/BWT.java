@@ -26,7 +26,6 @@
 package io.zorka.tdb.text.fm;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.ZicoException;
 
 public class BWT {
     private static interface BaseArray {

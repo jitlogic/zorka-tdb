@@ -17,7 +17,6 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.ChunkMetadata;
 
 public interface ChunkMetadataProcessor {
 

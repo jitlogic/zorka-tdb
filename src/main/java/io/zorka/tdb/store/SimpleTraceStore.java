@@ -17,25 +17,23 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.*;
-import io.zorka.tdb.search.*;
+import io.zorka.tdb.meta.ChunkMetadata;
+import io.zorka.tdb.meta.MetadataQuickIndex;
+import io.zorka.tdb.meta.MetadataTextIndex;
+import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.text.CachingTextIndex;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
 import io.zorka.tdb.util.CborBufReader;
 
 import io.zorka.tdb.util.ZicoUtil;
-import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.MetadataTextIndex;
-import io.zorka.tdb.meta.StructuredTextIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static io.zorka.tdb.store.TraceStoreUtil.*;
 
 /**
  *
@@ -77,17 +75,13 @@ public class SimpleTraceStore implements TraceStore {
 
     private Map<String,TraceDataIndexer> indexerCache;
 
-    private TraceTypeResolver traceTypeResolver;
-
     private Properties props;
 
 
-    public SimpleTraceStore(File root, Properties props, Map<String,TraceDataIndexer> indexerCache,
-                            TraceTypeResolver traceTypeResolver) {
+    public SimpleTraceStore(File root, Properties props, Map<String,TraceDataIndexer> indexerCache) {
         this.indexerCache = indexerCache;
         this.root = root;
         this.baseDir = this.root.getParentFile();
-        this.traceTypeResolver = traceTypeResolver;
 
         if (!baseDir.exists()) {
             throw new ZicoException("Directory " + baseDir + " does not exist.");
@@ -253,7 +247,7 @@ public class SimpleTraceStore implements TraceStore {
         }
 
         if (agentHandler == null) {
-            agentHandler = new AgentHandler(this, sessionId, traceTypeResolver);
+            agentHandler = new AgentHandler(this, sessionId);
             handlers.put(sessionId, agentHandler);
         }
 
@@ -263,7 +257,7 @@ public class SimpleTraceStore implements TraceStore {
     public void retrieveRaw(long chunkId, ByteArrayOutputStream bos) {
         checkOpen();
 
-        int slotId = parseSlotId(chunkId);
+        int slotId = TraceStoreUtil.parseSlotId(chunkId);
         long offs = qindex.getDataOffs(slotId);
         CborBufReader rdr = fdata.read(offs);
         try {
@@ -283,7 +277,7 @@ public class SimpleTraceStore implements TraceStore {
 
     public <T> void retrieveChunk(long chunkId, boolean first, TraceDataRetriever<T> rtr) {
         checkOpen();
-        int slotId = parseSlotId(chunkId);
+        int slotId = TraceStoreUtil.parseSlotId(chunkId);
         ChunkMetadata md = qindex.getChunkMetadata(slotId);
         CborBufReader rdr = fdata.read(md.getDataOffs());
         if (first) rdr.position(md.getStartOffs());
@@ -327,7 +321,7 @@ public class SimpleTraceStore implements TraceStore {
     public ChunkMetadata getChunkMetadata(long chunkId) {
         if (chunkId ==-1) return null;
         checkOpen();
-        int slotId = parseSlotId(chunkId);
+        int slotId = TraceStoreUtil.parseSlotId(chunkId);
         return qindex.getChunkMetadata(slotId);
     }
 

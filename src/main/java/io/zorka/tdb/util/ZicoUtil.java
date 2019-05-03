@@ -18,6 +18,7 @@ package io.zorka.tdb.util;
 
 import org.objectweb.asm.Type;
 
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
 import java.util.*;

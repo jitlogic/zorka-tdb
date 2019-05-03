@@ -17,7 +17,6 @@
 package io.zorka.tdb.text.fm;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.ZicoException;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static io.zorka.tdb.text.fm.FmIndexFormat.*;
 import static io.zorka.tdb.util.BitUtils.getInt48;
 
 /**

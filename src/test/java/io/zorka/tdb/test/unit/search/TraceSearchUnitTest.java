@@ -17,9 +17,10 @@
 package io.zorka.tdb.test.unit.search;
 
 import io.zorka.tdb.search.QueryBuilder;
-import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.TraceSearchQuery;
-import io.zorka.tdb.store.*;
+import io.zorka.tdb.store.RotatingTraceStore;
+import io.zorka.tdb.store.SimpleTraceStore;
+import io.zorka.tdb.store.TraceStore;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
 import java.util.*;
@@ -27,7 +28,6 @@ import java.util.*;
 import io.zorka.tdb.test.support.TraceTestDataBuilder;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

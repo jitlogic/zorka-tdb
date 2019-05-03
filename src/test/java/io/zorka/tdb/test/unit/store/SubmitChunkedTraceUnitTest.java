@@ -17,7 +17,8 @@
 package io.zorka.tdb.test.unit.store;
 
 import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.store.*;
+import io.zorka.tdb.store.TraceRecord;
+import io.zorka.tdb.test.support.TraceTestDataBuilder;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
 import java.util.List;
@@ -27,7 +28,6 @@ import java.util.UUID;
 import io.zorka.tdb.store.RecursiveTraceDataRetriever;
 import io.zorka.tdb.store.RotatingTraceStore;
 import io.zorka.tdb.store.TraceDataIndexer;
-import io.zorka.tdb.test.support.TraceTestDataBuilder;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

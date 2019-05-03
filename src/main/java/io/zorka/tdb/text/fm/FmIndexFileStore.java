@@ -20,11 +20,7 @@ import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.util.ZicoUtil;
 import io.zorka.tdb.util.lz4.LZ4Decompressor;
 import io.zorka.tdb.util.lz4.LZ4JavaSafeDecompressor;
-import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.util.BitUtils;
-import io.zorka.tdb.util.ZicoUtil;
-import io.zorka.tdb.util.lz4.LZ4Decompressor;
-import io.zorka.tdb.util.lz4.LZ4JavaSafeDecompressor;
 import sun.nio.ch.DirectBuffer;
 
 import java.io.Closeable;
@@ -34,11 +30,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
-import static io.zorka.tdb.text.fm.FmIndexFormat.*;
 import static io.zorka.tdb.text.fm.FmIndexStore.car;
-
-import static io.zorka.tdb.util.BitUtils.BYTE_ARRAY_OFFS;
-import static io.zorka.tdb.util.BitUtils.UNSAFE;
 
 /**
  * Memory mapped FM index.

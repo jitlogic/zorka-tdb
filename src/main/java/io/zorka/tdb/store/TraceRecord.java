@@ -16,8 +16,6 @@
 
 package io.zorka.tdb.store;
 
-import io.zorka.tdb.meta.ChunkMetadata;
-
 import java.util.List;
 import java.util.Map;
 

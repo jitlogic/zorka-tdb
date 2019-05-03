@@ -1,7 +1,7 @@
 package io.zorka.tdb.store;
 
-import com.jitlogic.zorka.common.util.ZorkaUtil;
 import io.zorka.tdb.meta.ChunkMetadata;
+import com.jitlogic.zorka.common.util.ZorkaUtil;
 
 public class TraceSearchResultItem {
 

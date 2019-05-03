@@ -22,7 +22,6 @@ package io.zorka.tdb.util.lz4;
 
 import java.util.Arrays;
 
-import static io.zorka.tdb.util.lz4.LZ4Utils.*;
 import static io.zorka.tdb.util.lz4.Utils.checkRange;
 
 /**

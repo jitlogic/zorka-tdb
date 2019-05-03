@@ -30,7 +30,6 @@ import java.util.Map;
 import static com.jitlogic.zorka.cbor.CBOR.*;
 
 import static com.jitlogic.zorka.cbor.TraceDataTags.*;
-import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 import static com.jitlogic.zorka.cbor.TraceInfoConstants.*;
 
 import static io.zorka.tdb.util.Debug.*;

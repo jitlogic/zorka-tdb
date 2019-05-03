@@ -24,16 +24,13 @@ import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.store.*;
+import io.zorka.tdb.test.support.TraceTestDataBuilder;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
 
 import java.util.List;
 import java.util.UUID;
 
-import static io.zorka.tdb.test.support.TraceTestDataBuilder.*;
-
-import io.zorka.tdb.store.RecursiveTraceDataRetriever;
-import io.zorka.tdb.store.RotatingTraceStore;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -51,12 +48,12 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(sessnUUID, true, agentData());
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
 
-        store.handleTraceData(sessnUUID, str(
-            tr(true, mid(0, 0, 0), 100, 200, 1,
-                ta("XXX", "YYY"),
-                tb(1500, 1L)
+        store.handleTraceData(sessnUUID, TraceTestDataBuilder.str(
+            TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0, 0, 0), 100, 200, 1,
+                TraceTestDataBuilder.ta("XXX", "YYY"),
+                TraceTestDataBuilder.tb(1500, 1L)
             )).get(0),
             md(42L, 24L, 0L, 1L, 0));
 
@@ -75,14 +72,14 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(sessnUUID, true, agentData());
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
 
-        store.handleTraceData(sessnUUID, str(
-            tr(true, mid(0, 0, 0), 100, 100+100*TICKS_IN_SECOND, 42,
-                tb(1500, 1L),
-                ta(ti(TAG_STRING_REF, sid("URI")), "/my/app"),
-                ta("STATUS", "200"),
-                tf(TF_ERROR_MARK)
+        store.handleTraceData(sessnUUID, TraceTestDataBuilder.str(
+            TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0, 0, 0), 100, 100+100*TICKS_IN_SECOND, 42,
+                TraceTestDataBuilder.tb(1500, 1L),
+                TraceTestDataBuilder.ta(TraceTestDataBuilder.ti(TAG_STRING_REF, TraceTestDataBuilder.sid("URI")), "/my/app"),
+                TraceTestDataBuilder.ta("STATUS", "200"),
+                TraceTestDataBuilder.tf(TF_ERROR_MARK)
             )).get(0),
             md(42L, 24L, 0L, 1L, 0));
 
@@ -102,8 +99,8 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(sessnUUID, true, agentData());
-        store.handleTraceData(sessnUUID, trc(1L, 100, 200),
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
+        store.handleTraceData(sessnUUID, TraceTestDataBuilder.trc(1L, 100, 200),
                 md(42L, 24L, 0L, 1L, 0));
 
         TraceRecord rslt = store.retrieve(42L, 24L, 1L, rtr());
@@ -124,14 +121,14 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(sessnUUID, true, agentData());
-        store.handleTraceData(sessnUUID, trc(1L, 100, 200),
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
+        store.handleTraceData(sessnUUID, TraceTestDataBuilder.trc(1L, 100, 200),
                 md(42L, 24L, 0L, 1L, 0));
 
         store.archive();
 
-        store.handleAgentData(sessnUUID, true, agentData());
-        store.handleTraceData(sessnUUID, trc(1L, 100, 200),
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
+        store.handleTraceData(sessnUUID, TraceTestDataBuilder.trc(1L, 100, 200),
                 md(45L, 25L, 0L, 1L, 0));
 
         TraceRecord rslt1 = store.retrieve(42L, 24L, 1L, rtr());
@@ -151,14 +148,14 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(sessnUUID, true, agentData());
-        store.handleTraceData(sessnUUID, trc(1L, 100, 200),
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
+        store.handleTraceData(sessnUUID, TraceTestDataBuilder.trc(1L, 100, 200),
                 md(42L, 24L, 0L, 1L, 0));
 
         store.archive();
 
-        store.handleAgentData(sessnUUID, true, agentData());
-        store.handleTraceData(sessnUUID, trc(1L, 100, 200),
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
+        store.handleTraceData(sessnUUID, TraceTestDataBuilder.trc(1L, 100, 200),
                 md(43L, 25L, 0L, 1L, 0));
 
         store.close();
@@ -178,9 +175,9 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(sessnUUID, true, agentData());
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
 
-        store.handleTraceData(sessnUUID, trc2(1L,100, 200),
+        store.handleTraceData(sessnUUID, TraceTestDataBuilder.trc2(1L,100, 200),
                 md(42L, 24L, 0L, 1L, 0));
 
         byte [] tb0 = store.retrieveRaw(42L, 24L, 1L);
@@ -210,12 +207,12 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(sessnUUID, true, agentData());
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
 
-        store.handleTraceData(sessnUUID, str(
-            tr(true, mid(0, 0, 0), 100, 200, 1,
-                ta("URL", "http://127.0.0.1:8080/my/app"),
-                tb(1500, 1L)
+        store.handleTraceData(sessnUUID, TraceTestDataBuilder.str(
+            TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0, 0, 0), 100, 200, 1,
+                TraceTestDataBuilder.ta("URL", "http://127.0.0.1:8080/my/app"),
+                TraceTestDataBuilder.tb(1500, 1L)
             )).get(0),
             md(42L, 24L, 0L, 1L, 0));
 
@@ -232,16 +229,16 @@ public class SubmitTraceUnitTest extends ZicoTestFixture {
 
         String sessnUUID = UUID.randomUUID().toString();
 
-        store.handleAgentData(sessnUUID, true, agentData());
+        store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
 
-        store.handleTraceData(sessnUUID, str(
-            tr(true, mid(0, 0, 0), 100, 200, 1,
-                ta("URL", "http://127.0.0.1:8080/my/app"),
-                tb(1500, 1L),
-                ex(1, 101, "This is error",
-                    sd(100, 200, 6, 42),
-                    sd(101, 201, 7, 24),
-                    sd(102, 202, 8, 66)
+        store.handleTraceData(sessnUUID, TraceTestDataBuilder.str(
+            TraceTestDataBuilder.tr(true, TraceTestDataBuilder.mid(0, 0, 0), 100, 200, 1,
+                TraceTestDataBuilder.ta("URL", "http://127.0.0.1:8080/my/app"),
+                TraceTestDataBuilder.tb(1500, 1L),
+                TraceTestDataBuilder.ex(1, 101, "This is error",
+                    TraceTestDataBuilder.sd(100, 200, 6, 42),
+                    TraceTestDataBuilder.sd(101, 201, 7, 24),
+                    TraceTestDataBuilder.sd(102, 202, 8, 66)
                 ))).get(0),
             md(42L, 24L, 0L, 1L, 0));
 

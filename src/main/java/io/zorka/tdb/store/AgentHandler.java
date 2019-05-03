@@ -16,13 +16,13 @@
 
 package io.zorka.tdb.store;
 
-import com.jitlogic.zorka.cbor.CborDataWriter;
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.*;
-import io.zorka.tdb.util.CborBufReader;
 import io.zorka.tdb.meta.ChunkMetadata;
+import io.zorka.tdb.meta.MetadataQuickIndex;
 import io.zorka.tdb.meta.MetadataTextIndex;
 import io.zorka.tdb.meta.StructuredTextIndex;
+import com.jitlogic.zorka.cbor.CborDataWriter;
+import io.zorka.tdb.util.CborBufReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,9 +62,7 @@ public class AgentHandler implements AgentDataProcessor {
 
     private int minDuration;
 
-    private TraceTypeResolver traceTypeResolver;
-
-    public AgentHandler(SimpleTraceStore store, String sessionUUID, TraceTypeResolver traceTypeResolver) {
+    public AgentHandler(SimpleTraceStore store, String sessionUUID) {
         // TODO zrobić po prostu referencję do danego store'a
         this.store = store;
         this.mindex = store.getMetaIndex();
@@ -73,7 +71,6 @@ public class AgentHandler implements AgentDataProcessor {
         this.dataFile = store.getDataFile();
         this.indexerCache = store.getIndexerCache();
         this.sessionId = sessionUUID;
-        this.traceTypeResolver = traceTypeResolver;
         this.minDuration = Integer.parseInt(store.getProps().getProperty("ingest.min.duration", "1"));
 
         cborWriter = new CborDataWriter(1024 * 1024, 1024 * 1024);
@@ -104,7 +101,7 @@ public class AgentHandler implements AgentDataProcessor {
         String tid = md.getTraceIdHex() + md.getSpanIdHex();
         TraceDataIndexer translator = indexerCache.get(tid);
         if (translator == null) {
-            translator = new TraceDataIndexer(traceTypeResolver);
+            translator = new TraceDataIndexer();
         } else {
             // Each trace that spans onto next chunk needs to have its start offset set to 0
             for (ChunkMetadata d : translator.getTraceStackRecs()) {

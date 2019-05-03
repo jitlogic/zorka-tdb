@@ -17,19 +17,13 @@
 package io.zorka.tdb.test.unit.store;
 
 import io.zorka.tdb.meta.StructuredTextIndex;
-import io.zorka.tdb.store.SimpleTraceStore;
+import io.zorka.tdb.test.support.TraceTestDataBuilder;
 import io.zorka.tdb.test.support.ZicoTestFixture;
+import io.zorka.tdb.store.SimpleTraceStore;
 
-import java.util.Arrays;
 import java.util.UUID;
 
-import static io.zorka.tdb.util.ZicoUtil.map;
-
-import static io.zorka.tdb.test.support.TraceTestDataBuilder.*;
-
-import io.zorka.tdb.meta.StructuredTextIndex;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -52,17 +46,17 @@ public class AgentStateSubmissionUnitTest extends ZicoTestFixture {
 
         String sessnUUID = UUID.randomUUID().toString();
 
-        byte[] agentData = str(
-            sr(10, "com.myapp.MyClass", TC),
-            sr(11, "myMethod", TM),
-            sr(12, "()V", TS),
-            mr(13, 10, 11, 12)).get(0);
+        byte[] agentData = TraceTestDataBuilder.str(
+            TraceTestDataBuilder.sr(10, "com.myapp.MyClass", TraceTestDataBuilder.TC),
+            TraceTestDataBuilder.sr(11, "myMethod", TraceTestDataBuilder.TM),
+            TraceTestDataBuilder.sr(12, "()V", TraceTestDataBuilder.TS),
+            TraceTestDataBuilder.mr(13, 10, 11, 12)).get(0);
 
         store.handleAgentData(sessnUUID, true, agentData);
 
-        int cid = store.getTextIndex().getTyped(TC, "com.myapp.MyClass");
-        int mid = store.getTextIndex().getTyped(TM, "myMethod");
-        int sid = store.getTextIndex().getTyped(TS, "()V");
+        int cid = store.getTextIndex().getTyped(TraceTestDataBuilder.TC, "com.myapp.MyClass");
+        int mid = store.getTextIndex().getTyped(TraceTestDataBuilder.TM, "myMethod");
+        int sid = store.getTextIndex().getTyped(TraceTestDataBuilder.TS, "()V");
 
         assertNotEquals(-1, cid);
         assertNotEquals(-1, mid);

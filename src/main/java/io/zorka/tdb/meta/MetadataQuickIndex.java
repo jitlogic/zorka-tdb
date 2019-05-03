@@ -17,7 +17,8 @@
 package io.zorka.tdb.meta;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.search.*;
+import io.zorka.tdb.search.QmiNode;
+import io.zorka.tdb.search.SortOrder;
 import io.zorka.tdb.util.ZicoMaintObject;
 import io.zorka.tdb.util.ZicoUtil;
 

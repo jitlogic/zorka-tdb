@@ -16,9 +16,9 @@
 
 package io.zorka.tdb.test.unit.text.ci;
 
-import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.TextIndex;
+import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
 

@@ -17,10 +17,7 @@
 package io.zorka.tdb.text.fm;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.util.BitUtils;
-
-import static io.zorka.tdb.util.BitUtils.UNSAFE;
 
 /**
  * Simplified LZ4 decompressor. Note that this is NOT general purpose decompressor class.

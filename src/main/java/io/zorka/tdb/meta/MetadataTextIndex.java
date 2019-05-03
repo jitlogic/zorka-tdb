@@ -20,8 +20,6 @@ import io.zorka.tdb.text.RawDictCodec;
 import io.zorka.tdb.text.WritableTextIndex;
 import io.zorka.tdb.util.BitmapSet;
 
-import static io.zorka.tdb.text.RawDictCodec.*;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -87,9 +85,9 @@ public class MetadataTextIndex {
         buf[0] = marker;
 
         for (Integer id : tids) {
-            pos += idEncode(buf, pos, traceId);
+            pos += RawDictCodec.idEncode(buf, pos, traceId);
             buf[pos++] = TID_MARKER;
-            pos += idEncode(buf, pos, id);
+            pos += RawDictCodec.idEncode(buf, pos, id);
             buf[pos++] = marker;
         }
 
@@ -101,7 +99,7 @@ public class MetadataTextIndex {
         byte[] buf = new byte[64];
         int pos = 0;
 
-        pos += idEncode(buf, pos, traceId);
+        pos += RawDictCodec.idEncode(buf, pos, traceId);
         buf[pos++] = CHO_MARKER;
         System.arraycopy(traceUUID.getBytes(), 0, buf, pos, traceUUID.length());
         pos += traceUUID.length();

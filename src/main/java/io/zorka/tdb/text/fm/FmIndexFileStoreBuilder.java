@@ -17,16 +17,13 @@
 package io.zorka.tdb.text.fm;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.util.BitUtils;
 import io.zorka.tdb.util.lz4.LZ4Compressor;
 import io.zorka.tdb.util.lz4.LZ4HCJavaSafeCompressor;
-import io.zorka.tdb.util.lz4.LZ4Compressor;
+import io.zorka.tdb.util.BitUtils;
 
 import java.io.*;
 import java.util.*;
 import java.util.zip.CRC32;
-
-import static io.zorka.tdb.text.fm.FmIndexFormat.*;
 
 import static io.zorka.tdb.util.BitUtils.BYTE_ARRAY_OFFS;
 import static io.zorka.tdb.util.BitUtils.UNSAFE;

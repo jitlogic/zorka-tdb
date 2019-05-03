@@ -16,9 +16,6 @@
 
 package io.zorka.tdb.search;
 
-import io.zorka.tdb.search.ssn.StringSearchNode;
-import io.zorka.tdb.search.ssn.TextNode;
-
 public class QmiQueryBuilder {
 
     private QmiNode qmi = new QmiNode();

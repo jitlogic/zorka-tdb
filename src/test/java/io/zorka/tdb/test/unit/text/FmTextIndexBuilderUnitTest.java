@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.zorka.tdb.text.fm.FmBlockDesc;
-import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

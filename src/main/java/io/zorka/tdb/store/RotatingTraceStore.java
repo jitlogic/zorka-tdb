@@ -20,6 +20,7 @@ import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.text.ci.CompositeIndex;
+import com.jitlogic.zorka.common.util.ZorkaUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +28,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.zorka.tdb.store.ConfigProps.*;
 import static io.zorka.tdb.store.RotatingTraceStoreState.*;
-import static io.zorka.tdb.store.TraceStoreUtil.*;
 
 /**
  *
@@ -52,12 +53,7 @@ public class RotatingTraceStore implements TraceStore {
 
     private Map<String,TraceDataIndexer> indexerCache;
 
-    private TraceTypeResolver traceTypeResolver;
-
-
-
-    public RotatingTraceStore(File baseDir, Properties props, TraceTypeResolver traceTypeResolver,
-                              Map<String,TraceDataIndexer> indexerCache) {
+    public RotatingTraceStore(File baseDir, Properties props, Map<String,TraceDataIndexer> indexerCache) {
         this.baseDir = baseDir;
 
         this.props = props;
@@ -67,7 +63,6 @@ public class RotatingTraceStore implements TraceStore {
         this.storesMax = Integer.parseInt(props.getProperty(STORES_MAX_NUM, "16"));     // default 256GB
 
         this.indexerCache = indexerCache;
-        this.traceTypeResolver = traceTypeResolver;
 
         if (!baseDir.exists() || !baseDir.isDirectory()) {
             throw new ZicoException("Path " + baseDir + " does not exist or is not a directory.");
@@ -110,6 +105,22 @@ public class RotatingTraceStore implements TraceStore {
         return new RotatingTraceStoreSearchResult(query, stores);
     }
 
+    private static final Pattern RE_SDIR = Pattern.compile("[0-9a-fA-F]{6}");
+
+    public synchronized void reset() throws IOException {
+        if (state.isOpen()) close();
+
+        String[] lst = baseDir.list();
+
+        if (lst != null) {
+            for (String s : lst) {
+                if (RE_SDIR.matcher(s).matches()) {
+                    ZorkaUtil.rmrf(new File(baseDir, s));
+                }
+            }
+        }
+    }
+
     @Override
     public synchronized void open() {
 
@@ -140,7 +151,7 @@ public class RotatingTraceStore implements TraceStore {
         List<SimpleTraceStore> stores = new ArrayList<>(sdirs.size()+1);
 
         for (File af : sdirs) {
-            stores.add(new SimpleTraceStore(af, props, indexerCache, traceTypeResolver));
+            stores.add(new SimpleTraceStore(af, props, indexerCache));
         }
 
         RotatingTraceStoreState ts = RotatingTraceStoreState.init(stores);
@@ -158,11 +169,11 @@ public class RotatingTraceStore implements TraceStore {
 
         if (chunkIds.isEmpty()) return null;
 
-        chunkIds.sort(Comparator.comparingLong(o -> o & SLOT_MASK));
+        chunkIds.sort(Comparator.comparingLong(o -> o & TraceStoreUtil.SLOT_MASK));
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         for (Long chunkId : chunkIds) {
-            SimpleTraceStore s = ts.get(parseStoreId(chunkId));
+            SimpleTraceStore s = ts.get(TraceStoreUtil.parseStoreId(chunkId));
             if (s != null) {
                 s.retrieveRaw(chunkId, bos);
             } else {
@@ -185,7 +196,7 @@ public class RotatingTraceStore implements TraceStore {
 
         for (int i = 0; i < chunkIds.size(); i++) {
             long chunkId = chunkIds.get(i);
-            SimpleTraceStore s = ts.get(parseStoreId(chunkId));
+            SimpleTraceStore s = ts.get(TraceStoreUtil.parseStoreId(chunkId));
             if (s != null) {
                 s.retrieveChunk(chunkId, i == 0, rtr);
             } else {
@@ -201,14 +212,14 @@ public class RotatingTraceStore implements TraceStore {
 
     @Override
     public long getTraceDuration(long chunkId) {
-        SimpleTraceStore s = state.get(parseStoreId(chunkId));
+        SimpleTraceStore s = state.get(TraceStoreUtil.parseStoreId(chunkId));
         return s != null ? s.getTraceDuration(chunkId) : -1;
     }
 
 
     @Override
     public String getDesc(long chunkId) {
-        int sid = parseStoreId(chunkId);
+        int sid = TraceStoreUtil.parseStoreId(chunkId);
         SimpleTraceStore ts = state.get(sid);
         return ts != null ? ts.getDesc(chunkId) : null;
     }
@@ -225,11 +236,11 @@ public class RotatingTraceStore implements TraceStore {
 
         List<SimpleTraceStore> as = state.getArchived();
 
-        for (int i = as.size() - 1; i >= 0 && !containsStartChunk(rslt); i--) {
+        for (int i = as.size() - 1; i >= 0 && !TraceStoreUtil.containsStartChunk(rslt); i--) {
             as.get(i).findChunkIds(rslt, traceId1, traceId2, spanId);
         }
 
-        rslt.sort(Comparator.comparingLong(o -> o & (CH_SE_MASK)));
+        rslt.sort(Comparator.comparingLong(o -> o & (TraceStoreUtil.CH_SE_MASK)));
 
         return rslt;
     }
@@ -242,7 +253,7 @@ public class RotatingTraceStore implements TraceStore {
 
 
     public ChunkMetadata getChunkMetadata(RotatingTraceStoreState state, long chunkId) {
-        TraceStore s = state.get(parseStoreId(chunkId));
+        TraceStore s = state.get(TraceStoreUtil.parseStoreId(chunkId));
         return s != null ? s.getChunkMetadata(chunkId) : null;
     }
 
@@ -339,7 +350,7 @@ public class RotatingTraceStore implements TraceStore {
             }
         } // TODO else what ?
 
-        SimpleTraceStore current = new SimpleTraceStore(root, props, indexerCache, traceTypeResolver);
+        SimpleTraceStore current = new SimpleTraceStore(root, props, indexerCache);
 
         current.open();
 

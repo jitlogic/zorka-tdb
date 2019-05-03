@@ -21,7 +21,6 @@ package io.zorka.tdb.util.lz4;
 // Please use original version that is properly maintained and not tailored for ZICO purposes.
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.ZicoException;
 
 /**
  * LZ4 compression or decompression error.

@@ -16,14 +16,14 @@
 
 package io.zorka.tdb.text.fm;
 
+import io.zorka.tdb.text.AbstractTextIndex;
+import io.zorka.tdb.text.RawDictCodec;
+import io.zorka.tdb.text.TextIndexState;
+import io.zorka.tdb.text.TextIndexUtils;
 import io.zorka.tdb.meta.MetaIndexUtils;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.ssn.TextNode;
-import io.zorka.tdb.text.AbstractTextIndex;
-import io.zorka.tdb.text.RawDictCodec;
 
-import io.zorka.tdb.text.TextIndexState;
-import io.zorka.tdb.text.TextIndexUtils;
 import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
 

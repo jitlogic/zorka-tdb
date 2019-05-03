@@ -1,9 +1,9 @@
 package io.zorka.tdb.test.unit.text;
 
-import io.zorka.tdb.search.ssn.TextNode;
-import io.zorka.tdb.search.tsn.KeyValSearchNode;
 import io.zorka.tdb.text.TextIndexType;
 import io.zorka.tdb.text.WritableTextIndex;
+import io.zorka.tdb.search.ssn.TextNode;
+import io.zorka.tdb.search.tsn.KeyValSearchNode;
 import io.zorka.tdb.util.BitmapSet;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -18,7 +18,6 @@ package io.zorka.tdb.text.ci;
 
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WritableTextIndex;
-import io.zorka.tdb.text.WritableTextIndex;
 
 import java.util.List;
 

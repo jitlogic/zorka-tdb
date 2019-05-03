@@ -18,7 +18,9 @@ package io.zorka.tdb.test.unit.store;
 
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.MetadataQuickIndex;
-import io.zorka.tdb.search.*;
+import io.zorka.tdb.search.QmiNode;
+import io.zorka.tdb.search.QmiQueryBuilder;
+import io.zorka.tdb.search.SortOrder;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 
 import java.io.File;
@@ -27,7 +29,6 @@ import java.util.List;
 
 import static io.zorka.tdb.store.TraceStoreUtil.*;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

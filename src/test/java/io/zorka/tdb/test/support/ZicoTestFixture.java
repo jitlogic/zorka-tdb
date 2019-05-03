@@ -20,12 +20,10 @@ import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.store.*;
-import io.zorka.tdb.text.*;
-import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
-import io.zorka.tdb.text.fm.FmTextIndex;
+import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WalTextIndex;
-import io.zorka.tdb.store.RecursiveTraceDataRetriever;
-import io.zorka.tdb.store.RotatingTraceStore;
+import io.zorka.tdb.text.fm.FmTextIndex;
+import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
 import org.junit.Before;
 
 import java.io.*;
@@ -52,7 +50,7 @@ public class ZicoTestFixture {
     protected TestStrGen randStrGen;
     protected Random rand = new Random();
 
-    protected Map<String,TraceDataIndexer> indexerCache = new ConcurrentHashMap<>();
+    protected Map<String, TraceDataIndexer> indexerCache = new ConcurrentHashMap<>();
 
 
     protected void prepareStrings(File file, int size) {
@@ -129,7 +127,7 @@ public class ZicoTestFixture {
         if (!baseDir.exists()) {
             assertTrue(baseDir.mkdirs());
         }
-        RotatingTraceStore store = new RotatingTraceStore(baseDir, new Properties(), s -> 1, indexerCache);
+        RotatingTraceStore store = new RotatingTraceStore(baseDir, new Properties(), indexerCache);
         store.open();
         return store;
     }
@@ -138,7 +136,7 @@ public class ZicoTestFixture {
     protected SimpleTraceStore createSimpleStore(int id) throws Exception {
         File baseDir = new File(tmpDir, String.format("%06x", id));
         assertTrue(baseDir.mkdir());
-        return new SimpleTraceStore(baseDir, null, indexerCache, s->1);
+        return new SimpleTraceStore(baseDir, null, indexerCache);
     }
 
 

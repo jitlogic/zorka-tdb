@@ -18,6 +18,8 @@ package io.zorka.tdb.test.unit.text;
 
 import io.zorka.tdb.test.support.TestUtil;
 import io.zorka.tdb.test.support.ZicoTestFixture;
+import io.zorka.tdb.text.WalTextIndex;
+import io.zorka.tdb.text.fm.FmTextIndex;
 
 import java.io.File;
 import java.util.HashMap;
@@ -26,8 +28,6 @@ import java.util.Map;
 import io.zorka.tdb.text.fm.FmCompressionLevel;
 import io.zorka.tdb.text.fm.FmIndexFileStore;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
-import io.zorka.tdb.text.fm.FmTextIndex;
-import io.zorka.tdb.text.WalTextIndex;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

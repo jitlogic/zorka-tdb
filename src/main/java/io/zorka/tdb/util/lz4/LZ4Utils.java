@@ -20,8 +20,6 @@ package io.zorka.tdb.util.lz4;
 // Using this copy for general purposes is not recommended.
 // Please use original version that is properly maintained and not tailored for ZICO purposes.
 
-import static io.zorka.tdb.util.lz4.Utils.readInt;
-
 enum LZ4Utils {
     ;
 
@@ -78,11 +76,11 @@ enum LZ4Utils {
     }
 
     static int hash(byte[] buf, int i) {
-        return hash(readInt(buf, i));
+        return hash(Utils.readInt(buf, i));
     }
 
     static int hash64k(byte[] buf, int i) {
-        return hash64k(readInt(buf, i));
+        return hash64k(Utils.readInt(buf, i));
     }
 
     static boolean readIntEquals(byte[] buf, int i, int j) {

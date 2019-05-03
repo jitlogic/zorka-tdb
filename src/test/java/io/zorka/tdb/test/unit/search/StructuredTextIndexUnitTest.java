@@ -17,11 +17,11 @@
 package io.zorka.tdb.test.unit.search;
 
 import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.WalTextIndex;
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.test.support.ZicoTestFixture;
-import io.zorka.tdb.text.WalTextIndex;
 
 import io.zorka.tdb.util.BitmapSet;
 import org.junit.After;

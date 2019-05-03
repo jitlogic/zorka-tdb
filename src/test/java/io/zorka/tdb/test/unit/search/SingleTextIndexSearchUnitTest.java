@@ -16,18 +16,18 @@
 
 package io.zorka.tdb.test.unit.search;
 
-import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.TextIndexType;
+import io.zorka.tdb.text.WalTextIndex;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
 import io.zorka.tdb.text.ci.CompositeIndexStore;
+import io.zorka.tdb.text.fm.FmTextIndex;
+import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.text.fm.FmCompressionLevel;
 import io.zorka.tdb.text.fm.FmIndexFileStore;
 import io.zorka.tdb.text.fm.FmIndexFileStoreBuilder;
-import io.zorka.tdb.text.fm.FmTextIndex;
-import io.zorka.tdb.text.WalTextIndex;
 import io.zorka.tdb.util.BitmapSet;
 import org.junit.After;
 import org.junit.Before;
@@ -38,8 +38,6 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.util.*;
 
-import static io.zorka.tdb.text.TextIndexType.*;
-
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
@@ -48,7 +46,7 @@ public class SingleTextIndexSearchUnitTest extends ZicoTestFixture {
 
     @Parameterized.Parameters(name="{0}")
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {{FMI}, {WAL}, {COMPOSITE}});
+        return Arrays.asList(new Object[][] {{TextIndexType.FMI}, {TextIndexType.WAL}, {TextIndexType.COMPOSITE}});
     }
 
     private TextIndexType type;
@@ -63,13 +61,13 @@ public class SingleTextIndexSearchUnitTest extends ZicoTestFixture {
 
     @Before
     public void populateIndex() throws Exception {
-        if (type == WAL || type == FMI) {
+        if (type == TextIndexType.WAL || type == TextIndexType.FMI) {
             WalTextIndex wal = new WalTextIndex(new File(tmpDir, "test.wal").getPath(), 0);
             for (String s : samples) {
                 data.put(wal.add(s), s);
             }
 
-            if (type == WAL) {
+            if (type == TextIndexType.WAL) {
                 // leave as is
                 index = wal;
             } else {
@@ -82,7 +80,7 @@ public class SingleTextIndexSearchUnitTest extends ZicoTestFixture {
                 index = new FmTextIndex(new FmIndexFileStore(fmf, 0));
             }
         } // type == WAL || type == FMI
-        if (type == COMPOSITE) {
+        if (type == TextIndexType.COMPOSITE) {
             CompositeIndexStore cs = new CompositeIndexFileStore(tmpDir, "test", new Properties());
             CompositeIndex ci = new CompositeIndex(cs, new Properties());
             for (String s : samples) {

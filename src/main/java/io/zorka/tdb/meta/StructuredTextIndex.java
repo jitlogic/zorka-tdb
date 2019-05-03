@@ -16,22 +16,19 @@
 
 package io.zorka.tdb.meta;
 
+import io.zorka.tdb.text.AbstractTextIndex;
+import io.zorka.tdb.text.RawDictCodec;
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.search.tsn.KeyValSearchNode;
 import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
-import io.zorka.tdb.text.AbstractTextIndex;
-import io.zorka.tdb.text.RawDictCodec;
 import io.zorka.tdb.text.WritableTextIndex;
 import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static io.zorka.tdb.text.RawDictCodec.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -117,7 +114,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         int pos = 0;
 
         pbuf[pos++] = KV_PAIR;
-        pos += idEncode(pbuf, pos, keyId);
+        pos += RawDictCodec.idEncode(pbuf, pos, keyId);
         pbuf[pos++] = KV_PAIR;
         System.arraycopy(buf, offs, pbuf, pos, len); pos += len;
         pbuf[pos++] = KV_PAIR;
@@ -134,7 +131,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         int pos = 0;
 
         pbuf[pos++] = KV_PAIR;
-        pos += idEncode(pbuf, pos, keyId);
+        pos += RawDictCodec.idEncode(pbuf, pos, keyId);
         pbuf[pos++] = KV_PAIR;
         System.arraycopy(buf, offs, pbuf, pos, len); pos += len;
         pbuf[pos++] = KV_PAIR;
@@ -152,7 +149,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         int pos = 0;
 
         pbuf[pos++] = KV_PAIR;
-        pos += idEncode(pbuf, pos, keyId);
+        pos += RawDictCodec.idEncode(pbuf, pos, keyId);
         pbuf[pos++] = KV_PAIR;
         System.arraycopy(buf, offs, pbuf, pos, len); pos += len;
         pbuf[pos] = KV_PAIR;
@@ -232,7 +229,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
 
         pbuf[pos++] = marker;
         for (long sid : ids) {
-            pos += idEncode(pbuf, pos, sid);
+            pos += RawDictCodec.idEncode(pbuf, pos, sid);
             pbuf[pos++] = marker;
         }
 
@@ -245,7 +242,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
 
         pbuf[pos++] = marker;
         for (long sid : ids) {
-            pos += idEncode(pbuf, pos, sid);
+            pos += RawDictCodec.idEncode(pbuf, pos, sid);
             pbuf[pos++] = marker;
         }
 
@@ -258,9 +255,9 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         int pos = 0;
 
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id1);
+        pos += RawDictCodec.idEncode(pbuf, pos, id1);
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id2);
+        pos += RawDictCodec.idEncode(pbuf, pos, id2);
         pbuf[pos++] = marker;
 
         return add(pbuf, 0, pos);
@@ -272,9 +269,9 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         int pos = 0;
 
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id1);
+        pos += RawDictCodec.idEncode(pbuf, pos, id1);
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id2);
+        pos += RawDictCodec.idEncode(pbuf, pos, id2);
         pbuf[pos++] = marker;
 
         return Arrays.copyOf(pbuf, pos);
@@ -286,11 +283,11 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         int pos = 0;
 
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id1);
+        pos += RawDictCodec.idEncode(pbuf, pos, id1);
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id2);
+        pos += RawDictCodec.idEncode(pbuf, pos, id2);
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id3);
+        pos += RawDictCodec.idEncode(pbuf, pos, id3);
         pbuf[pos++] = marker;
 
         return add(pbuf, 0, pos);
@@ -302,13 +299,13 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         int pos = 0;
 
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id1);
+        pos += RawDictCodec.idEncode(pbuf, pos, id1);
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id2);
+        pos += RawDictCodec.idEncode(pbuf, pos, id2);
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id3);
+        pos += RawDictCodec.idEncode(pbuf, pos, id3);
         pbuf[pos++] = marker;
-        pos += idEncode(pbuf, pos, id4);
+        pos += RawDictCodec.idEncode(pbuf, pos, id4);
         pbuf[pos++] = marker;
 
         return add(pbuf, 0, pos);

@@ -17,8 +17,8 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.StructuredTextIndex;
 import io.zorka.tdb.meta.ChunkMetadata;
+import io.zorka.tdb.meta.StructuredTextIndex;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -27,7 +27,6 @@ import com.jitlogic.zorka.cbor.CborDataWriter;
 
 import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 import static com.jitlogic.zorka.cbor.TraceInfoConstants.*;
-import static com.jitlogic.zorka.cbor.TextIndexTypeMarkers.*;
 
 /**
  * Normalizes all strings and translates IDs. Extract
@@ -59,8 +58,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
 
     private long tstart = Long.MAX_VALUE, tstop = Long.MIN_VALUE;
 
-    private TraceTypeResolver traceTypeResolver;
-
     // TODO indeksowanie methodId na 'czubku' trace'a
 
     // TODO aktualizacja duration po uwzględnieniu kolejnych fragmentów trace'a
@@ -69,12 +66,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     private ChunkMetadata mtop = null;
 
     private long tstamp;
-
-
-    public TraceDataIndexer(TraceTypeResolver traceTypeResolver) {
-        this.traceTypeResolver = traceTypeResolver;
-    }
-
 
     public void setup(StructuredTextIndex index, AgentHandler ah, long traceId1, long traceId2, int chnum,
                       StatelessDataProcessor output, CborDataWriter writer) {

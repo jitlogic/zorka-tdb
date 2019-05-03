@@ -16,8 +16,8 @@
 
 package io.zorka.tdb.test.unit.store;
 
-import io.zorka.tdb.store.RawTraceDataFile;
 import io.zorka.tdb.test.support.ZicoTestFixture;
+import io.zorka.tdb.store.RawTraceDataFile;
 import io.zorka.tdb.util.CborBufReader;
 
 import org.junit.Test;

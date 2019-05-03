@@ -20,7 +20,9 @@ import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.MetaIndexUtils;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.ssn.TextNode;
-import io.zorka.tdb.util.*;
+import io.zorka.tdb.util.BitmapSet;
+import io.zorka.tdb.util.QuickHashTab;
+import io.zorka.tdb.util.ZicoUtil;
 
 import java.io.*;
 import java.nio.ByteBuffer;

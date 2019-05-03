@@ -20,11 +20,8 @@ package io.zorka.tdb.util.lz4;
 // Using this copy for general purposes is not recommended.
 // Please use original version that is properly maintained and not tailored for ZICO purposes.
 
-import io.zorka.tdb.util.lz4.LZ4Utils.*;
-
 import java.util.Arrays;
 
-import static io.zorka.tdb.util.lz4.LZ4Utils.*;
 import static io.zorka.tdb.util.lz4.Utils.readInt;
 
 /**

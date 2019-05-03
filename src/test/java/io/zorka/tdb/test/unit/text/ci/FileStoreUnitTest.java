@@ -19,8 +19,8 @@ package io.zorka.tdb.test.unit.text.ci;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WritableTextIndex;
-import io.zorka.tdb.text.ci.CompositeIndexStore;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
+import io.zorka.tdb.text.ci.CompositeIndexStore;
 import io.zorka.tdb.util.ZicoUtil;
 
 import org.junit.Test;
