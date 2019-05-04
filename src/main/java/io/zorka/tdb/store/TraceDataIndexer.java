@@ -16,6 +16,7 @@
 
 package io.zorka.tdb.store;
 
+import com.jitlogic.zorka.common.util.ZorkaUtil;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.meta.StructuredTextIndex;
@@ -24,6 +25,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.jitlogic.zorka.cbor.CborDataWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 import static com.jitlogic.zorka.cbor.TraceInfoConstants.*;
@@ -32,6 +35,8 @@ import static com.jitlogic.zorka.cbor.TraceInfoConstants.*;
  * Normalizes all strings and translates IDs. Extract
  */
 public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProcessor {
+
+    private static final Logger log = LoggerFactory.getLogger(TraceDataIndexer.class);
 
     public final static int TICKS_IN_SECOND = 1000000000/65536;
     private final static int EXC_DELTA = 128;
@@ -197,6 +202,10 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     @Override
     public void traceInfo(int k, long v) {
 
+        if (mtop == null && k != TI_TSTART && k != TI_TSTOP && k != TI_METHOD) {
+            log.info("Got TI={} (v={}) but mtop is null: {}", k, v, ZorkaUtil.hex(traceId1, traceId2));
+        }
+
         switch (k) {
             case TI_TSTAMP:
                 traceBegin();
@@ -221,9 +230,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 v = methodRef((int)v);
                 break;
             case TI_CALLS:
-                if (mtop != null) {
-                    mtop.addCalls((int)v);
-                }
+                if (mtop != null) mtop.addCalls((int)v);
                 break;
             case TI_PARENT:
                 if (mtop != null) mtop.setParentId(v);

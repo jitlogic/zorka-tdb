@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 
@@ -61,6 +62,8 @@ public class AgentHandler implements AgentDataProcessor {
     private long lastTstamp;
 
     private int minDuration;
+
+    private Random rand = new Random();
 
     public AgentHandler(SimpleTraceStore store, String sessionUUID) {
         // TODO zrobić po prostu referencję do danego store'a
@@ -133,6 +136,11 @@ public class AgentHandler implements AgentDataProcessor {
                 if (!metadata.hasFlag(TF_SUBMIT_TRACE) && (metadata.hasFlag(TF_DROP_TRACE)
                         || (md.getDuration() < minDuration && metadata.getStartOffs() != 0))) {
                     continue;
+                }
+
+                if (metadata.getSpanId() == 0) {
+                    log.warn("Trace {} without spanID. Generated random one.", metadata.getTraceIdHex());
+                    md.setSpanId(rand.nextLong());
                 }
 
                 metadata.setDataOffs(dataOffs);
