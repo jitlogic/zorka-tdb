@@ -55,7 +55,7 @@ public class AgentDataReader implements Runnable {
     private void process() {
         int peek = reader.peek(), type = peek & TYPE_MASK;
 
-        checked(type == TAG_BASE, "Expected tagged data.");
+        checked(type == TAG_BASE, String.format("Expected tagged data, got: %02x", peek));
 
         int tag = reader.readInt();
 
