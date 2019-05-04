@@ -1,6 +1,6 @@
 package io.zorka.tdb.store;
 
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.StructuredTextIndex;
 
 import java.util.Collection;
 import java.util.HashMap;

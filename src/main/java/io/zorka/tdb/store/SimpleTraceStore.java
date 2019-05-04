@@ -17,10 +17,7 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.MetadataQuickIndex;
-import io.zorka.tdb.meta.MetadataTextIndex;
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.StructuredTextIndex;
 import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.text.CachingTextIndex;
 import io.zorka.tdb.text.ci.CompositeIndex;
@@ -28,12 +25,17 @@ import io.zorka.tdb.text.ci.CompositeIndexFileStore;
 import io.zorka.tdb.util.CborBufReader;
 
 import io.zorka.tdb.util.ZicoUtil;
+import org.mapdb.Atomic;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentNavigableMap;
 
 /**
  *
@@ -52,10 +54,29 @@ public class SimpleTraceStore implements TraceStore {
     private long storeId;
 
     private volatile StructuredTextIndex itext;
-    private volatile CompositeIndex ctext, cmeta;
-    private volatile MetadataTextIndex imeta;
-    private volatile MetadataQuickIndex qindex;
+    private volatile CompositeIndex ctext;
     private volatile RawTraceDataFile fdata;
+    private volatile DB db;
+
+    /** Next sequence number */
+    private Atomic.Integer nextSeq;
+
+    /** SEQ -> serialized chunk. */
+    private ConcurrentNavigableMap<Integer,byte[]> chunks;
+
+    /** Main index: tid1+tid2+sid+chnum -> SEQ */
+    private ConcurrentNavigableMap<Fun.Tuple4<Long,Long,Long,Integer>,Integer> tids;
+
+    /** Sorted by duration timestamp: tstamp+SEQ -> duration+err */
+    private ConcurrentNavigableMap<Fun.Tuple2<Long,Integer>,Long> tstamps;
+
+    /** String attributes: keyId+valId+SEQ -> duration+err */
+    private ConcurrentNavigableMap<Fun.Tuple3<Integer,Integer,Integer>,Long> sattrs;
+
+    // TODO fulltext: valId+SEQ -> keyId+duration+err
+
+    /** Numeric/Boolean attributes: (type|keyID)+val+SEQ -> duration+err */
+    private ConcurrentNavigableMap<Fun.Tuple3<Integer,Long,Integer>,Long> nattrs; // Types (2-bit): bool=1,long=2,double=3
 
     // TODO factor out trace/agent data handling code to separate class
     private final Map<String,AgentHandler> handlers = new ConcurrentHashMap<>();
@@ -191,13 +212,16 @@ public class SimpleTraceStore implements TraceStore {
             itext = new StructuredTextIndex(ctext);
         }
 
-        Properties pmeta = ZicoUtil.props(); // TODO configure properties here
-        CompositeIndexFileStore fmeta = new CompositeIndexFileStore(root.getPath(), "meta", pmeta);
-        cmeta = new CompositeIndex(fmeta, pmeta);
+        db = DBMaker.newFileDB(new File(root, "meta.db"))
+                // TODO mmapEnable(), segment size etc.
+                .closeOnJvmShutdown().cacheSize(8192).make();
 
-        imeta = new MetadataTextIndex(cmeta);
-
-        qindex = new MetadataQuickIndex(new File(root, "qmeta.idx"));
+        nextSeq = db.getAtomicInteger("seq");
+        chunks = db.getTreeMap("chunks.map");
+        tids = db.getTreeMap("tids.map");
+        tstamps = db.getTreeMap("tstamps.map");
+        sattrs = db.getTreeMap("sattrs.map");
+        nattrs = db.getTreeMap("nattrs.map");
 
         fdata = new RawTraceDataFile(new File(root, "traces.dat"), true,
             RawTraceDataFile.ZLIB_COMPRESSION | RawTraceDataFile.CRC32_CHECKSUM);
@@ -211,14 +235,6 @@ public class SimpleTraceStore implements TraceStore {
         return itext;
     }
 
-    public synchronized MetadataTextIndex getMetaIndex() {
-        return imeta;
-    }
-
-    public synchronized MetadataQuickIndex getQuickIndex() {
-         return qindex;
-    }
-
     public synchronized RawTraceDataFile getDataFile() {
         return fdata;
     }
@@ -227,16 +243,25 @@ public class SimpleTraceStore implements TraceStore {
         return indexerCache;
     }
 
+    ConcurrentNavigableMap<Fun.Tuple4<Long, Long, Long, Integer>, Integer> getTids() {
+        return tids;
+    }
+
+    ConcurrentNavigableMap<Fun.Tuple2<Long, Integer>, Long> getTstamps() {
+        return tstamps;
+    }
+
+
     @Override
     public long getTstart() {
         checkOpen();
-        return qindex.getTstart();
+        return tstamps.size() > 0 ? tstamps.firstKey().a : 0L;
     }
 
     @Override
     public synchronized long getTstop() {
         checkOpen();
-        return qindex.getTstop();
+        return tstamps.size() > 0 ? tstamps.lastKey().a : 0L;
     }
 
     private synchronized AgentHandler getHandler(String sessionId, boolean reset) {
@@ -255,11 +280,8 @@ public class SimpleTraceStore implements TraceStore {
     }
 
     public void retrieveRaw(long chunkId, ByteArrayOutputStream bos) {
-        checkOpen();
-
-        int slotId = TraceStoreUtil.parseSlotId(chunkId);
-        long offs = qindex.getDataOffs(slotId);
-        CborBufReader rdr = fdata.read(offs);
+        ChunkMetadata cm = getChunkMetadata(chunkId);
+        CborBufReader rdr = fdata.read(cm.getDataOffs());
         try {
             bos.write(rdr.getRawBytes());
         } catch (IOException e) {
@@ -276,53 +298,77 @@ public class SimpleTraceStore implements TraceStore {
     }
 
     public <T> void retrieveChunk(long chunkId, boolean first, TraceDataRetriever<T> rtr) {
-        checkOpen();
-        int slotId = TraceStoreUtil.parseSlotId(chunkId);
-        ChunkMetadata md = qindex.getChunkMetadata(slotId);
-        CborBufReader rdr = fdata.read(md.getDataOffs());
-        if (first) rdr.position(md.getStartOffs());
-        rtr.setResolver(itext);
-        TraceDataReader tdr = new TraceDataReader(rdr, rtr);
-        rtr.setReader(tdr);
-        tdr.run();
+        ChunkMetadata cm = getChunkMetadata(chunkId);
+        if (cm != null) {
+            CborBufReader rdr = fdata.read(cm.getDataOffs());
+            if (first) rdr.position(cm.getStartOffs());
+            rtr.setResolver(itext);
+            TraceDataReader tdr = new TraceDataReader(rdr, rtr);
+            rtr.setReader(tdr);
+            tdr.run();
+        }
+    }
+
+    public void saveChunkMetadata(ChunkMetadata cm) {
+        int seq = nextSeq.incrementAndGet();
+        long dur = cm.getDuration()|(cm.isErrorFlag()?0x8000000000000000L:0);
+        chunks.put(seq,ChunkMetadata.serialize(cm));
+        tids.put(Fun.t4(cm.getTraceId1(),cm.getTraceId2(),cm.getSpanId(),cm.getChunkNum()),seq);
+        tstamps.put(Fun.t2(cm.getTstamp(),seq),dur);
+        if (cm.getSattrs() != null) {
+            for (Map.Entry<Integer,Integer> e : cm.getSattrs().entrySet()) {
+                sattrs.put(Fun.t3(e.getKey(),e.getValue(),seq),dur);
+            }
+        }
+        if (cm.getNattrs() != null) {
+            for (Map.Entry<Integer,Long> e : cm.getNattrs().entrySet()) {
+                nattrs.put(Fun.t3(e.getKey(),e.getValue(),seq),dur);
+            }
+        }
+        db.commit();
     }
 
 
     @Override
     public long getTraceDuration(long chunkId) {
-        checkOpen();
-        return qindex.getTraceDuration(TraceStoreUtil.parseSlotId(chunkId));
+        return getChunkMetadata(chunkId).getDuration();
     }
 
 
     @Override
     public String getDesc(long chunkId) {
-        checkOpen();
-        int did = qindex.getDid(TraceStoreUtil.parseSlotId(chunkId));
-        return did > 0 ? itext.resolve(did) : null;
+        return "NIECZYNNE";
     }
 
 
     @Override
     public List<Long> getChunkIds(long traceId1, long traceId2, long spanId) {
-        checkOpen();
         List<Long> rslt = new ArrayList<>();
-        qindex.findChunkIds(rslt, (int)storeId, traceId1, traceId2, spanId);
+        findChunkIds(rslt, traceId1, traceId2, spanId);
         return rslt;
     }
+
 
     public void findChunkIds(List<Long> acc, long traceId1, long traceId2, long spanId) {
         checkOpen();
 
-        qindex.findChunkIds(acc, (int)storeId, traceId1, traceId2, spanId);
+        ConcurrentNavigableMap<Fun.Tuple4<Long,Long,Long,Integer>,Integer> t =
+                tids.subMap(Fun.t4(traceId1,traceId2,spanId,0),Fun.t4(traceId1,traceId2,spanId,Integer.MAX_VALUE));
+
+        for (Map.Entry<Fun.Tuple4<Long,Long,Long,Integer>,Integer> e : t.entrySet()) {
+            acc.add(e.getValue().longValue());
+        }
     }
+
 
     @Override
     public ChunkMetadata getChunkMetadata(long chunkId) {
         if (chunkId ==-1) return null;
         checkOpen();
-        int slotId = TraceStoreUtil.parseSlotId(chunkId);
-        return qindex.getChunkMetadata(slotId);
+        int seq = TraceStoreUtil.parseSlotId(chunkId);
+        byte[] b = chunks.get(seq);
+        if (b == null) return null;
+        return ChunkMetadata.deserialize(b);
     }
 
 
@@ -345,8 +391,6 @@ public class SimpleTraceStore implements TraceStore {
             checkOpen();
             iFlags |= CTF_ARCHIVED;
             ctext.archive();
-            cmeta.archive();
-            qindex.archive();
             itext = new StructuredTextIndex(ctext);
             saveProps();
         }
@@ -356,20 +400,19 @@ public class SimpleTraceStore implements TraceStore {
     public boolean runMaintenance() {
         checkOpen();
         cleanupSessions();
-        return qindex.runMaintenance() || ctext.runMaintenance() || cmeta.runMaintenance();
+        return ctext.runMaintenance();
     }
 
     public long length() {
-        return fdata.length() + ctext.length() + cmeta.length();
+        return fdata.length() + ctext.length();
     }
 
 
     @Override
     public synchronized void close() throws IOException {
         ctext.close();
-        cmeta.close();
         fdata.close();
-        qindex.close();
+        db.close();
         saveProps();
     }
 

@@ -570,15 +570,4 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     }
 
 
-    @Override
-    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
-        int cnt = 0;
-
-        for (TextIndex idx : getCState().getSearchIndexes()) {
-            cnt += idx.searchIds(tid, deep, rslt);
-        }
-
-        return cnt;
-    }
-
 }

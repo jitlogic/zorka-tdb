@@ -16,7 +16,6 @@
 
 package io.zorka.tdb.store;
 
-import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.util.ZicoMaintObject;
 

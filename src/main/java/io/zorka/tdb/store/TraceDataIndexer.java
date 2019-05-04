@@ -18,8 +18,7 @@ package io.zorka.tdb.store;
 
 import com.jitlogic.zorka.common.util.ZorkaUtil;
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.StructuredTextIndex;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -92,52 +91,20 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
 
 
     private int methodRef(int id) {
-        return catchId(ah.methodRef(id));
+        return ah.methodRef(id);
     }
 
     private int stringRef(int id) {
-        return catchId(ah.stringRef(id));
+        return ah.stringRef(id);
     }
 
     int exIdRef(int exId) {
         for (int i = 0; i < exIdSize; i++) {
-            catchId(localExIds[i]);
             if (exId == agentExIds[i]) {
                 return localExIds[i];
             }
         }
         throw new ZicoException("Unknown exception ID (not registered yet ?)");
-    }
-
-
-    private int catchId(int id) {
-
-        // TODO level jeszcze jest niepoprawnie liczony - nie uwzględnia zagnieżdżonych trace'ów
-
-        if (mrecs.size() > 0) {
-            for (int i = 0; i < mrecs.size(); i++) {
-                mrecs.get(i).catchId(id, stackDepth);
-            }
-        }
-
-        if (lastIdsSize >= 0) {
-            if (lastIdsSize >= lastIds.length) {
-                lastIds = Arrays.copyOf(lastIds, lastIds.length * 2);
-            }
-            lastIds[lastIdsSize++] = id;
-        }
-        return id;
-    }
-
-
-    /** Flushes IDs collected and disables further collection. */
-    private void flushLastIds() {
-        if (lastIdsSize > 0 && mtop != null) {
-            for (int lid : lastIds) {
-                mtop.catchId(lid, stackDepth);
-            }
-            lastIdsSize = -1;
-        }
     }
 
     public void mpush(ChunkMetadata md) {
@@ -195,8 +162,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
 
         md.addRecs(1);
         mpush(md);
-
-        flushLastIds();
     }
 
     @Override
@@ -251,7 +216,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
             int id = 0;
             if (s.length() != 0) {
                 id = index.add(s);
-                catchId(id);
             } else {
                 EMPTY_ATTR_STRINGS.incrementAndGet();
             }
@@ -259,7 +223,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         } else if (obj instanceof ObjectRef) {
             ObjectRef r1 = (ObjectRef) obj, r2 = new ObjectRef(r1.id);
             r2.id = stringRef(r2.id);
-            catchId(r2.id); // TODO not sure this is correct - we catch IDs both before and after translation, probably 'before' phase should be discarded
             return r2;
         } else if (obj instanceof Map) {
             Map<Object, Object> m1 = (Map<Object, Object>) obj, m2 = new HashMap<>();
@@ -268,9 +231,9 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 Object v = translate(e.getValue());
                 if (k instanceof ObjectRef) {
                     if (v instanceof ObjectRef) {
-                        catchId(index.addKRPair(((ObjectRef) k).id, ((ObjectRef) v).id));
+                        index.addKRPair(((ObjectRef) k).id, ((ObjectRef) v).id);
                     } else if (v instanceof Integer || v instanceof Long || v instanceof Boolean) {
-                        catchId(index.addKVPair(((ObjectRef) k).id, ""+v));
+                        index.addKVPair(((ObjectRef) k).id, ""+v);
                     }
                 }
                 m2.put(k, v);
@@ -280,9 +243,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
             List<Object> l1 = (List<Object>)obj, l2 = new ArrayList<>(l1.size());
             for (Object o : l1) {
                 Object v = translate(o);
-                if (v instanceof ObjectRef) {
-                    catchId(((ObjectRef)v).id);
-                }
                 l2.add(v);
             }
             return l2;
@@ -327,17 +287,13 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         for (int i = 0; i < stackIds.length; i++) {
             StackData se = ex.stackTrace.get(i);
             stackIds[i] = index.addStackItem(stringRef(se.classId), stringRef(se.methodId), stringRef(se.fileId), se.lineNum);
-            catchId(stackIds[i]);
         }
 
         int stackId = index.addCallStack(stackIds);
-        if (stackId > 0) catchId(stackId);
 
         int causeId = ex.causeId != 0 ? exIdRef(ex.causeId) : 0;
-        if (causeId > 0) catchId(causeId);
 
         int excId = index.addException(classId, msgId, stackId, causeId);
-        if (excId > 0) catchId(excId);
 
         if (exIdSize >= localExIds.length) {
             localExIds = Arrays.copyOf(localExIds, localExIds.length+EXC_DELTA);

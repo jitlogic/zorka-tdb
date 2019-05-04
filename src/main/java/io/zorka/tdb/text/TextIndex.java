@@ -113,8 +113,6 @@ public interface TextIndex extends Closeable, SearchableStore {
      */
     long length();
 
-    int searchIds(long tid, boolean deep, BitmapSet rslt);
-
     TextIndexState getState();
 
     void setState(TextIndexState state);

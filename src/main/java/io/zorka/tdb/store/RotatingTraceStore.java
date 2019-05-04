@@ -17,7 +17,6 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.ChunkMetadata;
 import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import com.jitlogic.zorka.common.util.ZorkaUtil;

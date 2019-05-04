@@ -88,11 +88,6 @@ public class TextIndexR extends AbstractTextIndex implements TextIndex {
     }
 
     @Override
-    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
-        return 0;
-    }
-
-    @Override
     public void close() { }
 
     @Override

@@ -184,6 +184,13 @@ public class CborBufReader {
         return new String(buf);
     }
 
+    public int readTag() {
+        int type = peekType();
+        if (type != TAG_BASE) {
+            throw new ZicoException(String.format("Expected tag, got type %02x", type));
+        }
+        return readInt();
+    }
 
     public int peek() {
         return UNSAFE.getByte(obj, pos) & 0xff;

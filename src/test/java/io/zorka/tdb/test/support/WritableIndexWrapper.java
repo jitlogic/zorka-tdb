@@ -83,11 +83,6 @@ public class WritableIndexWrapper implements WritableTextIndex {
     }
 
     @Override
-    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
-        return index.searchIds(tid, deep, rslt);
-    }
-
-    @Override
     public TextIndexState getState() {
         return index.getState();
     }

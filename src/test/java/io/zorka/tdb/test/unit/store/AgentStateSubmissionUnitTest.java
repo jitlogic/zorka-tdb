@@ -16,7 +16,7 @@
 
 package io.zorka.tdb.test.unit.store;
 
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.StructuredTextIndex;
 import io.zorka.tdb.test.support.TraceTestDataBuilder;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.store.SimpleTraceStore;

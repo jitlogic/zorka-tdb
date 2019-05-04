@@ -16,7 +16,7 @@
 
 package io.zorka.tdb.test.unit.store;
 
-import io.zorka.tdb.meta.ChunkMetadata;
+import io.zorka.tdb.store.ChunkMetadata;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import io.zorka.tdb.search.QmiQueryBuilder;
 import io.zorka.tdb.store.RotatingTraceStore;

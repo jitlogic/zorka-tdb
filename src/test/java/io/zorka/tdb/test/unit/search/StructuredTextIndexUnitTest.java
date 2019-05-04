@@ -16,7 +16,7 @@
 
 package io.zorka.tdb.test.unit.search;
 
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.StructuredTextIndex;
 import io.zorka.tdb.text.WalTextIndex;
 import io.zorka.tdb.search.QueryBuilder;
 import io.zorka.tdb.search.SearchNode;

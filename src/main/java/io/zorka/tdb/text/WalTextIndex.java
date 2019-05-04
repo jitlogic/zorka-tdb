@@ -17,7 +17,6 @@
 package io.zorka.tdb.text;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.MetaIndexUtils;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.util.BitmapSet;
@@ -29,9 +28,6 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
-import static io.zorka.tdb.meta.MetadataTextIndex.FIDS_MARKER;
-import static io.zorka.tdb.meta.MetadataTextIndex.TIDS_MARKER;
-import static io.zorka.tdb.meta.MetadataTextIndex.TID_MARKER;
 
 /**
  * This is writable index that will store additional items in Write Ahead Log to be later
@@ -545,25 +541,6 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
             synchronized (this) {
                 if (getState() == TextIndexState.OPEN && expr instanceof TextNode) {
                     r = scan(((TextNode) expr).getText(), rslt, false);
-                } else {
-                    r = 0;
-                }
-            }
-        } finally {
-            lock.readLock().unlock();
-        }
-        return r;
-    }
-
-    @Override
-    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
-        byte[] text = MetaIndexUtils.encodeMetaInt(TID_MARKER, (int)tid, deep ? FIDS_MARKER : TIDS_MARKER);
-        int r;
-        lock.readLock().lock();
-        try {
-            synchronized (this) {
-                if (getState() == TextIndexState.OPEN) {
-                    r = scan(text, rslt, true);
                 } else {
                     r = 0;
                 }

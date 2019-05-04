@@ -14,12 +14,16 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.zorka.tdb.meta;
+package io.zorka.tdb.store;
 
+import com.jitlogic.zorka.cbor.*;
 import com.jitlogic.zorka.common.util.ZorkaUtil;
+import io.zorka.tdb.ZicoException;
+import io.zorka.tdb.util.CborBufReader;
 
 import java.util.*;
 
+import static com.jitlogic.zorka.cbor.TraceDataTags.TAG_CHUNK_METADATA;
 import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 
 /**
@@ -28,17 +32,29 @@ import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
  */
 public class ChunkMetadata {
 
+    /** Trace ID (high word) */
+    private long traceId1;
+
+    /** Trace ID (low word) */
+    private long traceId2;
+
+    /** Span ID */
+    private long spanId;
+
+    /** Chunk sequential number. */
+    private int chunkNum;
+
+    /** Parent ID */
+    private long parentId;
+
     /** Trace flags. See com.jitlogic.zorka.cbor.TraceRecordFlags for reference. */
     private int tflags;
 
     /** Trace timestamp (time when trace started in milliseconds since Epoch). */
     private long tstamp;
 
-    /** Trace duration (in seconds). */
+    /** Trace duration (in seconds). */ // TODO milliseconds/microseconds/ticks
     private long duration;
-
-    /** Chunk sequential number. */
-    private int chunkNum;
 
     /** Position of saved chunk inside trace data file. */
     private long dataOffs;
@@ -60,37 +76,24 @@ public class ChunkMetadata {
     /** Number of method calls recorded by tracer. */
     private int recs;
 
-    /** Start timestamp (ticks since trace start). */
+    /** Chunk start timestamp (ticks since trace start). */
     private long tstart;
 
-    /** End timestamp (ticks since trace stop). */
+    /** Chunk end timestamp (ticks since trace start). */
     private long tstop;
 
-    /** Trace ID (high word) */
-    private long traceId1;
-
-    /** Trace ID (low word) */
-    private long traceId2;
-
-    /** Span ID */
-    private long spanId;
-
-    /** Parent ID */
-    private long parentId;
-
-    /** Full search IDs */
-    private Set<Integer> fids = null;
-
-    /** Top level IDs */
-    private Set<Integer> tids = null;
-
     /** Trace attributes (if resolved) */
-    private Map<Object,Object> attrs = null;
+    private Map<Object,Object> attrs = null; // TODO to be removed
+
+    /** String attributes */
+    private Map<Integer,Integer> sattrs = null;
+
+    /** Primitive Attributes (numeric, booleans) */
+    private Map<Integer,Long> nattrs = null;
 
     @Override
     public String toString() {
-        return "ChunkMetadata(dataOffs=" + dataOffs + ", startOffs=" + startOffs
-            + ", tstamp=" + tstamp + ")";
+        return "ChunkMetadata(dataOffs=" + dataOffs + ", startOffs=" + startOffs + ", tstamp=" + tstamp + ")";
     }
 
     public ChunkMetadata(long traceId1, long traceId2, long parentId, long spanId, int chunkNum) {
@@ -259,29 +262,6 @@ public class ChunkMetadata {
         this.tstop = tstop;
     }
 
-    public List<Integer> getFids() {
-        List<Integer> lst = new ArrayList<>(fids != null ? fids.size() : 1);
-        if (fids != null) lst.addAll(fids);
-        Collections.sort(lst);
-        return lst;
-    }
-
-    public List<Integer> getTids() {
-        List<Integer> lst = new ArrayList<>(tids != null ? tids.size() : 1);
-        if (tids != null) lst.addAll(tids);
-        Collections.sort(lst);
-        return lst;
-    }
-
-    public void catchId(int id, int level) {
-        if (tids == null) tids = new HashSet<>();
-        if (fids == null) fids = new HashSet<>();
-        if (level == zeroLevel) {
-            this.tids.add(id);
-        }
-        this.fids.add(id);
-    }
-
     public long getTraceId1() {
         return traceId1;
     }
@@ -324,5 +304,124 @@ public class ChunkMetadata {
 
     public void setParentId(long parentId) {
         this.parentId = parentId;
+    }
+
+    public Map<Integer, Integer> getSattrs() {
+        return sattrs;
+    }
+
+    public void setSattrs(Map<Integer, Integer> sattrs) {
+        this.sattrs = sattrs;
+    }
+
+    public Map<Integer, Long> getNattrs() {
+        return nattrs;
+    }
+
+    public void setNattrs(Map<Integer, Long> nattrs) {
+        this.nattrs = nattrs;
+    }
+
+    public static byte[] serialize(ChunkMetadata cm) {
+        CborDataWriter w = new CborDataWriter(192,128);
+        w.writeTag(TAG_CHUNK_METADATA);
+        w.writeLong(cm.traceId1);
+        w.writeLong(cm.traceId2);
+        w.writeLong(cm.parentId);
+        w.writeLong(cm.spanId);
+        w.writeInt(cm.chunkNum);
+
+        w.writeInt(cm.tflags);
+        w.writeLong(cm.tstamp);
+        w.writeLong(cm.duration);
+        w.writeLong(cm.dataOffs);
+        w.writeInt(cm.startOffs);
+
+        w.writeInt(cm.zeroLevel);
+        w.writeInt(cm.stackDepth);
+
+        w.writeInt(cm.calls);
+        w.writeInt(cm.errors);
+        w.writeInt(cm.recs);
+        w.writeLong(cm.tstart);
+        w.writeLong(cm.tstop);
+
+//        if (cm.getSattrs() != null) {
+//            w.writeObj(cm.getSattrs());
+//        } else {
+//            w.write(CBOR.NULL_CODE);
+//        }
+//
+//        if (cm.getNattrs() != null) {
+//            w.writeObj(cm.getNattrs());
+//        } else {
+//            w.write(CBOR.NULL_CODE);
+//        }
+
+        return w.toByteArray();
+    }
+
+    public static ChunkMetadata deserialize(byte[] buf) {
+
+        if (buf == null || buf.length == 0) {
+            throw new ZicoException("Tried to deserialize from null or empty buffer");
+        }
+
+        CborBufReader r = new CborBufReader(buf);
+        int tag = r.readTag();
+        if (tag != TAG_CHUNK_METADATA) {
+            throw new ZicoException(String.format("Expected TAG_CHUNK_METADATA, got %02x", tag));
+        }
+
+        ChunkMetadata cm = new ChunkMetadata(r.readLong(), r.readLong(), r.readLong(), r.readLong(), r.readInt());
+
+        cm.tflags = r.readInt();
+        cm.tstamp = r.readLong();
+        cm.duration = r.readLong();
+        cm.dataOffs = r.readLong();
+        cm.startOffs = r.readInt();
+
+        cm.zeroLevel = r.readInt();
+        cm.stackDepth = r.readInt();
+
+        cm.calls = r.readInt();
+        cm.errors = r.readInt();
+        cm.recs = r.readInt();
+        cm.tstart = r.readInt();
+        cm.tstop = r.readInt();
+
+//        if (r.peekType() != CBOR.NULL_CODE) {
+//            int x = r.peekType();
+//            if (x == CBOR.MAP_BASE) {
+//                x = r.readInt();
+//                Map<Integer,Integer> m = new TreeMap<>();
+//                for (int i = 0; i < x; i++) {
+//                    m.put(r.readInt(),r.readInt());
+//                }
+//                cm.setSattrs(m);
+//            } else {
+//                throw new ZicoException(String.format("Expected map or NULL, got %02x", x));
+//            }
+//        } else {
+//            r.read();
+//        }
+//
+//        if (r.peekType() != CBOR.NULL_CODE) {
+//            int x = r.peekType();
+//            if (x == CBOR.MAP_BASE) {
+//                x = r.readInt();
+//                Map<Integer,Long> m = new TreeMap<>();
+//                for (int i = 0; i < x; i++) {
+//                    m.put(r.readInt(),r.readLong());
+//                }
+//                cm.setNattrs(m);
+//            } else {
+//                throw new ZicoException(String.format("Expected map or NULL, got %02x", x));
+//            }
+//        } else {
+//            r.read();
+//        }
+
+        return cm;
     }
 }

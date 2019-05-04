@@ -16,12 +16,11 @@
 
 package io.zorka.tdb.test.support;
 
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.StructuredTextIndex;
 import com.jitlogic.zorka.cbor.CborDataWriter;
 import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
 
-import javax.xml.bind.DatatypeConverter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

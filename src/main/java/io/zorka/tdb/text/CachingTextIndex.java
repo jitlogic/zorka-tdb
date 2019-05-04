@@ -99,11 +99,6 @@ public class CachingTextIndex extends AbstractTextIndex implements WritableTextI
     }
 
     @Override
-    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
-        return idx.searchIds(tid, deep, rslt);
-    }
-
-    @Override
     public int search(SearchNode expr, BitmapSet rslt) {
         return idx.search(expr, rslt);
     }

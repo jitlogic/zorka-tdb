@@ -17,10 +17,7 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.MetadataQuickIndex;
-import io.zorka.tdb.meta.MetadataTextIndex;
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.StructuredTextIndex;
 import com.jitlogic.zorka.cbor.CborDataWriter;
 import io.zorka.tdb.util.CborBufReader;
 import org.slf4j.Logger;
@@ -49,12 +46,8 @@ public class AgentHandler implements AgentDataProcessor {
 
     private SimpleTraceStore store;
 
-    private MetadataTextIndex mindex;
     private StructuredTextIndex sindex;
     private RawTraceDataFile dataFile;
-
-    private MetadataQuickIndex qindex;
-
     private CborDataWriter cborWriter;
 
     private Map<String,TraceDataIndexer> indexerCache;
@@ -68,9 +61,7 @@ public class AgentHandler implements AgentDataProcessor {
     public AgentHandler(SimpleTraceStore store, String sessionUUID) {
         // TODO zrobić po prostu referencję do danego store'a
         this.store = store;
-        this.mindex = store.getMetaIndex();
         this.sindex = store.getTextIndex();
-        this.qindex = store.getQuickIndex();
         this.dataFile = store.getDataFile();
         this.indexerCache = store.getIndexerCache();
         this.sessionId = sessionUUID;
@@ -145,18 +136,7 @@ public class AgentHandler implements AgentDataProcessor {
 
                 metadata.setDataOffs(dataOffs);
 
-                int slotId = qindex.add(metadata);
-
-                if (log.isDebugEnabled()) {
-                    log.debug("Indexed: " + metadata + " -> " + slotId);
-                }
-
-                mindex.addTraceChunkDesc(slotId, metadata.getTraceIdHex()+metadata.getSpanIdHex());
-
-                int ftid = mindex.addTextMetaData(slotId, metadata.getFids(), true);
-                int ttid = mindex.addTextMetaData(slotId, metadata.getTids(), false);
-
-                qindex.setTids(slotId, ftid, ttid);
+                store.saveChunkMetadata(metadata);
             }
 
             indexerCache.remove(tid);

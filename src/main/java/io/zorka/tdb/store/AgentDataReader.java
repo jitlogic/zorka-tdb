@@ -17,7 +17,7 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.StructuredTextIndex;
 import io.zorka.tdb.util.CborBufReader;
 
 import static com.jitlogic.zorka.cbor.TraceDataTags.*;

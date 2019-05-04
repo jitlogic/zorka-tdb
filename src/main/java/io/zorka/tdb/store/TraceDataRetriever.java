@@ -16,7 +16,7 @@
 
 package io.zorka.tdb.store;
 
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.text.StructuredTextIndex;
 
 
 /**

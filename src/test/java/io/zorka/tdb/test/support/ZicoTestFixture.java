@@ -17,8 +17,8 @@
 package io.zorka.tdb.test.support;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.meta.ChunkMetadata;
-import io.zorka.tdb.meta.StructuredTextIndex;
+import io.zorka.tdb.store.ChunkMetadata;
+import io.zorka.tdb.text.StructuredTextIndex;
 import io.zorka.tdb.store.*;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.WalTextIndex;

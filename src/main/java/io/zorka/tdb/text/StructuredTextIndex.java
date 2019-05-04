@@ -14,17 +14,13 @@
  * along with this software. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.zorka.tdb.meta;
+package io.zorka.tdb.text;
 
-import io.zorka.tdb.text.AbstractTextIndex;
-import io.zorka.tdb.text.RawDictCodec;
-import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.search.tsn.KeyValSearchNode;
 import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
-import io.zorka.tdb.text.WritableTextIndex;
 import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
 import org.slf4j.Logger;
@@ -351,12 +347,6 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         return tidx.length();
     }
 
-
-    @Override
-    public int searchIds(long tid, boolean deep, BitmapSet rslt) {
-        throw new ZicoException("Not implemented.");
-    }
-
     @Override
     public int add(byte[] buf, int offs, int len, boolean esc) {
         return tidx.add(buf, offs, len, esc);
@@ -367,22 +357,22 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         byte [] eib = tidx.get(id);
         ExceptionData rslt = null;
         if (eib != null) {
-            int classId = MetaIndexUtils.getInt(eib, EXCEPTION_DESC, 0);
-            int msgId = MetaIndexUtils.getInt(eib, EXCEPTION_DESC, 1);
-            int stackId = MetaIndexUtils.getInt(eib, EXCEPTION_DESC, 2);
-            int causeId = MetaIndexUtils.getInt(eib, EXCEPTION_DESC, 3);
+            int classId = getInt(eib, EXCEPTION_DESC, 0);
+            int msgId = getInt(eib, EXCEPTION_DESC, 1);
+            int stackId = getInt(eib, EXCEPTION_DESC, 2);
+            int causeId = getInt(eib, EXCEPTION_DESC, 3);
             rslt = new ExceptionData(0, classId, msgId, causeId);
             if (getStack) {
                 byte[] stb = tidx.get(stackId);
                 if (stb != null) {
-                    int sz = MetaIndexUtils.countMarkers(stb, CALL_STACK_DESC) - 1;
+                    int sz = countMarkers(stb, CALL_STACK_DESC) - 1;
                     for (int i = 0; i < sz; i++) {
-                        byte[] sib = tidx.get(MetaIndexUtils.getInt(stb, CALL_STACK_DESC, i));
+                        byte[] sib = tidx.get(getInt(stb, CALL_STACK_DESC, i));
                         if (sib != null) {
-                            int cid = MetaIndexUtils.getInt(sib, STACK_ITEM_DESC, 0);
-                            int mid = MetaIndexUtils.getInt(sib, STACK_ITEM_DESC, 1);
-                            int fid = MetaIndexUtils.getInt(sib, STACK_ITEM_DESC, 2);
-                            int lnum = MetaIndexUtils.getInt(sib, STACK_ITEM_DESC, 3);
+                            int cid = getInt(sib, STACK_ITEM_DESC, 0);
+                            int mid = getInt(sib, STACK_ITEM_DESC, 1);
+                            int fid = getInt(sib, STACK_ITEM_DESC, 2);
+                            int lnum = getInt(sib, STACK_ITEM_DESC, 3);
                             rslt.addStackElement(new StackData(cid, mid, fid, lnum));
                         }
                     }
@@ -420,9 +410,9 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
                 return new String(b1);
             }
             case METHOD_DESC: {
-                String cname = resolve(MetaIndexUtils.getInt(buf, METHOD_DESC, 0));
-                String mname = resolve(MetaIndexUtils.getInt(buf, METHOD_DESC, 1));
-                String msign = resolve(MetaIndexUtils.getInt(buf, METHOD_DESC, 2));
+                String cname = resolve(getInt(buf, METHOD_DESC, 0));
+                String mname = resolve(getInt(buf, METHOD_DESC, 1));
+                String msign = resolve(getInt(buf, METHOD_DESC, 2));
 
                 return ZicoUtil.prettyPrint(
                     cname != null ? cname : "UnknownClass",
@@ -499,6 +489,56 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
             }
             return cnt;
         }
+    }
+
+
+    public static int getInt(byte[] buf, byte sep, int idx) {
+        int i1 = pos1(buf, sep, idx), i2 = pos2(buf, sep, i1);
+
+        if (i1 == buf.length) {
+            return -1;
+        }
+
+        return (int)RawDictCodec.idDecode(buf, i1, i2-i1);
+
+    }
+
+    public static int countMarkers(byte[] buf, byte marker) {
+        int rslt = 0;
+
+        for (byte b : buf) {
+            if (b == marker) {
+                rslt++;
+            }
+        }
+
+        return rslt;
+    }
+
+
+    private static int pos2(byte[] buf, byte sep, int i1) {
+        int i2;
+        for (i2 = i1; i2 < buf.length; i2++) {
+            if (buf[i2] == sep) {
+                break;
+            }
+        }
+        return i2;
+    }
+
+    private static int pos1(byte[] buf, byte sep, int idx) {
+        int i1;
+        for (i1 = 0; i1 < buf.length; i1++) {
+            if (buf[i1] == sep) {
+                if (idx == 0) {
+                    i1++;
+                    break;
+                } else {
+                    idx--;
+                }
+            }
+        }
+        return i1;
     }
 
 
