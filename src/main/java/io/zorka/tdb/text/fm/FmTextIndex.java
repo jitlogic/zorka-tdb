@@ -20,8 +20,6 @@ import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.RawDictCodec;
 import io.zorka.tdb.text.TextIndexState;
 import io.zorka.tdb.text.TextIndexUtils;
-import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.ssn.TextNode;
 
 import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
@@ -291,12 +289,12 @@ public class FmTextIndex extends AbstractTextIndex {
     }
 
     @Override
-    public int search(SearchNode expr, BitmapSet rslt) {
+    public int search(String text, boolean matchStart, boolean matchEnd, BitmapSet rslt) {
         int r;
         lock.readLock().lock();
         try {
             if (getState() == TextIndexState.OPEN) {
-                r = searchInternal(expr, rslt);
+                r = searchInternal(text, matchStart, matchEnd, rslt);
             } else {
                 r = 0;
             }
@@ -306,22 +304,19 @@ public class FmTextIndex extends AbstractTextIndex {
         return r;
     }
 
+    private int searchInternal(String text, boolean matchStart, boolean matchEnd, BitmapSet rslt) {
 
-    private int searchInternal(SearchNode expr, BitmapSet rslt) {
-
-        if (!(expr instanceof TextNode)) return 0;
-
-        TextNode node = (TextNode)expr;
+        byte[] s = text.getBytes();
 
         // Prepare search phrase
-        byte[] buf = new byte[node.getText().length + (node.isMatchStart() ? 1 : 0) + (node.isMatchEnd() ? 1 : 0)];
-        System.arraycopy(node.getText(), 0, buf, node.isMatchStart() ? 1 : 0, node.getText().length);
+        byte[] buf = new byte[s.length + (matchStart ? 1 : 0) + (matchEnd ? 1 : 0)];
+        System.arraycopy(s, 0, buf, matchStart ? 1 : 0, s.length);
 
-        if (node.isMatchStart()) {
+        if (matchStart) {
             buf[0] = RawDictCodec.MARK_TXT;
         }
 
-        if (node.isMatchEnd()) {
+        if (matchEnd) {
             buf[buf.length-1] = RawDictCodec.MARK_ID2;
         }
 
@@ -334,7 +329,7 @@ public class FmTextIndex extends AbstractTextIndex {
         int sptr = sp(range);
         int eptr = ep(range);
 
-        boolean bskip = !node.isMatchStart();
+        boolean bskip = !matchStart;
 
         int cnt = 0;
 

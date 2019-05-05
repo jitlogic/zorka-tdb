@@ -1,6 +1,5 @@
 package io.zorka.tdb.text;
 
-import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.util.BitmapSet;
 
 import java.io.IOException;
@@ -98,11 +97,6 @@ public class CachingTextIndex extends AbstractTextIndex implements WritableTextI
         return idx.length();
     }
 
-    @Override
-    public int search(SearchNode expr, BitmapSet rslt) {
-        return idx.search(expr, rslt);
-    }
-
 
     @Override
     public void close() throws IOException {
@@ -160,5 +154,10 @@ public class CachingTextIndex extends AbstractTextIndex implements WritableTextI
     @Override
     public void flush() {
         idx.flush();
+    }
+
+    @Override
+    public int search(String text, boolean matchStart, boolean matchEnd, BitmapSet rslt) {
+        return idx.search(text, matchStart, matchEnd, rslt);
     }
 }

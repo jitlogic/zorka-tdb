@@ -33,23 +33,12 @@ public class CborBufReader {
     private long addr, end;
     private long pos;
 
-    // TODO implement on-the-fly decompression for LZ4
+    // TODO implement safe version of this reader, merge with CborDataReader
 
     public CborBufReader(byte[] buf) {
         this.obj = buf;
         this.addr = BYTE_ARRAY_OFFS;
         this.end = this.addr + buf.length;
-        this.pos = addr;
-    }
-
-    public CborBufReader(long addr, long end) {
-        this(null, addr, end);
-    }
-
-    public CborBufReader(Object obj, long addr, long end) {
-        this.obj = obj;
-        this.addr = addr;
-        this.end = end;
         this.pos = addr;
     }
 

@@ -18,7 +18,6 @@ package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.text.StructuredTextIndex;
-import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.text.CachingTextIndex;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
@@ -37,14 +36,15 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 
+import static io.zorka.tdb.store.ChunkMetadata.BOOL_TYPE;
+import static io.zorka.tdb.store.ChunkMetadata.INT_TYPE;
+
 /**
  *
  */
 public class SimpleTraceStore implements TraceStore {
 
     private static final Logger log = LoggerFactory.getLogger(SimpleTraceStore.class);
-
-    private static final String PROPS_FILE = "store.props";
 
     /** Read only index, old WALs are packed to FM format, no new WALs are created. */
     public final static int CTF_ARCHIVED = 0x01;
@@ -58,37 +58,31 @@ public class SimpleTraceStore implements TraceStore {
     private volatile RawTraceDataFile fdata;
     private volatile DB db;
 
-    /** Next sequence number */
-    private Atomic.Integer nextSeq;
+    public static final long ERROR_BIT = 0x8000000000000000L;
 
-    /** SEQ -> serialized chunk. */
-    private ConcurrentNavigableMap<Integer,byte[]> chunks;
+    // Tstamp in nanoseconds, in case of conflicts it is incremented to resolve conflict
 
-    /** Main index: tid1+tid2+sid+chnum -> SEQ */
-    private ConcurrentNavigableMap<Fun.Tuple4<Long,Long,Long,Integer>,Integer> tids;
+    /** tstamp -> serialized chunk. */
+    private ConcurrentNavigableMap<Long,byte[]> chunks;
 
-    /** Sorted by duration timestamp: tstamp+SEQ -> duration+err */
-    private ConcurrentNavigableMap<Fun.Tuple2<Long,Integer>,Long> tstamps;
+    /** Main index: tid1+tid2+sid+chnum -> tstamp */
+    private ConcurrentNavigableMap<Fun.Tuple4<Long,Long,Long,Integer>,Long> tids;
 
-    /** String attributes: keyId+valId+SEQ -> duration+err */
-    private ConcurrentNavigableMap<Fun.Tuple3<Integer,Integer,Integer>,Long> sattrs;
+    /** Sorted by duration timestamp: tstamp -> duration+err */
+    private ConcurrentNavigableMap<Long,Long> tstamps;
+
+    /** String attributes: keyId+valId+tstamp -> duration+err */
+    private ConcurrentNavigableMap<Fun.Tuple3<Integer,Integer,Long>,Long> sattrs;
 
     // TODO fulltext: valId+SEQ -> keyId+duration+err
 
-    /** Numeric/Boolean attributes: (type|keyID)+val+SEQ -> duration+err */
-    private ConcurrentNavigableMap<Fun.Tuple3<Integer,Long,Integer>,Long> nattrs; // Types (2-bit): bool=1,long=2,double=3
+    /** Numeric/Boolean attributes: (type|keyID)+val+tstamp -> duration+err */
+    private ConcurrentNavigableMap<Fun.Tuple3<Integer,Long,Long>,Long> nattrs; // Types (2-bit): bool=1,long=2,double=3
 
     // TODO factor out trace/agent data handling code to separate class
     private final Map<String,AgentHandler> handlers = new ConcurrentHashMap<>();
 
-    private long tidxWalSize = 128;
-    private long midxWalSize = 128;
-    private int tidxWalNum = 1;
-    private int midxWalNum = 1;
-
     private volatile int iFlags = 0;
-
-    private volatile int dFlags = 0;
 
     private int sessionTimeout = 90000;
 
@@ -112,13 +106,11 @@ public class SimpleTraceStore implements TraceStore {
 
         this.storeId = Integer.parseInt(this.root.getName(), 16);
 
-
         if (props == null) {
             props = new Properties();
         }
 
-        configure(props);
-        configure(loadProps());
+        this.props = props;
 
         if (!baseDir.isDirectory() && !baseDir.mkdir()) {
             throw new ZicoException("Cannot create directory " + root);
@@ -129,78 +121,26 @@ public class SimpleTraceStore implements TraceStore {
         return props;
     }
 
-    private synchronized Properties loadProps() {
 
-        File f = new File(root, PROPS_FILE);
-
-        if (f.canRead() && f.isFile()) {
-            try (FileInputStream fis = new FileInputStream(f)) {
-                props.load(fis);
-            } catch (IOException e) {
-                log.error("Cannot load store properties for " + root, e);
-            }
-        }
-
-        return props;
-    }
-
-
-    public synchronized void saveProps() {
-        Properties p = new Properties();
-
-        for (String n : props.stringPropertyNames()) {
-            p.setProperty(n, props.getProperty(n));
-        }
-
-        p.setProperty(ConfigProps.TIDX_WAL_SIZE, ""+tidxWalSize);
-        p.setProperty(ConfigProps.TIDX_WAL_NUM, ""+tidxWalNum);
-        p.setProperty(ConfigProps.MIDX_WAL_SIZE, ""+midxWalSize);
-        p.setProperty(ConfigProps.MIDX_WAL_NUM, ""+midxWalNum);
-
-        p.setProperty(ConfigProps.IFLAGS, ""+ iFlags);
-        p.setProperty(ConfigProps.DFLAGS, ""+ dFlags);
-
-        try (FileOutputStream fos = new FileOutputStream(new File(root, PROPS_FILE))) {
-            p.store(fos, "ZicoDB store properties saved at " + new Date());
-        } catch (IOException e) {
-            log.error("Cannot save store properties for " + root, e);
-        }
-    }
-
-
-    public synchronized void configure(Properties props) {
-        this.props = props;
-        for (Map.Entry<Object,Object> e : props.entrySet()) {
-            switch ((String)e.getKey()) {
-                case ConfigProps.TIDX_WAL_SIZE:
-                    tidxWalSize = Integer.parseInt((String)e.getValue());
-                    break;
-                case ConfigProps.TIDX_WAL_NUM:
-                    tidxWalNum = Integer.parseInt((String)e.getValue());
-                    break;
-                case ConfigProps.MIDX_WAL_SIZE:
-                    midxWalSize = Integer.parseInt((String)e.getValue());
-                    break;
-                case ConfigProps.MIDX_WAL_NUM:
-                    midxWalNum = Integer.parseInt((String)e.getValue());
-                    break;
-                case ConfigProps.IFLAGS:
-                    iFlags = Integer.parseInt((String)e.getValue());
-                    break;
-                case ConfigProps.DFLAGS:
-                    dFlags = Integer.parseInt((String)e.getValue());
-                    break;
-            }
-        }
-    }
-
-
+    @Override
     public synchronized void open() {
 
         // TODO writeLock here
         if (fdata != null) {
             return;
         }
+
+        db = DBMaker.newFileDB(new File(root, "meta.db"))
+                // TODO mmapEnable(), segment size etc.
+                .closeOnJvmShutdown().cacheSize(8192).make();
+
+        chunks = db.getTreeMap("chunks.map");
+        tids = db.getTreeMap("tids.map");
+        tstamps = db.getTreeMap("tstamps.map");
+        sattrs = db.getTreeMap("sattrs.map");
+        nattrs = db.getTreeMap("nattrs.map");
+
+        if (db.getAtomicBoolean("archived.flag").get()) iFlags |= CTF_ARCHIVED;
 
         Properties ptext = ZicoUtil.props(); // TODO configure properties here
         CompositeIndexFileStore ftext = new CompositeIndexFileStore(root.getPath(), "text", ptext);
@@ -212,57 +152,54 @@ public class SimpleTraceStore implements TraceStore {
             itext = new StructuredTextIndex(ctext);
         }
 
-        db = DBMaker.newFileDB(new File(root, "meta.db"))
-                // TODO mmapEnable(), segment size etc.
-                .closeOnJvmShutdown().cacheSize(8192).make();
-
-        nextSeq = db.getAtomicInteger("seq");
-        chunks = db.getTreeMap("chunks.map");
-        tids = db.getTreeMap("tids.map");
-        tstamps = db.getTreeMap("tstamps.map");
-        sattrs = db.getTreeMap("sattrs.map");
-        nattrs = db.getTreeMap("nattrs.map");
-
         fdata = new RawTraceDataFile(new File(root, "traces.dat"), true,
             RawTraceDataFile.ZLIB_COMPRESSION | RawTraceDataFile.CRC32_CHECKSUM);
     }
+
 
     public synchronized long getStoreId() {
         return storeId;
     }
 
+
     public synchronized StructuredTextIndex getTextIndex() {
         return itext;
     }
+
 
     public synchronized RawTraceDataFile getDataFile() {
         return fdata;
     }
 
+
     public synchronized Map<String,TraceDataIndexer> getIndexerCache() {
         return indexerCache;
     }
 
-    ConcurrentNavigableMap<Fun.Tuple4<Long, Long, Long, Integer>, Integer> getTids() {
-        return tids;
+
+    public ConcurrentNavigableMap<Long,Long> getTstamps() {
+        return tstamps;
     }
 
-    ConcurrentNavigableMap<Fun.Tuple2<Long, Integer>, Long> getTstamps() {
-        return tstamps;
+
+    public ConcurrentNavigableMap<Fun.Tuple3<Integer,Integer,Long>,Long> getSattrs() {
+        return sattrs;
     }
 
 
     @Override
     public long getTstart() {
         checkOpen();
-        return tstamps.size() > 0 ? tstamps.firstKey().a : 0L;
+        return tstamps.size() > 0 ? tstamps.firstKey() : 0L;
     }
+
 
     @Override
     public synchronized long getTstop() {
         checkOpen();
-        return tstamps.size() > 0 ? tstamps.lastKey().a : 0L;
+        return tstamps.size() > 0 ? tstamps.lastKey() : 0L;
     }
+
 
     private synchronized AgentHandler getHandler(String sessionId, boolean reset) {
         AgentHandler agentHandler = handlers.get(sessionId);
@@ -279,6 +216,7 @@ public class SimpleTraceStore implements TraceStore {
         return agentHandler;
     }
 
+
     public void retrieveRaw(long chunkId, ByteArrayOutputStream bos) {
         ChunkMetadata cm = getChunkMetadata(chunkId);
         CborBufReader rdr = fdata.read(cm.getDataOffs());
@@ -289,13 +227,16 @@ public class SimpleTraceStore implements TraceStore {
         }
     }
 
+
     private void checkOpen() {
         if (fdata == null) open();
     }
 
+
     public <T> void retrieveChunk(long chunkId, TraceDataRetriever<T> rtr) {
         retrieveChunk(chunkId, true, rtr);
     }
+
 
     public <T> void retrieveChunk(long chunkId, boolean first, TraceDataRetriever<T> rtr) {
         ChunkMetadata cm = getChunkMetadata(chunkId);
@@ -309,68 +250,91 @@ public class SimpleTraceStore implements TraceStore {
         }
     }
 
+
     public void saveChunkMetadata(ChunkMetadata cm) {
-        int seq = nextSeq.incrementAndGet();
-        long dur = cm.getDuration()|(cm.isErrorFlag()?0x8000000000000000L:0);
-        chunks.put(seq,ChunkMetadata.serialize(cm));
-        tids.put(Fun.t4(cm.getTraceId1(),cm.getTraceId2(),cm.getSpanId(),cm.getChunkNum()),seq);
-        tstamps.put(Fun.t2(cm.getTstamp(),seq),dur);
+
+        // Ensure tstamp is unique
+        long tst = cm.getTstamp();
+        while (tstamps.containsKey(tst)) tst++;
+        cm.setTstamp(tst);
+
+        long dur = cm.getDuration()|(cm.isErrorFlag()?ERROR_BIT:0);
+        chunks.put(tst,ChunkMetadata.serialize(cm));
+        tids.put(Fun.t4(cm.getTraceId1(),cm.getTraceId2(),cm.getSpanId(),cm.getChunkNum()),tst);
+        tstamps.put(tst,dur);
         if (cm.getSattrs() != null) {
             for (Map.Entry<Integer,Integer> e : cm.getSattrs().entrySet()) {
-                sattrs.put(Fun.t3(e.getKey(),e.getValue(),seq),dur);
+                sattrs.put(Fun.t3(e.getKey(),e.getValue(),tst),dur);
             }
         }
         if (cm.getNattrs() != null) {
             for (Map.Entry<Integer,Long> e : cm.getNattrs().entrySet()) {
-                nattrs.put(Fun.t3(e.getKey(),e.getValue(),seq),dur);
+                nattrs.put(Fun.t3(e.getKey(),e.getValue(),tst),dur);
             }
         }
         db.commit();
     }
 
 
-    @Override
-    public long getTraceDuration(long chunkId) {
-        return getChunkMetadata(chunkId).getDuration();
+    public ChunkMetadata getChunkMetadata(long tstamp) {
+        if (tstamp ==-1) return null;
+        checkOpen();
+        byte[] b = chunks.get(tstamp);
+        if (b == null) return null;
+        ChunkMetadata c = ChunkMetadata.deserialize(b);
+        c.setStore(this);
+        return c;
     }
 
 
-    @Override
-    public String getDesc(long chunkId) {
-        return "NIECZYNNE";
-    }
+    public int getChunks(Tid t, List<ChunkMetadata> acc) {
 
-
-    @Override
-    public List<Long> getChunkIds(long traceId1, long traceId2, long spanId) {
-        List<Long> rslt = new ArrayList<>();
-        findChunkIds(rslt, traceId1, traceId2, spanId);
-        return rslt;
-    }
-
-
-    public void findChunkIds(List<Long> acc, long traceId1, long traceId2, long spanId) {
         checkOpen();
 
-        ConcurrentNavigableMap<Fun.Tuple4<Long,Long,Long,Integer>,Integer> t =
-                tids.subMap(Fun.t4(traceId1,traceId2,spanId,0),Fun.t4(traceId1,traceId2,spanId,Integer.MAX_VALUE));
+        int count = 0;
 
-        for (Map.Entry<Fun.Tuple4<Long,Long,Long,Integer>,Integer> e : t.entrySet()) {
-            acc.add(e.getValue().longValue());
+        Fun.Tuple4<Long, Long, Long, Integer> t1 = Fun.t4(t.t1, t.t2, t.s!= 0L?t.s:Long.MIN_VALUE, Integer.MIN_VALUE);
+        Fun.Tuple4<Long, Long, Long, Integer> t2 = Fun.t4(t.t1, t.t2, (t.s!= 0L?t.s:Long.MAX_VALUE)+1, Integer.MAX_VALUE);
+
+        System.err.println("CMP=" + t1.compareTo(t2));
+
+        for (Long tst : tids.subMap(t1, t2).values()) {
+            acc.add(getChunkMetadata(tst));
+            count++;
+        }
+
+        return count;
+    }
+
+
+    public void getAttributes(ChunkMetadata md, Map<String,Object> acc) {
+        checkOpen();
+
+        if (md.getSattrs() != null) {
+            for (Map.Entry<Integer,Integer> e : md.getSattrs().entrySet()) {
+                String k = itext.resolve(e.getKey());
+                String v = itext.resolve(e.getValue());
+                if (k != null && v != null) acc.put(k, v);
+            }
+        }
+
+        if (md.getNattrs() != null) {
+            for (Map.Entry<Integer,Long> e : md.getNattrs().entrySet()) {
+                String k = itext.resolve(e.getKey() & ~ChunkMetadata.TYPE_MASK);
+                if (k == null) continue;
+                switch (e.getKey() & ChunkMetadata.TYPE_MASK) {
+                    case INT_TYPE:
+                        acc.put(k, e.getValue()); break;
+                    case BOOL_TYPE:
+                        acc.put(k, e.getValue() != 0); break;
+                    case ChunkMetadata.DBL_TYPE:
+                        acc.put(k, Double.longBitsToDouble(e.getValue())); break;
+                    case ChunkMetadata.NULL_TYPE:
+                        acc.put(k, null);
+                }
+            }
         }
     }
-
-
-    @Override
-    public ChunkMetadata getChunkMetadata(long chunkId) {
-        if (chunkId ==-1) return null;
-        checkOpen();
-        int seq = TraceStoreUtil.parseSlotId(chunkId);
-        byte[] b = chunks.get(seq);
-        if (b == null) return null;
-        return ChunkMetadata.deserialize(b);
-    }
-
 
     @Override
     public void handleTraceData(String sessionUUID, byte[] data, ChunkMetadata md) {
@@ -385,18 +349,17 @@ public class SimpleTraceStore implements TraceStore {
     }
 
 
-    @Override
     public synchronized void archive() {
         if (0 == (iFlags & CTF_ARCHIVED)) {
             checkOpen();
             iFlags |= CTF_ARCHIVED;
+            db.getAtomicBoolean("archived.flag").set(true);
+            db.commit();
             ctext.archive();
             itext = new StructuredTextIndex(ctext);
-            saveProps();
         }
     }
 
-    @Override
     public boolean runMaintenance() {
         checkOpen();
         cleanupSessions();
@@ -413,11 +376,7 @@ public class SimpleTraceStore implements TraceStore {
         ctext.close();
         fdata.close();
         db.close();
-        saveProps();
     }
-
-    // TODO implement session timeout & cleanup functionality
-
 
     private synchronized void cleanupSessions() {
         long tst = System.currentTimeMillis();
@@ -429,19 +388,8 @@ public class SimpleTraceStore implements TraceStore {
         }
     }
 
-
-    public static int SEARCH_QR_THRESHOLD = 512;
-    public static int SEARCH_TX_THRESHOLD = 512;
-
-
-    public long toChunkId(int slot) {
-        return slot >= 0 ? (storeId << 32) | slot : -1;
-    }
-
-
-    @Override
-    public TraceSearchResult searchTraces(TraceSearchQuery query) {
-        return new SimpleTraceStoreSearchResult(query, this);
+    public int search(TraceSearchQuery query, int limit, int offset, List<ChunkMetadata> acc) {
+        return new SimpleTraceStoreSearchContext(this, query, limit, offset).search(acc);
     }
 
 }

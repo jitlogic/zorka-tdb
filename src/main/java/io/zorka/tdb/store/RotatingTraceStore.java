@@ -17,7 +17,6 @@
 package io.zorka.tdb.store;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.search.TraceSearchQuery;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import com.jitlogic.zorka.common.util.ZorkaUtil;
 import org.slf4j.Logger;
@@ -68,12 +67,6 @@ public class RotatingTraceStore implements TraceStore {
         }
     }
 
-    public synchronized void configure(Properties props) {
-        checkOpen();
-        this.props = props;
-        SimpleTraceStore s = state.getCurrent();
-        if (s != null) s.configure(props);
-    }
 
     @Override
     public long getTstart() {
@@ -81,27 +74,11 @@ public class RotatingTraceStore implements TraceStore {
         return s != null ? s.getTstart() : 0;
     }
 
+
     @Override
     public long getTstop() {
         SimpleTraceStore s = state.newest();
         return s != null ? s.getTstop() : 0;
-    }
-
-    @Override
-    public TraceSearchResult searchTraces(TraceSearchQuery query) {
-
-        checkOpen();
-
-        RotatingTraceStoreState ts = state;
-
-        // TODO pass state directly to RotatingTraceStoreSearchResult
-        List<SimpleTraceStore> stores = new ArrayList<>(ts.getArchived().size() + 2);
-
-        stores.add(ts.getCurrent());
-        stores.addAll(ts.getArchived());
-        stores.sort( (a,b) -> (int)(a.getStoreId() - b.getStoreId()));
-
-        return new RotatingTraceStoreSearchResult(query, stores);
     }
 
     private static final Pattern RE_SDIR = Pattern.compile("[0-9a-fA-F]{6}");
@@ -120,13 +97,13 @@ public class RotatingTraceStore implements TraceStore {
         }
     }
 
+
     @Override
     public synchronized void open() {
 
         if (state.isOpen()) return;
 
         log.info("Opening store at " + baseDir);
-
 
         List<File> sdirs = Arrays.stream(baseDir.list())
             .filter(f -> f.matches("[0-9a-f]{6}"))
@@ -162,46 +139,28 @@ public class RotatingTraceStore implements TraceStore {
     }
 
 
-    public byte[] retrieveRaw(long traceId1, long traceId2, long spanId) {
-        RotatingTraceStoreState ts = state;
-        List<Long> chunkIds = getChunkIds(ts, traceId1, traceId2, spanId);
+    public byte[] retrieveRaw(Tid t) {
+        List<ChunkMetadata> chunks = getChunks(t);
+        if (chunks.isEmpty()) return null;
 
-        if (chunkIds.isEmpty()) return null;
-
-        chunkIds.sort(Comparator.comparingLong(o -> o & TraceStoreUtil.SLOT_MASK));
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-        for (Long chunkId : chunkIds) {
-            SimpleTraceStore s = ts.get(TraceStoreUtil.parseStoreId(chunkId));
-            if (s != null) {
-                s.retrieveRaw(chunkId, bos);
-            } else {
-                // Incomplete trace will not be accessible
-                return null;
-            }
+        for (ChunkMetadata c : chunks) {
+            c.getStore().retrieveRaw(c.getTstamp(), bos);
         }
 
         return bos.toByteArray();
     }
 
 
-    public <T> T retrieve(long traceId1, long traceId2, long spanId, TraceDataRetriever<T> rtr) {
+    public <T> T retrieve(Tid t, TraceDataRetriever<T> rtr) {
+        List<ChunkMetadata> chunks = getChunks(t);
 
-        checkOpen();
+        // TODO check if chunk list is complete
 
-        RotatingTraceStoreState ts = state;
-
-        List<Long> chunkIds = getChunkIds(ts, traceId1, traceId2, spanId);
-
-        for (int i = 0; i < chunkIds.size(); i++) {
-            long chunkId = chunkIds.get(i);
-            SimpleTraceStore s = ts.get(TraceStoreUtil.parseStoreId(chunkId));
-            if (s != null) {
-                s.retrieveChunk(chunkId, i == 0, rtr);
-            } else {
-                // Incomplete trace will not be accessible
-                return null;
-            }
+        for (int i = 0; i < chunks.size(); i++) {
+            ChunkMetadata c = chunks.get(i);
+            c.getStore().retrieveChunk(c.getTstamp(), i == 0, rtr);
         }
 
         rtr.commit();
@@ -209,60 +168,83 @@ public class RotatingTraceStore implements TraceStore {
     }
 
 
-    @Override
-    public long getTraceDuration(long chunkId) {
-        SimpleTraceStore s = state.get(TraceStoreUtil.parseStoreId(chunkId));
-        return s != null ? s.getTraceDuration(chunkId) : -1;
-    }
-
-
-    @Override
-    public String getDesc(long chunkId) {
-        int sid = TraceStoreUtil.parseStoreId(chunkId);
-        SimpleTraceStore ts = state.get(sid);
-        return ts != null ? ts.getDesc(chunkId) : null;
-    }
-
-
-    @Override
-    public List<Long> getChunkIds(long traceId1, long traceId2, long spanId) {
+    public List<ChunkMetadata> getChunks(Tid t) {
         checkOpen();
-        return getChunkIds(state, traceId1, traceId2, spanId);
-    }
 
-    private List<Long> getChunkIds(RotatingTraceStoreState state, long traceId1, long traceId2, long spanId) {
-        List<Long> rslt = state.getCurrent().getChunkIds(traceId1, traceId2, spanId);
+        RotatingTraceStoreState st = state;
 
-        List<SimpleTraceStore> as = state.getArchived();
+        List<ChunkMetadata> chunks = new ArrayList<>();
+        int count = st.getCurrent().getChunks(t,chunks);
 
-        for (int i = as.size() - 1; i >= 0 && !TraceStoreUtil.containsStartChunk(rslt); i--) {
-            as.get(i).findChunkIds(rslt, traceId1, traceId2, spanId);
+        for (int i = state.getArchived().size()-1; i >= 0; i--) {
+            int cnt = state.getArchived().get(i).getChunks(t,chunks);
+            if (count != 0 && cnt == 0) break;
+            count += cnt;
         }
 
-        rslt.sort(Comparator.comparingLong(o -> o & (TraceStoreUtil.CH_SE_MASK)));
+        chunks.sort(Comparator.comparingInt(ChunkMetadata::getChunkNum));
+
+        return chunks;
+    }
+
+
+    public ChunkMetadata getTrace(Tid t, boolean fetchAttrs) {
+        List<ChunkMetadata> chunks = getChunks(t);
+
+        if (chunks.isEmpty()) return null;
+
+        Map<Long,List<ChunkMetadata>> m = new TreeMap<>();
+
+        long root = 0L;
+
+        for (ChunkMetadata md : chunks) {
+            long sid = md.getSpanId();
+            if (root == 0L && md.getParentId() == 0) root = md.getSpanId();
+            if (!m.containsKey(sid)) m.put(sid, new ArrayList<>());
+            m.get(sid).add(md);
+        }
+
+        // Pass 1: sort chunks and set chunks field
+        for (Map.Entry<Long,List<ChunkMetadata>> e : m.entrySet()) {
+            List<ChunkMetadata> l = e.getValue();
+            l.sort(Comparator.comparingInt(ChunkMetadata::getChunkNum));
+            if (l.size() > 1) l.get(0).setChunks(l);
+            l.get(0).setChildren(new ArrayList<>());
+            if (fetchAttrs) {
+                Map<String,Object> attrs = new TreeMap<>();
+                for (ChunkMetadata c : l) c.getStore().getAttributes(c, attrs);
+                l.get(0).setAttributes(attrs);
+            }
+        }
+
+        // Pass 2: merge all chunk sets into a tree
+        for (Map.Entry<Long,List<ChunkMetadata>> e : m.entrySet()) {
+            ChunkMetadata c = e.getValue().get(0);
+            long pid = c.getParentId();
+            if (pid != 0) {
+                List<ChunkMetadata> pl = m.get(pid);
+                if (pl != null) {
+                    pl.get(0).getChildren().add(c);
+                }
+            }
+        }
+
+        return m.get(root).get(0);
+    }
+
+
+    public Map<String,Object> getAttributes(Tid t) {
+
+        Map<String,Object> rslt = new TreeMap<>();
+
+        for (ChunkMetadata cm : getChunks(t)) {
+            cm.getStore().getAttributes(cm, rslt);
+        }
 
         return rslt;
     }
 
 
-    @Override
-    public ChunkMetadata getChunkMetadata(long chunkId) {
-        return getChunkMetadata(state, chunkId);
-    }
-
-
-    public ChunkMetadata getChunkMetadata(RotatingTraceStoreState state, long chunkId) {
-        TraceStore s = state.get(TraceStoreUtil.parseStoreId(chunkId));
-        return s != null ? s.getChunkMetadata(chunkId) : null;
-    }
-
-
-    @Override
-    public void archive() {
-        rotate();
-    }
-
-    @Override
     public boolean runMaintenance() {
         boolean rslt;
 
@@ -334,7 +316,7 @@ public class RotatingTraceStore implements TraceStore {
     /**
      * Archives current log and opens next one.
      */
-    private synchronized void rotate() {
+    public synchronized void rotate() {
 
         RotatingTraceStoreState ts = state;
 
@@ -375,13 +357,64 @@ public class RotatingTraceStore implements TraceStore {
 
     }
 
-
-    public Map<String, TraceDataIndexer> getIndexerCache() {
-        return indexerCache;
-    }
-
-
     public SimpleTraceStore getCurrent() {
         return state.getCurrent();
     }
+
+    public Collection<ChunkMetadata> searchChunks(TraceSearchQuery query, int limit, int offset) {
+        checkOpen();
+
+        List<ChunkMetadata> acc = new ArrayList<>(limit);
+
+        RotatingTraceStoreState state = this.state;
+
+        int count = state.getCurrent().search(query, limit, offset, acc);
+
+        if (state.getArchived() != null) {
+            for (int i = state.getArchived().size() - 1; i >= 0 && acc.size() < limit; i--) {
+                SimpleTraceStore store = state.getArchived().get(i);
+                int lim = limit - acc.size();
+                int off = offset - count;
+                count += store.search(query, lim, off, acc);
+            }
+        }
+
+        if (query.fetchAttrs()) {
+            for (ChunkMetadata c : acc) {
+                Map<String,Object> attrs = new TreeMap<>();
+                c.getStore().getAttributes(c, attrs);
+                c.setAttributes(attrs);
+            }
+        }
+
+        return acc;
+    }
+
+    public Collection<ChunkMetadata> search(TraceSearchQuery query, int limit, int offset) {
+        Map<Tid,ChunkMetadata> rslt = new HashMap<>();
+
+        int lim = limit + offset, offs = 0;
+
+        while (rslt.size() < limit) {
+            Collection<ChunkMetadata> chunks = searchChunks(query, lim, offs);
+            if (chunks.size() == 0) break;
+
+            for (ChunkMetadata c : chunks) {
+                Tid tid = query.spansOnly()
+                        ? Tid.s(c.getTraceId1(), c.getTraceId2(), c.getSpanId())
+                        : Tid.t(c.getTraceId1(), c.getTraceId2());
+                if (rslt.containsKey(tid)) continue;
+                rslt.put(tid, getTrace(tid, query.fetchAttrs()));
+                if (rslt.size() >= limit) break;
+            }
+
+            if (rslt.size() < limit) {
+                offs += lim;
+                lim = limit;
+            }
+        }
+
+        return rslt.values();
+    }
+
 }

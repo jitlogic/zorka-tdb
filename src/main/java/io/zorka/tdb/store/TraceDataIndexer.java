@@ -16,6 +16,7 @@
 
 package io.zorka.tdb.store;
 
+import com.jitlogic.zorka.cbor.TraceAttributes;
 import com.jitlogic.zorka.common.util.ZorkaUtil;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.text.StructuredTextIndex;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
 import static com.jitlogic.zorka.cbor.TraceInfoConstants.*;
+import static io.zorka.tdb.store.ChunkMetadata.*;
 
 /**
  * Normalizes all strings and translates IDs. Extract
@@ -42,6 +44,9 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     private int[] localExIds = new int[EXC_DELTA], agentExIds = new int[EXC_DELTA];
     private int exIdSize = 0;
 
+    private int methoCallKey = -1;
+    private int lastMethodCall = -1;
+
     private long traceId1, traceId2;
     private int chnum;
 
@@ -54,9 +59,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     private AgentHandler ah;
 
     private int lastPos = -1;
-
-    private int[] lastIds = new int[64];
-    private int lastIdsSize = -1;   // -1 -- collecting last IDs disabled, > 0 -- collecting lastIDs enabled, points to first free slot
 
     private long lastTstamp = -1;
 
@@ -81,6 +83,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         this.chnum = chnum;
         this.writer = writer;
         this.lastPos = -1;
+        this.methoCallKey = index.add(TraceAttributes.CALL_METHOD);
         mrslt.clear();
         if (mrecs.size() > 0) {
             for (ChunkMetadata md : mrecs) {
@@ -135,7 +138,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     public void traceStart(int pos) {
         stackDepth++;
         lastPos = writer.position();
-        lastIdsSize = 0;  // Reset and enable collecting of lastIds
         if (mtop != null) mtop.addRecs(1);
         output.traceStart(pos);
     }
@@ -147,7 +149,6 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
             mpop();
         }
         stackDepth--;
-        lastIdsSize = -1;  // Reset and disable collecting of lastIds
         output.traceEnd();
     }
 
@@ -159,6 +160,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         md.setStartOffs(lastPos);
         md.setTstamp(lastTstamp);
         md.setTstart(tstart);
+        md.getSattrs().put(methoCallKey, lastMethodCall);
 
         md.addRecs(1);
         mpush(md);
@@ -192,7 +194,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 }
                 break;
             case TI_METHOD:
-                v = methodRef((int)v);
+                v = lastMethodCall = methodRef((int)v);
                 break;
             case TI_CALLS:
                 if (mtop != null) mtop.addCalls((int)v);
@@ -254,8 +256,27 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
     @Override
     public void attr(Map<Object, Object> data) {
         Map<Object, Object> d1 = (Map<Object,Object>)translate(data);
-        if (mtop != null && mtop.getStackDepth() == stackDepth) {
-            mtop.addAttrData(d1);
+        if (mtop != null) {
+            if (mtop.getStackDepth() == stackDepth) {
+                for (Map.Entry<Object,Object> e : d1.entrySet()) {
+                    if (e.getKey() instanceof ObjectRef) {
+                        int k = ((ObjectRef) e.getKey()).id;
+                        if (e.getValue() instanceof ObjectRef) {
+                            mtop.getSattrs().put(k, ((ObjectRef) e.getValue()).id);
+                        } else if (e.getValue() instanceof Integer) {
+                            mtop.getNattrs().put(k|INT_TYPE, ((Integer)e.getValue()).longValue());
+                        } else if (e.getValue() instanceof Long) {
+                            mtop.getNattrs().put(k|INT_TYPE, (Long)e.getValue());
+                        } else if (e.getValue() instanceof Boolean) {
+                            mtop.getNattrs().put(k|BOOL_TYPE, Boolean.TRUE.equals(e.getValue()) ? 1L : 0L);
+                        } else if (e.getValue() instanceof Double) {
+                            mtop.getNattrs().put(k|DBL_TYPE, Double.doubleToLongBits((Double)e.getValue()));
+                        }
+                    }
+                }
+            } else if (mtop.getStackDepth() < stackDepth) {
+                log.info("TBD register deep attributes: {}", d1);
+            }
         }
         output.attr(d1);
     }

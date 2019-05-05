@@ -18,7 +18,6 @@ package io.zorka.tdb.test.unit.text.ci;
 
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.TextIndex;
-import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.ZicoUtil;
 
@@ -111,7 +110,7 @@ public class TextIndexR extends AbstractTextIndex implements TextIndex {
     }
 
     @Override
-    public int search(SearchNode expr, BitmapSet rslt) {
+    public int search(String text, boolean matchStart, boolean matchEnd, BitmapSet rslt) {
         return 0;
     }
 

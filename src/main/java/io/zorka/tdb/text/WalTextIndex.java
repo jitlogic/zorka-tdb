@@ -17,8 +17,6 @@
 package io.zorka.tdb.text;
 
 import io.zorka.tdb.ZicoException;
-import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.ssn.TextNode;
 import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.QuickHashTab;
 import io.zorka.tdb.util.ZicoUtil;
@@ -483,15 +481,16 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         return jump(pos, RawDictCodec.MARK_ID1);
     }
 
-    private int scan(byte[] text, BitmapSet matches, boolean fetchTids) {
+    private int scan(String s, boolean matchStart, boolean matchEnd, BitmapSet matches) {
+        // TODO handle matchStart/matchEnd
         int rec = 0;
         int cnt = 0;
+        byte[] text = s.getBytes();
         int limit = fpos - text.length;
         byte[] buf = new byte[8];
 
         for (int pos = jump(4) + 1; pos <= limit; pos = jump(pos) + 1) {
             if (pos >= limit) break;
-            // TODO obsłużenie matchStart i matchEnd
             while (pos < limit) {
                 boolean match = true, mbrk = false;
                 for (int i = 0 ; i < text.length; i++) {
@@ -505,22 +504,8 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
                 if (mbrk) {
                     break;
                 } else if (match) {
-                    if (fetchTids) {
-                        for (int i = 0; i < 8; i++) {
-                            byte b = buffer.get(pos-i-1);
-                            if (b >= 0 && b < 32) {
-                                if (i > 1) ZicoUtil.reverse(buf, 0, i);
-                                matches.set((int)RawDictCodec.idDecode(buf, 0, i));
-                                cnt++;
-                                break;
-                            } else {
-                                buf[i] = b;
-                            }
-                        }
-                    } else {
-                        matches.set(rec+idBase);
-                        cnt++;
-                    }
+                    matches.set(rec+idBase);
+                    cnt++;
                     break;
                 } else {
                     pos++;
@@ -532,15 +517,14 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         return cnt;
     }
 
-
     @Override
-    public int search(SearchNode expr, BitmapSet rslt) {
+    public int search(String text, boolean matchStart, boolean matchEnd, BitmapSet rslt) {
         int r;
         lock.readLock().lock();
         try {
             synchronized (this) {
-                if (getState() == TextIndexState.OPEN && expr instanceof TextNode) {
-                    r = scan(((TextNode) expr).getText(), rslt, false);
+                if (getState() == TextIndexState.OPEN) {
+                    r = scan(text, matchStart, matchEnd, rslt);
                 } else {
                     r = 0;
                 }
@@ -550,6 +534,7 @@ public class WalTextIndex extends AbstractTextIndex implements WritableTextIndex
         }
         return r;
     }
+
 }
 
 

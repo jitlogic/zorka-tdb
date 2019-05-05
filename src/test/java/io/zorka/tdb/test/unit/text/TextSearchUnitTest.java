@@ -2,8 +2,6 @@ package io.zorka.tdb.test.unit.text;
 
 import io.zorka.tdb.text.TextIndexType;
 import io.zorka.tdb.text.WritableTextIndex;
-import io.zorka.tdb.search.ssn.TextNode;
-import io.zorka.tdb.search.tsn.KeyValSearchNode;
 import io.zorka.tdb.util.BitmapSet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,7 +42,7 @@ public class TextSearchUnitTest extends TextIndexTestFixture {
     public void testNonTerminatedSearch() throws Exception {
         newIndex(this::loadData);
         BitmapSet bbs = new BitmapSet();
-        int cnt = idx.search(new TextNode("C", false, false), bbs);
+        int cnt = idx.search("C", false, false, bbs);
 
         assertEquals(1, cnt);
         assertTrue(bbs.get(ids[2]));
@@ -55,15 +53,15 @@ public class TextSearchUnitTest extends TextIndexTestFixture {
     public void testSearchNonExistentItem() throws Exception {
         newIndex(this::loadData);
         BitmapSet bbs = new BitmapSet();
-        assertEquals(0, idx.search(new TextNode("X", false, false), bbs));
+        assertEquals(0, idx.search("X", false, false, bbs));
     }
 
 
     @Test
     public void testSearchInvalidType() throws Exception {
-        newIndex(this::loadData);
-        BitmapSet bbs = new BitmapSet();
-        assertEquals(0, idx.search(new KeyValSearchNode("a", new TextNode("ss", false, false)), bbs));
+//        newIndex(this::loadData);
+//        BitmapSet bbs = new BitmapSet();
+//        assertEquals(0, idx.search(new KeyValSearchNode("a", new TextNode("ss", false, false)), bbs));
     }
 
 
@@ -71,7 +69,7 @@ public class TextSearchUnitTest extends TextIndexTestFixture {
     public void testSearchWithLongIds() throws Exception {
         newIndex(this::loadData1);
         BitmapSet bbs = new BitmapSet();
-        int cnt = idx.search(new TextNode("XYZ", false, false), bbs);
+        int cnt = idx.search("XYZ", false, false, bbs);
         assertEquals(1, cnt);
         assertTrue(bbs.get(ids[100]));
     }

@@ -19,7 +19,6 @@ package io.zorka.tdb.test.support;
 import io.zorka.tdb.text.TextIndex;
 import io.zorka.tdb.text.TextIndexState;
 import io.zorka.tdb.text.WritableTextIndex;
-import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.util.BitmapSet;
 
 import java.io.IOException;
@@ -98,7 +97,8 @@ public class WritableIndexWrapper implements WritableTextIndex {
     }
 
     @Override
-    public int search(SearchNode expr, BitmapSet rslt) {
+    public int search(String text, boolean matchStart, boolean matchEnd, BitmapSet rslt) {
         return 0;
     }
+
 }

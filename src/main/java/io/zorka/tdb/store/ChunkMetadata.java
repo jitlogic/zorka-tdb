@@ -32,6 +32,12 @@ import static com.jitlogic.zorka.cbor.TraceRecordFlags.*;
  */
 public class ChunkMetadata {
 
+    public static final int TYPE_MASK = 0xC0000000;
+    public static final int INT_TYPE  = 0x00000000;
+    public static final int DBL_TYPE  = 0x40000000;
+    public static final int BOOL_TYPE = 0x80000000;
+    public static final int NULL_TYPE = 0xC0000000;
+
     /** Trace ID (high word) */
     private long traceId1;
 
@@ -82,14 +88,23 @@ public class ChunkMetadata {
     /** Chunk end timestamp (ticks since trace start). */
     private long tstop;
 
-    /** Trace attributes (if resolved) */
-    private Map<Object,Object> attrs = null; // TODO to be removed
-
     /** String attributes */
-    private Map<Integer,Integer> sattrs = null;
+    private Map<Integer,Integer> sattrs = new TreeMap<>();
 
     /** Primitive Attributes (numeric, booleans) */
-    private Map<Integer,Long> nattrs = null;
+    private Map<Integer,Long> nattrs = new TreeMap<>();
+
+    /** Store owning this chunk. */
+    private transient SimpleTraceStore store;
+
+    /** Plain text (resolved) trace attributes map. */
+    private transient Map<String,Object> attributes;
+
+    /** If there are more chunks in this span, this list contains them */
+    private transient List<ChunkMetadata> chunks = null;
+
+    /** Children spans. */
+    private transient List<ChunkMetadata> children = null;
 
     @Override
     public String toString() {
@@ -108,13 +123,64 @@ public class ChunkMetadata {
         this.zeroLevel = zeroLevel;
     }
 
-    public void addAttrData(Map<Object,Object> data) {
-        if (attrs == null) attrs = new HashMap<>();
-        attrs.putAll(data);
+    public SimpleTraceStore getStore() {
+        return store;
     }
 
-    public Map<Object,Object> getAttrs() {
-        return attrs;
+    public void setStore(SimpleTraceStore store) {
+        this.store = store;
+    }
+
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Map<String, Object> attributes) {
+        this.attributes = attributes;
+    }
+
+    public long getTraceId1() {
+        return traceId1;
+    }
+
+    public void setTraceId1(long traceId1) {
+        this.traceId1 = traceId1;
+    }
+
+    public long getTraceId2() {
+        return traceId2;
+    }
+
+    public void setTraceId2(long traceId2) {
+        this.traceId2 = traceId2;
+    }
+
+    public String getTraceIdHex() {
+        return traceId2 != 0 ? ZorkaUtil.hex(traceId1, traceId2) : ZorkaUtil.hex(traceId1);
+    }
+
+    public long getSpanId() {
+        return spanId;
+    }
+
+    public String getSpanIdHex() {
+        return spanId != 0 ? ZorkaUtil.hex(spanId) : null;
+    }
+
+    public void setSpanId(long spanId) {
+        this.spanId = spanId;
+    }
+
+    public long getParentId() {
+        return parentId;
+    }
+
+    public String getParentIdHex() {
+        return parentId != 0 ? ZorkaUtil.hex(parentId) : null;
+    }
+
+    public void setParentId(long parentId) {
+        this.parentId = parentId;
     }
 
     public int getFlags() {
@@ -133,13 +199,10 @@ public class ChunkMetadata {
         this.tstamp = tstamp;
     }
 
-
-
     public long catchTstamp(long tstamp) {
         this.tstamp = tstamp;
         return tstamp;
     }
-
 
     public void setDuration(long duration) {
         this.duration = duration;
@@ -262,64 +325,28 @@ public class ChunkMetadata {
         this.tstop = tstop;
     }
 
-    public long getTraceId1() {
-        return traceId1;
-    }
-
-    public void setTraceId1(long traceId1) {
-        this.traceId1 = traceId1;
-    }
-
-    public long getTraceId2() {
-        return traceId2;
-    }
-
-    public void setTraceId2(long traceId2) {
-        this.traceId2 = traceId2;
-    }
-
-    public String getTraceIdHex() {
-        return traceId2 != 0 ? ZorkaUtil.hex(traceId1, traceId2) : ZorkaUtil.hex(traceId1);
-    }
-
-    public long getSpanId() {
-        return spanId;
-    }
-
-    public String getSpanIdHex() {
-        return spanId != 0 ? ZorkaUtil.hex(spanId) : null;
-    }
-
-    public void setSpanId(long spanId) {
-        this.spanId = spanId;
-    }
-
-    public long getParentId() {
-        return parentId;
-    }
-
-    public String getParentIdHex() {
-        return parentId != 0 ? ZorkaUtil.hex(parentId) : null;
-    }
-
-    public void setParentId(long parentId) {
-        this.parentId = parentId;
-    }
-
     public Map<Integer, Integer> getSattrs() {
         return sattrs;
-    }
-
-    public void setSattrs(Map<Integer, Integer> sattrs) {
-        this.sattrs = sattrs;
     }
 
     public Map<Integer, Long> getNattrs() {
         return nattrs;
     }
 
-    public void setNattrs(Map<Integer, Long> nattrs) {
-        this.nattrs = nattrs;
+    public List<ChunkMetadata> getChunks() {
+        return chunks;
+    }
+
+    public void setChunks(List<ChunkMetadata> chunks) {
+        this.chunks = chunks;
+    }
+
+    public List<ChunkMetadata> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<ChunkMetadata> children) {
+        this.children = children;
     }
 
     public static byte[] serialize(ChunkMetadata cm) {
@@ -346,17 +373,8 @@ public class ChunkMetadata {
         w.writeLong(cm.tstart);
         w.writeLong(cm.tstop);
 
-//        if (cm.getSattrs() != null) {
-//            w.writeObj(cm.getSattrs());
-//        } else {
-//            w.write(CBOR.NULL_CODE);
-//        }
-//
-//        if (cm.getNattrs() != null) {
-//            w.writeObj(cm.getNattrs());
-//        } else {
-//            w.write(CBOR.NULL_CODE);
-//        }
+        w.writeObj(cm.getSattrs());
+        w.writeObj(cm.getNattrs());
 
         return w.toByteArray();
     }
@@ -390,37 +408,26 @@ public class ChunkMetadata {
         cm.tstart = r.readInt();
         cm.tstop = r.readInt();
 
-//        if (r.peekType() != CBOR.NULL_CODE) {
-//            int x = r.peekType();
-//            if (x == CBOR.MAP_BASE) {
-//                x = r.readInt();
-//                Map<Integer,Integer> m = new TreeMap<>();
-//                for (int i = 0; i < x; i++) {
-//                    m.put(r.readInt(),r.readInt());
-//                }
-//                cm.setSattrs(m);
-//            } else {
-//                throw new ZicoException(String.format("Expected map or NULL, got %02x", x));
-//            }
-//        } else {
-//            r.read();
-//        }
-//
-//        if (r.peekType() != CBOR.NULL_CODE) {
-//            int x = r.peekType();
-//            if (x == CBOR.MAP_BASE) {
-//                x = r.readInt();
-//                Map<Integer,Long> m = new TreeMap<>();
-//                for (int i = 0; i < x; i++) {
-//                    m.put(r.readInt(),r.readLong());
-//                }
-//                cm.setNattrs(m);
-//            } else {
-//                throw new ZicoException(String.format("Expected map or NULL, got %02x", x));
-//            }
-//        } else {
-//            r.read();
-//        }
+        int t = r.peekType();
+        if (t == CBOR.MAP_BASE) {
+            t = r.readInt();
+            for (int i = 0; i < t; i++) {
+                cm.getSattrs().put(r.readInt(),r.readInt());
+            }
+
+        } else {
+            throw new ZicoException(String.format("Expected map or NULL, got %02x", t));
+        }
+
+        t = r.peekType();
+        if (t == CBOR.MAP_BASE) {
+            t = r.readInt();
+            for (int i = 0; i < t; i++) {
+                cm.getNattrs().put(r.readInt(),r.readLong());
+            }
+        } else {
+            throw new ZicoException(String.format("Expected map or NULL, got %02x", t));
+        }
 
         return cm;
     }

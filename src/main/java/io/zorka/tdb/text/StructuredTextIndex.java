@@ -16,9 +16,6 @@
 
 package io.zorka.tdb.text;
 
-import io.zorka.tdb.search.SearchNode;
-import io.zorka.tdb.search.ssn.TextNode;
-import io.zorka.tdb.search.tsn.KeyValSearchNode;
 import io.zorka.tdb.store.ExceptionData;
 import io.zorka.tdb.store.StackData;
 import io.zorka.tdb.util.BitmapSet;
@@ -443,27 +440,20 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
         tidx.close();
     }
 
-
     @Override
-    public int search(SearchNode expr, BitmapSet rslt) {
+    public int search(String text, boolean matchStart, boolean matchEnd, BitmapSet rslt) {
+        return tidx.search(text, matchStart, matchEnd, rslt);
+    }
 
-        if (!(expr instanceof KeyValSearchNode)) {
-            return tidx.search(expr, rslt);
-        }
 
-        int idk = tidx.get(((KeyValSearchNode)expr).getKey());
+    public int search(String key, String val, boolean matchStart, boolean matchEnd, BitmapSet rslt) {
 
+        int idk = tidx.get(key);
         if (idk < 0) return 0;
 
-        // Character class search nodes not supported (yet)
-        if (!(((KeyValSearchNode)expr).getVal() instanceof TextNode)) return 0;
-
-
-        TextNode tsn = (TextNode) ((KeyValSearchNode)expr).getVal();
-
-        if (tsn.isMatchStart() && tsn.isMatchEnd()) {
+        if (matchStart && matchEnd) {
             // Looking for exact match ...
-            int idv = tidx.get(tsn.getText());
+            int idv = tidx.get(val);
             if (idv < 0) return 0;
 
             byte[] buf = encTuple2(KR_PAIR, idk, idv);
@@ -476,7 +466,7 @@ public class StructuredTextIndex extends AbstractTextIndex implements WritableTe
             }
         } else {
             BitmapSet ids = new BitmapSet();
-            int sz = tidx.search(tsn, rslt);
+            int sz = tidx.search(val, matchStart, matchEnd, rslt);
             if (sz == 0) return 0;
             int cnt = 0;
             for (int id = ids.first(); id > 0; id = ids.next(id)) {

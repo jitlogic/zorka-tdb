@@ -16,7 +16,6 @@
 
 package io.zorka.tdb.text;
 
-import io.zorka.tdb.search.SearchableStore;
 import io.zorka.tdb.util.BitmapSet;
 
 import java.io.Closeable;
@@ -24,7 +23,7 @@ import java.io.Closeable;
 /**
  * Read only full text index. Basic API.
  */
-public interface TextIndex extends Closeable, SearchableStore {
+public interface TextIndex extends Closeable {
 
     String getPath();
 
@@ -116,4 +115,6 @@ public interface TextIndex extends Closeable, SearchableStore {
     TextIndexState getState();
 
     void setState(TextIndexState state);
+
+    int search(String text, boolean matchStart, boolean matchEnd, BitmapSet rslt);
 }

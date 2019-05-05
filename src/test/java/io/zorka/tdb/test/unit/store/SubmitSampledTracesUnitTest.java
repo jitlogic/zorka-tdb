@@ -18,15 +18,10 @@ package io.zorka.tdb.test.unit.store;
 
 import io.zorka.tdb.store.ChunkMetadata;
 import io.zorka.tdb.test.support.ZicoTestFixture;
-import io.zorka.tdb.search.QmiQueryBuilder;
-import io.zorka.tdb.store.RotatingTraceStore;
-import io.zorka.tdb.store.TraceSearchResult;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.xml.bind.DatatypeConverter;
-import java.util.Set;
-import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 
@@ -47,20 +42,20 @@ public class SubmitSampledTracesUnitTest extends ZicoTestFixture {
 
     @Test @Ignore("Fix me.")
     public void testSubmitTomcatOldTracerSinglePkt() throws Exception {
-        RotatingTraceStore store = openRotatingStore();
-
-        String sessnUUID = UUID.randomUUID().toString();
-
-        String trc01UUID = UUID.randomUUID().toString();
-
-        // TODO fix input data, so trace ID is proper
-
-        store.handleAgentData(sessnUUID, false, AGD_PACKETS[0]);
-        store.handleTraceData(sessnUUID, TRC_PACKETS[0], cm());
-
-        TraceSearchResult sr0 = store.searchTraces(QmiQueryBuilder.all().query());
-        Set sl0 = drain(sr0);
-        assertEquals("Should store exactly one record.", 1, sl0.size());
+//        RotatingTraceStore store = openRotatingStore();
+//
+//        String sessnUUID = UUID.randomUUID().toString();
+//
+//        String trc01UUID = UUID.randomUUID().toString();
+//
+//        // TODO fix input data, so trace ID is proper
+//
+//        store.handleAgentData(sessnUUID, false, AGD_PACKETS[0]);
+//        store.handleTraceData(sessnUUID, TRC_PACKETS[0], cm());
+//
+//        TraceSearchResult sr0 = store.searchTraces(QmiQueryBuilder.all().query());
+//        Set sl0 = drain(sr0);
+//        assertEquals("Should store exactly one record.", 1, sl0.size());
     }
 
 }

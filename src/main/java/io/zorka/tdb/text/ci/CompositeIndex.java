@@ -19,10 +19,8 @@ package io.zorka.tdb.text.ci;
 
 import io.zorka.tdb.text.AbstractTextIndex;
 import io.zorka.tdb.text.TextIndex;
-import io.zorka.tdb.search.SearchNode;
 import io.zorka.tdb.text.WritableTextIndex;
 import io.zorka.tdb.util.BitmapSet;
-import io.zorka.tdb.util.ZicoMaintObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-public class CompositeIndex extends AbstractTextIndex implements WritableTextIndex, ZicoMaintObject {
+public class CompositeIndex extends AbstractTextIndex implements WritableTextIndex {
 
     private static final Logger log = LoggerFactory.getLogger(CompositeIndex.class);
 
@@ -88,7 +86,6 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
     /**
      * This method performs all background maintenance tasks: compression, merges, removal.
      */
-    @Override
     public boolean runMaintenance() {
 
         if (!mlock.tryLock()) return false;
@@ -557,17 +554,15 @@ public class CompositeIndex extends AbstractTextIndex implements WritableTextInd
 
 
     @Override
-    public int search(SearchNode expr, BitmapSet rslt) {
+    public int search(String text, boolean matchStart, boolean matchEnd, BitmapSet rslt) {
         int cnt = 0;
 
         List<TextIndex> indexes = getCState().getSearchIndexes();
 
         for (TextIndex idx : indexes) {
-            cnt += idx.search(expr, rslt);
+            cnt += idx.search(text, matchStart, matchEnd, rslt);
         }
 
         return cnt;
     }
-
-
 }
