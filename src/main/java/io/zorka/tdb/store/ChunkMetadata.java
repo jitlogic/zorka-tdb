@@ -108,7 +108,8 @@ public class ChunkMetadata {
 
     @Override
     public String toString() {
-        return "ChunkMetadata(dataOffs=" + dataOffs + ", startOffs=" + startOffs + ", tstamp=" + tstamp + ")";
+        return "ChunkMetadata(tid=" + getTraceIdHex() + ",sid=" + getSpanIdHex() + ",chn=" + getChunkNum()
+            + ",pid=" + getParentIdHex() + ")";
     }
 
     public ChunkMetadata(long traceId1, long traceId2, long parentId, long spanId, int chunkNum) {
@@ -405,8 +406,8 @@ public class ChunkMetadata {
         cm.calls = r.readInt();
         cm.errors = r.readInt();
         cm.recs = r.readInt();
-        cm.tstart = r.readInt();
-        cm.tstop = r.readInt();
+        cm.tstart = r.readLong();
+        cm.tstop = r.readLong();
 
         int t = r.peekType();
         if (t == CBOR.MAP_BASE) {

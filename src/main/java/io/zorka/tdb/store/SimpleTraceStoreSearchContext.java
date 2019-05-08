@@ -76,7 +76,7 @@ public class SimpleTraceStoreSearchContext {
 
     private boolean align() {
         long md = query.getMinDuration();
-        boolean ef = query.errorsOnly();
+        boolean ef = query.hasErrorsOnly();
         boolean cde = md != 0 || ef;
         for (Long tst = lowestTstamp(); tst != null; tst = lowestTstamp()) {
             if (cde) {

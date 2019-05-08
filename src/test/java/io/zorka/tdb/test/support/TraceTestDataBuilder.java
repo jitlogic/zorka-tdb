@@ -16,6 +16,7 @@
 
 package io.zorka.tdb.test.support;
 
+import io.zorka.tdb.store.ChunkMetadata;
 import io.zorka.tdb.text.StructuredTextIndex;
 import com.jitlogic.zorka.cbor.CborDataWriter;
 import io.zorka.tdb.store.ExceptionData;
@@ -23,10 +24,13 @@ import io.zorka.tdb.store.StackData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static com.jitlogic.zorka.cbor.CBOR.*;
+import static com.jitlogic.zorka.cbor.TraceAttributes.*;
 import static com.jitlogic.zorka.cbor.TraceDataTags.*;
+import static org.junit.Assert.fail;
 
 
 /**
@@ -202,9 +206,17 @@ public class TraceTestDataBuilder {
     }
 
 
-    /** Generates trace begin marker. */
+    /**
+     * Generates trace begin marker.
+     * @param clock - clock (milliseconds since epoch);
+     * @param sid - span ID;
+     */
     public static WireObj tb(long clock, long sid) {
         return new TaggedObjs(ARR_BASE, TAG_TRACE_BEGIN, clock, sid);
+    }
+
+    public static WireObj tb(long clock, long sid, long pid) {
+        return new TaggedObjs(ARR_BASE, TAG_TRACE_BEGIN, clock, sid, pid);
     }
 
 
@@ -266,23 +278,36 @@ public class TraceTestDataBuilder {
 
     private static final int TCO = 100;
     private static final String[] TCV = {
-        "com.myapp.MyClass",
+        "com.myapp.MyClass",             // 0
         "org.catalina.request.Request",
-        "org.catalina.Server" };
+        "org.catalina.Server",
+        "com.mysql.Statement",          // 3
+    };
 
     private static final int TMO = 200;
     private static final String[] TMV = {
-        "myMethod", "invoke", "getStatus", "process", ".init"
+        "myMethod",  // 0
+        "invoke",
+        "getStatus",
+        "process",
+        ".init",
+        "execute"    // 5
     };
 
     private static final int TSO = 300;
     private static final String[] TSV = {
-        "()V", "(II)I", "(I)V",
+        "()V",
+        "(II)I",
+        "(I)V",
     };
 
     private static final int TTO = 0;
     private static final String[] TTV = {
-      "HTTP", "SQL", "LDAP", "SOAP", "URI", "STATUS", "MyClass.java", "Request.java", "Server.java"
+        "HTTP", "SQL", "LDAP", "SOAP", "URI", "STATUS",
+        "MyClass.java", "Request.java", "Server.java",
+        SPAN_KIND, COMPONENT, "http", "db",
+        HTTP_URL, HTTP_METHOD, HTTP_STATUS,
+        DB_TYPE, DB_STATEMENT, DB_INSTANCE, DB_USER,
     };
 
     public static byte[] agentData() {
@@ -302,6 +327,7 @@ public class TraceTestDataBuilder {
         for (int i = 0; i < TTV.length; i++) {
             if (TTV[i].equals(s)) return i;
         }
+        fail("Cannot find string: " + s);
         return -1;
     }
 
@@ -339,4 +365,11 @@ public class TraceTestDataBuilder {
             )).get(0);
     }
 
+    public static ChunkMetadata bySid(Collection<ChunkMetadata> l, long spanId) {
+        for (ChunkMetadata c : l) {
+            if (c == null) fail("Found NULL item in returned chunk list.");
+            if (c.getSpanId() == spanId) return c;
+        }
+        return null;
+    }
 }

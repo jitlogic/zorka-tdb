@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import static io.zorka.tdb.test.support.TraceTestDataBuilder.trc;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
@@ -69,10 +70,10 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
         store.handleAgentData(sessnUUID, true, TraceTestDataBuilder.agentData());
 
         store.handleTraceData(sessnUUID,
-                TraceTestDataBuilder.trc(1L, 400, 100, "XXX", "YYY", "AAA", "UVW"),
+                trc(1L, 400, 100, "XXX", "YYY", "AAA", "UVW"),
                 md(traceId1, traceId2, 0, spanId, 0));
         store.handleTraceData(sessnUUID,
-                TraceTestDataBuilder.trc(1L, 500, 200, "XXX", "XYZ", "CCC", "UVW"),
+                trc(1L, 500, 200, "XXX", "XYZ", "CCC", "UVW"),
                 md(traceId1+1, traceId2+1, 0, spanId+1, 0));
 
         if (archive) store.rotate();
@@ -82,16 +83,9 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
 
 
     @Test
-    public void testListAllTracesInArchivedStore() {
-        TraceSearchQuery query = new TraceSearchQuery();
-        List<ChunkMetadata> rslt = store.searchChunks(query, 10, 0);
-        assertEquals(2, rslt.size());
-    }
-
-    @Test
     public void testListAllTracesWithOffset() {
         TraceSearchQuery query = new TraceSearchQuery();
-        List<ChunkMetadata> rslt = store.searchChunks(query, 10, 1);
+        List<ChunkMetadata> rslt = new ArrayList<>(store.searchChunks(query, 10, 1));
         assertEquals(1, rslt.size());
 
     }
@@ -99,14 +93,14 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
     @Test
     public void searchByAttrKV() {
         TraceSearchQuery query = new TraceSearchQuery().attrMatch("XXX", "XYZ");
-        List<ChunkMetadata> rslt = store.searchChunks(query, 10, 0);
+        List<ChunkMetadata> rslt = new ArrayList<>(store.searchChunks(query, 10, 0));
         assertEquals(1, rslt.size());
     }
 
     @Test
     public void searchByAttrKVWithOffset() {
         TraceSearchQuery query = new TraceSearchQuery().attrMatch("XXX", "xxx");
-        List<ChunkMetadata> rslt = store.searchChunks(query, 10, 0);
+        List<ChunkMetadata> rslt = new ArrayList<>(store.searchChunks(query, 10, 0));
         assertEquals(0, rslt.size());
     }
 

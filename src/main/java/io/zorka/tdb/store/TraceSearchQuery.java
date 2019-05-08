@@ -51,15 +51,15 @@ public class TraceSearchQuery {
         return this;
     }
 
-    public boolean errorsOnly() {
+    public boolean hasErrorsOnly() {
         return 0 != (flags & ERRORS_ONLY);
     }
 
-    public boolean fetchAttrs() {
+    public boolean hasFetchAttrs() {
         return 0 != (flags & FETCH_ATTRS);
     }
 
-    public boolean spansOnly() {
+    public boolean hasSpansOnly() {
         return 0 != (flags & SPANS_ONLY);
     }
 

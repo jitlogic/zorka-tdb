@@ -121,6 +121,10 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
             md.markFlag(TF_CHUNK_LAST);
             md.setTstop(tstop);
             md.setDuration((md.getTstop()-md.getTstart())/TICKS_IN_SECOND);
+            // Fix up parent ID for internal traces if not set by agent.
+            if (md.getParentId() == 0 && mrecs.size() > 1) {
+                md.setParentId(mrecs.get(mrecs.size()-2).getSpanId());
+            }
             mrslt.add(md);
             mrecs.remove(mrecs.size()-1);
             if (mrecs.size() > 0) {

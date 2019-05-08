@@ -361,7 +361,7 @@ public class RotatingTraceStore implements TraceStore {
         return state.getCurrent();
     }
 
-    public Collection<ChunkMetadata> searchChunks(TraceSearchQuery query, int limit, int offset) {
+    public List<ChunkMetadata> searchChunks(TraceSearchQuery query, int limit, int offset) {
         checkOpen();
 
         List<ChunkMetadata> acc = new ArrayList<>(limit);
@@ -379,7 +379,7 @@ public class RotatingTraceStore implements TraceStore {
             }
         }
 
-        if (query.fetchAttrs()) {
+        if (query.hasFetchAttrs()) {
             for (ChunkMetadata c : acc) {
                 Map<String,Object> attrs = new TreeMap<>();
                 c.getStore().getAttributes(c, attrs);
@@ -400,11 +400,11 @@ public class RotatingTraceStore implements TraceStore {
             if (chunks.size() == 0) break;
 
             for (ChunkMetadata c : chunks) {
-                Tid tid = query.spansOnly()
+                Tid tid = query.hasSpansOnly()
                         ? Tid.s(c.getTraceId1(), c.getTraceId2(), c.getSpanId())
                         : Tid.t(c.getTraceId1(), c.getTraceId2());
                 if (rslt.containsKey(tid)) continue;
-                rslt.put(tid, getTrace(tid, query.fetchAttrs()));
+                rslt.put(tid, getTrace(tid, query.hasFetchAttrs()));
                 if (rslt.size() >= limit) break;
             }
 

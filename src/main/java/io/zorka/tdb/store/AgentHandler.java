@@ -124,11 +124,6 @@ public class AgentHandler implements AgentDataProcessor {
                     metadata.markFlag(TF_CHUNK_ENABLED);
                 }
 
-                if (!metadata.hasFlag(TF_SUBMIT_TRACE) && (metadata.hasFlag(TF_DROP_TRACE)
-                        || (md.getDuration() < minDuration && metadata.getStartOffs() != 0))) {
-                    continue;
-                }
-
                 if (metadata.getSpanId() == 0) {
                     log.warn("Trace {} without spanID. Generated random one.", metadata.getTraceIdHex());
                     md.setSpanId(rand.nextLong());

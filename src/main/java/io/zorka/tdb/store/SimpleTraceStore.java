@@ -294,9 +294,7 @@ public class SimpleTraceStore implements TraceStore {
         int count = 0;
 
         Fun.Tuple4<Long, Long, Long, Integer> t1 = Fun.t4(t.t1, t.t2, t.s!= 0L?t.s:Long.MIN_VALUE, Integer.MIN_VALUE);
-        Fun.Tuple4<Long, Long, Long, Integer> t2 = Fun.t4(t.t1, t.t2, (t.s!= 0L?t.s:Long.MAX_VALUE)+1, Integer.MAX_VALUE);
-
-        System.err.println("CMP=" + t1.compareTo(t2));
+        Fun.Tuple4<Long, Long, Long, Integer> t2 = Fun.t4(t.t1, t.t2, (t.s!= 0L?t.s+1:Long.MAX_VALUE), Integer.MAX_VALUE);
 
         for (Long tst : tids.subMap(t1, t2).values()) {
             acc.add(getChunkMetadata(tst));
