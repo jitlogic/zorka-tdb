@@ -21,6 +21,7 @@ import io.zorka.tdb.text.StructuredTextIndex;
 import io.zorka.tdb.text.CachingTextIndex;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import io.zorka.tdb.text.ci.CompositeIndexFileStore;
+import io.zorka.tdb.util.BitmapSet;
 import io.zorka.tdb.util.CborBufReader;
 
 import io.zorka.tdb.util.ZicoUtil;
@@ -237,7 +238,7 @@ public class SimpleTraceStore implements TraceStore {
     }
 
 
-    public <T> void retrieveChunk(long chunkId, boolean first, TraceDataRetriever<T> rtr) {
+    <T> void retrieveChunk(long chunkId, boolean first, TraceDataRetriever<T> rtr) {
         ChunkMetadata cm = getChunkMetadata(chunkId);
         if (cm != null) {
             CborBufReader rdr = fdata.read(cm.getDataOffs());
@@ -250,7 +251,7 @@ public class SimpleTraceStore implements TraceStore {
     }
 
 
-    public void saveChunkMetadata(ChunkMetadata cm) {
+    void saveChunkMetadata(ChunkMetadata cm) {
 
         // Ensure tstamp is unique
         long tst = cm.getTstamp();
@@ -286,7 +287,7 @@ public class SimpleTraceStore implements TraceStore {
     }
 
 
-    public int getChunks(Tid t, List<ChunkMetadata> acc) {
+    int getChunks(Tid t, List<ChunkMetadata> acc) {
 
         checkOpen();
 
@@ -304,7 +305,7 @@ public class SimpleTraceStore implements TraceStore {
     }
 
 
-    public void getAttributes(ChunkMetadata md, Map<String,Object> acc) {
+    void getAttributes(ChunkMetadata md, Map<String,Object> acc) {
         checkOpen();
 
         if (md.getSattrs() != null) {
@@ -332,6 +333,40 @@ public class SimpleTraceStore implements TraceStore {
             }
         }
     }
+
+
+    int getAttributeValues(String attr, int limit, BitmapSet bs, List<String> acc) {
+        checkOpen();
+
+        int aid = itext.get(attr);
+        if (aid <= 0) return 0;
+
+        int count = 0;
+
+        Fun.Tuple3<Integer,Integer,Long> t1 = Fun.t3(aid, Integer.MIN_VALUE, 0L);
+        Fun.Tuple3<Integer,Integer,Long> t2 = Fun.t3(aid, Integer.MAX_VALUE, 0L);
+
+        ConcurrentNavigableMap<Fun.Tuple3<Integer,Integer,Long>,Long> m1 = sattrs.subMap(t1,t2);
+        if (m1.size() == 0) return 0;
+
+        Fun.Tuple3<Integer,Integer,Long> c = m1.firstKey();
+
+        while (count < limit && c != null) {
+            int v = c.b;
+            if (!bs.get(v)) {
+                String s = itext.resolve(v);
+                if (s != null) {
+                    count++;
+                    bs.set(v);
+                    acc.add(s);
+                }
+            }
+            c = m1.higherKey(Fun.t3(c.a, c.b, Long.MAX_VALUE));
+        }
+
+        return count;
+    }
+
 
     @Override
     public void handleTraceData(String sessionUUID, byte[] data, ChunkMetadata md) {

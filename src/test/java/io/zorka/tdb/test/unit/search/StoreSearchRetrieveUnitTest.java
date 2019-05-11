@@ -14,8 +14,7 @@ import java.util.List;
 import static com.jitlogic.zorka.cbor.TraceAttributes.*;
 import static com.jitlogic.zorka.common.util.ZorkaUtil.hex;
 import static io.zorka.tdb.test.support.TraceTestDataBuilder.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
 
@@ -32,20 +31,20 @@ public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
 
         store.handleTraceData(sesId, str(
             tr(true, mid(2, 1, 1), 100, 20000, 12345,
-                tb(100, 1), ta(sid(COMPONENT), "http"),
-                ta(sid(HTTP_METHOD), "GET"), ta(sid(HTTP_STATUS), "200"),
-                ta(sid(HTTP_URL), "http://localhost:8642"),
+                tb(100, 1), ta(COMPONENT, "http"),
+                ta(HTTP_METHOD, "GET"), ta(HTTP_STATUS, "200"),
+                ta(HTTP_URL, "http://localhost:8642"),
                 tr(true, mid(3, 5, 2), 115, 1115, 20,
-                    tb(101, 2), ta(sid(COMPONENT), "db"),
-                    ta(sid(DB_TYPE), "sql"), ta(sid(DB_STATEMENT), "select 1"),
-                    ta(sid(DB_INSTANCE), "test"), ta(sid(DB_USER), "test.user"))
+                    tb(101, 2), ta(COMPONENT, "db"),
+                    ta(DB_TYPE, "sql"), ta(DB_STATEMENT, "select 1"),
+                    ta(DB_INSTANCE, "test"), ta(DB_USER, "test.user"))
             )).get(0),
             md(tid1, tid2, 0, 0, 0));
 
         store.handleTraceData(sesId, str(
-            tb(102, 3, 1), ta(sid(COMPONENT), "http"),
-            ta(sid(HTTP_METHOD), "GET"), ta(sid(HTTP_STATUS), "200"),
-            ta(sid(HTTP_URL), "http://localhost:8644")).get(0),
+            tb(102, 3, 1), ta(COMPONENT, "http"),
+            ta(HTTP_METHOD, "GET"), ta(HTTP_STATUS, "200"),
+            ta(HTTP_URL, "http://localhost:8644")).get(0),
             md(tid1, tid2, 0, 0, 0));
     }
 
@@ -72,5 +71,13 @@ public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
         assertNotNull(c);
         assertNotNull(c.getChildren());
         assertEquals(2, c.getChildren().size());
+    }
+
+    @Test
+    public void testListAttrVals() {
+        List<String> lst = store.getAttributeValues(COMPONENT, 100);
+        assertEquals(2, lst.size());
+        assertTrue(lst.contains("db"));
+        assertTrue(lst.contains("http"));
     }
 }

@@ -19,6 +19,7 @@ package io.zorka.tdb.store;
 import io.zorka.tdb.ZicoException;
 import io.zorka.tdb.text.ci.CompositeIndex;
 import com.jitlogic.zorka.common.util.ZorkaUtil;
+import io.zorka.tdb.util.BitmapSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -233,17 +234,24 @@ public class RotatingTraceStore implements TraceStore {
     }
 
 
-    public Map<String,Object> getAttributes(Tid t) {
+    public List<String> getAttributeValues(String attr, int limit) {
+        checkOpen();
 
-        Map<String,Object> rslt = new TreeMap<>();
+        BitmapSet bs = new BitmapSet();
+        List<String> lst = new ArrayList<>();
+        RotatingTraceStoreState ts = state;
 
-        for (ChunkMetadata cm : getChunks(t)) {
-            cm.getStore().getAttributes(cm, rslt);
+        int count = ts.getCurrent().getAttributeValues(attr, limit, bs, lst);
+
+
+        for (int i = state.getArchived().size()-1; i >= 0 && count < limit; i--) {
+            int cnt = state.getArchived().get(i).getAttributeValues(attr, limit-count, bs, lst);
+            if (count != 0 && cnt == 0) break;
+            count += cnt;
         }
 
-        return rslt;
+        return lst;
     }
-
 
     public boolean runMaintenance() {
         boolean rslt;
@@ -395,7 +403,7 @@ public class RotatingTraceStore implements TraceStore {
     }
 
     public Collection<ChunkMetadata> search(TraceSearchQuery query, int limit, int offset) {
-        boolean fetchAttrs = query.hasFetchAttrs();
+        boolean fetchAttrs = query.hasFetchAttrs();   // TODO rework fetchAttrs to handle multiple chunk spans
         Map<Tid,ChunkMetadata> rslt = new HashMap<>();
 
         int lim = limit + offset, offs = 0;
