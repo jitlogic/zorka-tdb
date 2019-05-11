@@ -230,11 +230,11 @@ public class ChunkMetadata {
         tflags &= ~flag;
     }
 
-    public boolean isErrorFlag() {
+    public boolean hasError() {
         return 0 != (tflags & TF_ERROR_MARK);
     }
 
-    public void setErrorFlag(boolean errorFlag) {
+    public void setError(boolean errorFlag) {
         if (errorFlag) {
             tflags |= TF_ERROR_MARK;
         } else {

@@ -51,12 +51,37 @@ public class TraceSearchQuery {
         return this;
     }
 
+    public TraceSearchQuery withErrorsOnly() {
+        flags |= ERRORS_ONLY;
+        return this;
+    }
+
     public boolean hasErrorsOnly() {
         return 0 != (flags & ERRORS_ONLY);
     }
 
+    public TraceSearchQuery withFetchAttrs() {
+        flags |= FETCH_ATTRS;
+        return this;
+    }
+
+    public TraceSearchQuery withoutFetchAttrs() {
+        flags &= ~FETCH_ATTRS;
+        return this;
+    }
+
     public boolean hasFetchAttrs() {
         return 0 != (flags & FETCH_ATTRS);
+    }
+
+    public TraceSearchQuery withSpansOnly() {
+        flags |= SPANS_ONLY;
+        return this;
+    }
+
+    public TraceSearchQuery withoutSpansOnly() {
+        flags &= ~SPANS_ONLY;
+        return this;
     }
 
     public boolean hasSpansOnly() {
@@ -65,6 +90,12 @@ public class TraceSearchQuery {
 
     public Map<String, String> getAttrMatches() {
         return attrMatches;
+    }
+
+    public TraceSearchQuery withAttrMatch(String key, String val) {
+        if (attrMatches == null) attrMatches = new TreeMap<>();
+        if (key != null && val != null) attrMatches.put(key, val);
+        return this;
     }
 
     public TraceSearchQuery setAttrMatches(Map<String, String> attrMatches) {

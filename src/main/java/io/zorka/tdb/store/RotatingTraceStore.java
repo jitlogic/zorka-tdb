@@ -357,6 +357,10 @@ public class RotatingTraceStore implements TraceStore {
 
     }
 
+    public Map<String,TraceDataIndexer> getIndexerCache() {
+        return indexerCache;
+    }
+
     public SimpleTraceStore getCurrent() {
         return state.getCurrent();
     }
@@ -391,6 +395,7 @@ public class RotatingTraceStore implements TraceStore {
     }
 
     public Collection<ChunkMetadata> search(TraceSearchQuery query, int limit, int offset) {
+        boolean fetchAttrs = query.hasFetchAttrs();
         Map<Tid,ChunkMetadata> rslt = new HashMap<>();
 
         int lim = limit + offset, offs = 0;

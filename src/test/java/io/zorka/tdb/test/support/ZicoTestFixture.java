@@ -201,7 +201,7 @@ public class ZicoTestFixture {
         tm.setDuration(duration);
         tm.setDataOffs(dataOffs);
         tm.setChunkNum(chunkNum);
-        tm.setErrorFlag(errorFlag);
+        tm.setError(errorFlag);
 
         return tm;
     }

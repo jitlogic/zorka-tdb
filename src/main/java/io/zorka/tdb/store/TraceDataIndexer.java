@@ -120,7 +120,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
             ChunkMetadata md = mrecs.get(mrecs.size()-1);
             md.markFlag(TF_CHUNK_LAST);
             md.setTstop(tstop);
-            md.setDuration((md.getTstop()-md.getTstart())/TICKS_IN_SECOND);
+            md.setDuration((md.getTstop()-md.getTstart())<<16);
             // Fix up parent ID for internal traces if not set by agent.
             if (md.getParentId() == 0 && mrecs.size() > 1) {
                 md.setParentId(mrecs.get(mrecs.size()-2).getSpanId());
@@ -180,8 +180,8 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
         switch (k) {
             case TI_TSTAMP:
                 traceBegin();
-                if (mtop != null) mtop.catchTstamp(v);
-                lastTstamp = v;
+                if (mtop != null) mtop.catchTstamp(v*1000000L);
+                lastTstamp = v * 1000000L;
                 break;
             case TI_DURATION:
                 if (mtop != null) mtop.catchDuration(v);
@@ -194,7 +194,7 @@ public class TraceDataIndexer implements StatelessDataProcessor, AgentDataProces
                 break;
             case TI_FLAGS:
                 if (0 != (v & TF_ERROR_MARK)) {
-                    if (mtop != null) mtop.setErrorFlag(true);
+                    if (mtop != null) mtop.setError(true);
                 }
                 break;
             case TI_METHOD:

@@ -24,7 +24,6 @@ import io.zorka.tdb.text.ci.CompositeIndexFileStore;
 import io.zorka.tdb.util.CborBufReader;
 
 import io.zorka.tdb.util.ZicoUtil;
-import org.mapdb.Atomic;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Fun;
@@ -258,7 +257,7 @@ public class SimpleTraceStore implements TraceStore {
         while (tstamps.containsKey(tst)) tst++;
         cm.setTstamp(tst);
 
-        long dur = cm.getDuration()|(cm.isErrorFlag()?ERROR_BIT:0);
+        long dur = cm.getDuration()|(cm.hasError()?ERROR_BIT:0);
         chunks.put(tst,ChunkMetadata.serialize(cm));
         tids.put(Fun.t4(cm.getTraceId1(),cm.getTraceId2(),cm.getSpanId(),cm.getChunkNum()),tst);
         tstamps.put(tst,dur);
