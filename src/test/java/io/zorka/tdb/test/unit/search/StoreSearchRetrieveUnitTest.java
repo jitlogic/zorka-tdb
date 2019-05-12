@@ -80,4 +80,10 @@ public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
         assertTrue(lst.contains("db"));
         assertTrue(lst.contains("http"));
     }
+
+    @Test
+    public void testSearchByDuration() {
+        TraceSearchQuery q = new TraceSearchQuery().setMinDuration(1000000000L);
+        List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);
+    }
 }

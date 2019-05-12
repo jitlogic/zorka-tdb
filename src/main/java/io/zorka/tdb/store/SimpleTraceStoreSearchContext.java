@@ -81,8 +81,14 @@ public class SimpleTraceStoreSearchContext {
         for (Long tst = lowestTstamp(); tst != null; tst = lowestTstamp()) {
             if (cde) {
                 long dur = tstamps.get(tst);
-                if ((dur & ~ERROR_BIT) < md) continue;
-                if (ef && 0 == (dur & ERROR_BIT)) continue;
+                if ((dur & ~ERROR_BIT) < md) {
+                    tstampC = tstamps.lowerKey(tst);
+                    continue;
+                }
+                if (ef && 0 == (dur & ERROR_BIT)) {
+                    tstampC = tstamps.lowerKey(tst);
+                    continue;
+                }
             }
             boolean match = true;
             for (int i = 0; i < sattrs.size(); i++) {
