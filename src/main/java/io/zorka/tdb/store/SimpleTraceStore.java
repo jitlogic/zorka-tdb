@@ -74,6 +74,9 @@ public class SimpleTraceStore implements TraceStore {
     /** String attributes: keyId+valId+tstamp -> duration+err */
     private ConcurrentNavigableMap<Fun.Tuple3<Integer,Integer,Long>,Long> sattrs;
 
+    /** For free text search: valId+tstamp -> duration+err */
+    private ConcurrentNavigableMap<Fun.Tuple2<Integer,Long>,Long> strings;
+
     // TODO fulltext: valId+SEQ -> keyId+duration+err
 
     /** Numeric/Boolean attributes: (type|keyID)+val+tstamp -> duration+err */
@@ -139,6 +142,7 @@ public class SimpleTraceStore implements TraceStore {
         tstamps = db.getTreeMap("tstamps.map");
         sattrs = db.getTreeMap("sattrs.map");
         nattrs = db.getTreeMap("nattrs.map");
+        strings = db.getTreeMap("strings.map");
 
         if (db.getAtomicBoolean("archived.flag").get()) iFlags |= CTF_ARCHIVED;
 
@@ -186,6 +190,9 @@ public class SimpleTraceStore implements TraceStore {
         return sattrs;
     }
 
+    public ConcurrentNavigableMap<Fun.Tuple2<Integer, Long>, Long> getStrings() {
+        return strings;
+    }
 
     @Override
     public long getTstart() {
@@ -265,6 +272,7 @@ public class SimpleTraceStore implements TraceStore {
         if (cm.getSattrs() != null) {
             for (Map.Entry<Integer,Integer> e : cm.getSattrs().entrySet()) {
                 sattrs.put(Fun.t3(e.getKey(),e.getValue(),tst),dur);
+                strings.put(Fun.t2(e.getValue(),tst),dur);
             }
         }
         if (cm.getNattrs() != null) {

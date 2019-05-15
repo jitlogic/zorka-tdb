@@ -1,5 +1,6 @@
 package io.zorka.tdb.store;
 
+import io.zorka.tdb.util.BitmapSet;
 import org.mapdb.Fun;
 
 import java.util.ArrayList;
@@ -24,6 +25,9 @@ public class SimpleTraceStoreSearchContext {
     private List<ConcurrentNavigableMap<Fun.Tuple3<Integer,Integer,Long>,Long>> sattrs = new ArrayList<>();
     private List<Fun.Tuple3<Integer,Integer,Long>> sattrC = new ArrayList<>();
 
+    private BitmapSet stringIds;
+    private ConcurrentNavigableMap<Fun.Tuple2<Integer,Long>,Long> strings;
+
     public SimpleTraceStoreSearchContext(SimpleTraceStore store, TraceSearchQuery query, int limit, int offset) {
         this.query = query;
         this.store = store;
@@ -31,6 +35,7 @@ public class SimpleTraceStoreSearchContext {
         this.skip = offset;
         this.count = 0;
         this.limit = limit;
+        this.strings = store.getStrings();
     }
 
     private boolean init() {
@@ -53,6 +58,11 @@ public class SimpleTraceStoreSearchContext {
             if (m.isEmpty()) return false;
             sattrs.add(m);
             sattrC.add(m.lastKey());
+        }
+
+        if (query.getText() != null) {
+            stringIds = new BitmapSet();
+            store.getTextIndex().search(query.getText(), query.hasMatchStart(), query.hasMatchEnd(), stringIds);
         }
 
         return true;
@@ -78,6 +88,7 @@ public class SimpleTraceStoreSearchContext {
         long md = query.getMinDuration();
         boolean ef = query.hasErrorsOnly();
         boolean cde = md != 0 || ef;
+
         for (Long tst = lowestTstamp(); tst != null; tst = lowestTstamp()) {
             if (cde) {
                 long dur = tstamps.get(tst);
@@ -90,21 +101,35 @@ public class SimpleTraceStoreSearchContext {
                     continue;
                 }
             }
+
             boolean match = true;
+
             for (int i = 0; i < sattrs.size(); i++) {
                 Fun.Tuple3<Integer,Integer,Long> c = sattrC.get(i);
                 Fun.Tuple3<Integer,Integer,Long> c2 = sattrs.get(i).floorKey(Fun.t3(c.a,c.b,tst));
                 if (c2 == null) return false;
                 if (!tst.equals(c2.c)) { match = false; break; }
-
                 sattrC.set(i,c2);
             }
+
             if (match) {
-                tstampC = tst;
-                return true;
+                boolean smatch = stringIds == null;
+                if (!smatch) {
+                    for (int id = stringIds.first(); id > 0; id = stringIds.next(id)) {
+                        if (strings.containsKey(Fun.t2(id, tst))) {
+                            smatch = true;
+                            break;
+                        }
+                    }
+                }
+                if (smatch) {
+                    tstampC = tst;
+                    return true;
+                }
             }
             tstampC = tstamps.lowerKey(tst);
         }
+
         return false;
     }
 

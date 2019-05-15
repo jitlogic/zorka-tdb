@@ -119,4 +119,12 @@ public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
         assertEquals(1L, lst.get(0).getSpanId());
         assertEquals(2, lst.get(0).getChildren().size());
     }
+
+    @Test
+    public void searchFreeText() {
+        TraceSearchQuery q = new TraceSearchQuery().setText("select 1");
+        List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);
+        assertEquals(1, lst.size());
+        assertEquals(2L, lst.get(0).getSpanId());
+    }
 }

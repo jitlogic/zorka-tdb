@@ -30,11 +30,16 @@ public class TraceSearchQuery {
     /** Will return whole distribued traces if set to 0, only single spans if set to 1 */
     public static final int SPANS_ONLY    = 0x04;
 
+    public static final int MATCH_START = 0x08;
+    public static final int MATCH_END   = 0x10;
+
     private int flags = 0;
     private long minTstamp = Long.MIN_VALUE, maxTstamp = Long.MAX_VALUE;
     private long minDuration = 0;
 
     private Map<String,String> attrMatches = new TreeMap<>();
+
+    private String text;
 
     public TraceSearchQuery attrMatch(String k, String v) {
         attrMatches.put(k,v);
@@ -83,8 +88,36 @@ public class TraceSearchQuery {
         return this;
     }
 
+    public TraceSearchQuery withMatchStart() {
+        flags |= MATCH_START;
+        return this;
+    }
+
+    public TraceSearchQuery withoutMatchStart() {
+        flags &= ~MATCH_START;
+        return this;
+    }
+
+    public TraceSearchQuery withMatchEnd() {
+        flags |= MATCH_END;
+        return this;
+    }
+
+    public TraceSearchQuery withoutMatchEnd() {
+        flags &= ~MATCH_END;
+        return this;
+    }
+
     public boolean hasSpansOnly() {
         return 0 != (flags & SPANS_ONLY);
+    }
+
+    public boolean hasMatchStart() {
+        return 0 != (flags & MATCH_START);
+    }
+
+    public boolean hasMatchEnd() {
+        return 0 != (flags & MATCH_END);
     }
 
     public Map<String, String> getAttrMatches() {
@@ -128,4 +161,15 @@ public class TraceSearchQuery {
         this.minDuration = minDuration;
         return this;
     }
+
+    public String getText() {
+        return text;
+    }
+
+    public TraceSearchQuery setText(String text) {
+        this.text = text;
+        return this;
+    }
+
+
 }
