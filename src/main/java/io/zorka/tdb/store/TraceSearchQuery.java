@@ -27,8 +27,7 @@ public class TraceSearchQuery {
     /** Will search only error traces if set to 1 */
     public static final int ERRORS_ONLY   = 0x02;
 
-    /** Will return whole distribued traces if set to 0,
-     *  only single spans if set to 1 */
+    /** Will return whole distribued traces if set to 0, only single spans if set to 1 */
     public static final int SPANS_ONLY    = 0x04;
 
     private int flags = 0;

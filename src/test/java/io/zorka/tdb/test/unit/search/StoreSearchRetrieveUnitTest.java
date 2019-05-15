@@ -94,4 +94,29 @@ public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
         List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);
         assertEquals(2, lst.size());
     }
+
+    @Test
+    public void testShallowSearch() {
+        TraceSearchQuery q = new TraceSearchQuery().attrMatch(COMPONENT, "db");
+        List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);
+        assertEquals(1, lst.size());
+        assertEquals(2L, lst.get(0).getSpanId());
+    }
+
+    @Test
+    public void searchOnlySpans() {
+        TraceSearchQuery q = new TraceSearchQuery().attrMatch(COMPONENT, "db").withSpansOnly();
+        List<ChunkMetadata> lst = store.search(q, 10, 0);
+        assertEquals(1, lst.size());
+        assertEquals(2L, lst.get(0).getSpanId());
+    }
+
+    @Test
+    public void searchWholeTrees() {
+        TraceSearchQuery q = new TraceSearchQuery().attrMatch(COMPONENT, "db");
+        List<ChunkMetadata> lst = store.search(q, 10, 0);
+        assertEquals(1, lst.size());
+        assertEquals(1L, lst.get(0).getSpanId());
+        assertEquals(2, lst.get(0).getChildren().size());
+    }
 }

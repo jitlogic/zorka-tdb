@@ -196,7 +196,7 @@ public class RotatingTraceStore implements TraceStore {
 
         Map<Long,List<ChunkMetadata>> m = new TreeMap<>();
 
-        long root = 0L;
+        long root = t.s;
 
         for (ChunkMetadata md : chunks) {
             long sid = md.getSpanId();
@@ -402,8 +402,7 @@ public class RotatingTraceStore implements TraceStore {
         return acc;
     }
 
-    public Collection<ChunkMetadata> search(TraceSearchQuery query, int limit, int offset) {
-        boolean fetchAttrs = query.hasFetchAttrs();   // TODO rework fetchAttrs to handle multiple chunk spans
+    public List<ChunkMetadata> search(TraceSearchQuery query, int limit, int offset) {
         Map<Tid,ChunkMetadata> rslt = new HashMap<>();
 
         int lim = limit + offset, offs = 0;
@@ -427,7 +426,7 @@ public class RotatingTraceStore implements TraceStore {
             }
         }
 
-        return rslt.values();
+        return new ArrayList<>(rslt.values());
     }
 
 }

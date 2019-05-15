@@ -99,7 +99,10 @@ public class SimpleTraceStoreSearchContext {
 
                 sattrC.set(i,c2);
             }
-            if (match) return true;
+            if (match) {
+                tstampC = tst;
+                return true;
+            }
             tstampC = tstamps.lowerKey(tst);
         }
         return false;
