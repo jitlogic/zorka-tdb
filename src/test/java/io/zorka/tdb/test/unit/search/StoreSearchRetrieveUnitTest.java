@@ -85,5 +85,13 @@ public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
     public void testSearchByDuration() {
         TraceSearchQuery q = new TraceSearchQuery().setMinDuration(1000000000L);
         List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);
+        assertEquals(1, lst.size());
+    }
+
+    @Test
+    public void testSearchByAttrs() {
+        TraceSearchQuery q = new TraceSearchQuery().attrMatch(COMPONENT, "http");
+        List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);
+        assertEquals(2, lst.size());
     }
 }
