@@ -30,8 +30,10 @@ public class TraceSearchQuery {
     /** Will return whole distribued traces if set to 0, only single spans if set to 1 */
     public static final int SPANS_ONLY    = 0x04;
 
-    public static final int MATCH_START = 0x08;
-    public static final int MATCH_END   = 0x10;
+    public static final int MATCH_START   = 0x08;
+    public static final int MATCH_END     = 0x10;
+
+    public static final int NO_CHILDREN   = 0x20;
 
     private int flags = 0;
     private long minTstamp = Long.MIN_VALUE, maxTstamp = Long.MAX_VALUE;
@@ -106,6 +108,20 @@ public class TraceSearchQuery {
     public TraceSearchQuery withoutMatchEnd() {
         flags &= ~MATCH_END;
         return this;
+    }
+
+    public TraceSearchQuery withNoChildren() {
+        flags |= NO_CHILDREN;
+        return this;
+    }
+
+    public TraceSearchQuery withoutNoChildren() {
+        flags &= NO_CHILDREN;
+        return this;
+    }
+
+    public boolean hasNoChildren() {
+        return 0 != (flags & NO_CHILDREN);
     }
 
     public boolean hasSpansOnly() {

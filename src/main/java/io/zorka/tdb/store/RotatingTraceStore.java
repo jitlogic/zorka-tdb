@@ -412,11 +412,23 @@ public class RotatingTraceStore implements TraceStore {
             if (chunks.size() == 0) break;
 
             for (ChunkMetadata c : chunks) {
+
                 Tid tid = query.hasSpansOnly()
                         ? Tid.s(c.getTraceId1(), c.getTraceId2(), c.getSpanId())
                         : Tid.t(c.getTraceId1(), c.getTraceId2());
+
                 if (rslt.containsKey(tid)) continue;
-                rslt.put(tid, getTrace(tid, query.hasFetchAttrs()));
+
+                ChunkMetadata trace = getTrace(tid, query.hasFetchAttrs());
+
+                if (trace.isHasChildren()) trace.setHasChildren(true);
+
+                if (query.hasNoChildren() && !query.hasSpansOnly()) {
+                    trace.setChildren(null);
+                }
+
+                rslt.put(tid, trace);
+
                 if (rslt.size() >= limit) break;
             }
 

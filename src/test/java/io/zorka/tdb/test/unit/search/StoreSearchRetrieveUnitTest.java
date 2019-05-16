@@ -121,6 +121,16 @@ public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
     }
 
     @Test
+    public void searchWholeTreesWithNoChildren() {
+        TraceSearchQuery q = new TraceSearchQuery().attrMatch(COMPONENT, "db").withNoChildren();
+        List<ChunkMetadata> lst = store.search(q, 10, 0);
+        assertEquals(1, lst.size());
+        assertEquals(1L, lst.get(0).getSpanId());
+        assertNull(lst.get(0).getChildren());
+        assertTrue(lst.get(0).isHasChildren());
+    }
+
+    @Test
     public void searchFreeText() {
         TraceSearchQuery q = new TraceSearchQuery().setText("select 1");
         List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);

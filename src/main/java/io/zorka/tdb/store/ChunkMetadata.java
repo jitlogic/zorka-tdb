@@ -88,6 +88,8 @@ public class ChunkMetadata {
     /** Chunk end timestamp (ticks since trace start). */
     private long tstop;
 
+    private boolean hasChildren;
+
     /** String attributes */
     private Map<Integer,Integer> sattrs = new TreeMap<>();
 
@@ -348,6 +350,14 @@ public class ChunkMetadata {
 
     public void setChildren(List<ChunkMetadata> children) {
         this.children = children;
+    }
+
+    public void setHasChildren(boolean hasChildren) {
+        this.hasChildren = hasChildren;
+    }
+
+    public boolean isHasChildren() {
+        return hasChildren || (children != null && !children.isEmpty());
     }
 
     public static byte[] serialize(ChunkMetadata cm) {
