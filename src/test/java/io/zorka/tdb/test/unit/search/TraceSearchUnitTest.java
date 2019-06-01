@@ -84,23 +84,23 @@ public class TraceSearchUnitTest extends ZicoTestFixture {
 
     @Test
     public void testListAllTracesWithOffset() {
-        TraceSearchQuery query = new TraceSearchQuery();
-        List<ChunkMetadata> rslt = new ArrayList<>(store.searchChunks(query, 10, 1));
+        TraceSearchQuery query = new TraceSearchQuery().withSpansOnly();
+        TraceSearchResultSet rslt = store.searchChunks(query, 10, 1);
         assertEquals(1, rslt.size());
 
     }
 
     @Test
     public void searchByAttrKV() {
-        TraceSearchQuery query = new TraceSearchQuery().attrMatch("XXX", "XYZ");
-        List<ChunkMetadata> rslt = new ArrayList<>(store.searchChunks(query, 10, 0));
+        TraceSearchQuery query = new TraceSearchQuery().attrMatch("XXX", "XYZ").withSpansOnly();
+        TraceSearchResultSet rslt = store.searchChunks(query, 10, 0);
         assertEquals(1, rslt.size());
     }
 
     @Test
     public void searchByAttrKVWithOffset() {
-        TraceSearchQuery query = new TraceSearchQuery().attrMatch("XXX", "xxx");
-        List<ChunkMetadata> rslt = new ArrayList<>(store.searchChunks(query, 10, 0));
+        TraceSearchQuery query = new TraceSearchQuery().attrMatch("XXX", "xxx").withSpansOnly();
+        TraceSearchResultSet rslt = store.searchChunks(query, 10, 0);
         assertEquals(0, rslt.size());
     }
 

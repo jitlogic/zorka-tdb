@@ -194,7 +194,7 @@ public class RotatingTraceStore implements TraceStore {
 
         if (chunks.isEmpty()) return null;
 
-        Map<Long,List<ChunkMetadata>> m = new TreeMap<>();
+        TreeMap<Long,List<ChunkMetadata>> m = new TreeMap<>();
 
         long root = t.s;
 
@@ -230,7 +230,8 @@ public class RotatingTraceStore implements TraceStore {
             }
         }
 
-        return m.get(root).get(0);
+        return m.containsKey(root) ? m.get(root).get(0)
+            : m.size() > 0 ? m.firstEntry().getValue().get(0) : null;
     }
 
 
@@ -373,72 +374,43 @@ public class RotatingTraceStore implements TraceStore {
         return state.getCurrent();
     }
 
-    public List<ChunkMetadata> searchChunks(TraceSearchQuery query, int limit, int offset) {
+    public TraceSearchResultSet searchChunks(TraceSearchQuery query, int limit, int offset) {
         checkOpen();
 
-        List<ChunkMetadata> acc = new ArrayList<>(limit);
+        TraceSearchResultSet rs = new TraceSearchResultSet(offset, limit, query.hasSpansOnly());
 
         RotatingTraceStoreState state = this.state;
 
-        int count = state.getCurrent().search(query, limit, offset, acc);
+        new SimpleTraceStoreSearchContext(state.getCurrent(), query).search(rs);
 
-        if (state.getArchived() != null) {
-            for (int i = state.getArchived().size() - 1; i >= 0 && acc.size() < limit; i--) {
-                SimpleTraceStore store = state.getArchived().get(i);
-                int lim = limit - acc.size();
-                int off = offset - count;
-                count += store.search(query, lim, off, acc);
+        if (state.getArchived() != null && rs.needMore()) {
+            for (int i = state.getArchived().size() - 1; i >= 0 && rs.needMore(); i--) {
+                new SimpleTraceStoreSearchContext(state.getArchived().get(i), query).search(rs);
             }
         }
 
-        if (query.hasFetchAttrs()) {
-            for (ChunkMetadata c : acc) {
-                Map<String,Object> attrs = new TreeMap<>();
-                c.getStore().getAttributes(c, attrs);
-                c.setAttributes(attrs);
-            }
-        }
-
-        return acc;
+        return rs;
     }
 
     public List<ChunkMetadata> search(TraceSearchQuery query, int limit, int offset) {
-        Map<Tid,ChunkMetadata> rslt = new HashMap<>();
+        TraceSearchResultSet rslt = searchChunks(query, limit, offset);
+        List<ChunkMetadata> lst = new ArrayList<>(rslt.size());
 
-        int lim = limit + offset, offs = 0;
+        for (ChunkMetadata c : rslt.getResults()) {
 
-        while (rslt.size() < limit) {
-            Collection<ChunkMetadata> chunks = searchChunks(query, lim, offs);
-            if (chunks.size() == 0) break;
+            Tid tid = query.hasSpansOnly()
+                ? Tid.s(c.getTraceId1(), c.getTraceId2(), c.getSpanId())
+                : Tid.t(c.getTraceId1(), c.getTraceId2());
 
-            for (ChunkMetadata c : chunks) {
-
-                Tid tid = query.hasSpansOnly()
-                        ? Tid.s(c.getTraceId1(), c.getTraceId2(), c.getSpanId())
-                        : Tid.t(c.getTraceId1(), c.getTraceId2());
-
-                if (rslt.containsKey(tid)) continue;
-
-                ChunkMetadata trace = getTrace(tid, query.hasFetchAttrs());
-
+            ChunkMetadata trace = getTrace(tid, query.hasFetchAttrs());
+            if (trace != null) {
                 if (trace.isHasChildren()) trace.setHasChildren(true);
-
-                if (query.hasNoChildren() && !query.hasSpansOnly()) {
-                    trace.setChildren(null);
-                }
-
-                rslt.put(tid, trace);
-
-                if (rslt.size() >= limit) break;
-            }
-
-            if (rslt.size() < limit) {
-                offs += lim;
-                lim = limit;
+                if (query.hasNoChildren() && !query.hasSpansOnly()) trace.setChildren(null);
+                lst.add(trace);
             }
         }
 
-        return new ArrayList<>(rslt.values());
+        return lst;
     }
 
 }

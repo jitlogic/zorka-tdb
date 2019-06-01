@@ -12,10 +12,6 @@ import static io.zorka.tdb.store.SimpleTraceStore.ERROR_BIT;
 
 public class SimpleTraceStoreSearchContext {
 
-    private int skip;
-    private int count;
-    private int limit;
-
     private TraceSearchQuery query;
     private SimpleTraceStore store;
 
@@ -28,13 +24,10 @@ public class SimpleTraceStoreSearchContext {
     private BitmapSet stringIds;
     private ConcurrentNavigableMap<Fun.Tuple2<Integer,Long>,Long> strings;
 
-    public SimpleTraceStoreSearchContext(SimpleTraceStore store, TraceSearchQuery query, int limit, int offset) {
+    public SimpleTraceStoreSearchContext(SimpleTraceStore store, TraceSearchQuery query) {
         this.query = query;
         this.store = store;
         this.tstamps = store.getTstamps();
-        this.skip = offset;
-        this.count = 0;
-        this.limit = limit;
         this.strings = store.getStrings();
     }
 
@@ -133,24 +126,15 @@ public class SimpleTraceStoreSearchContext {
         return false;
     }
 
-    public int search(List<ChunkMetadata> acc) {
+    public void search(TraceSearchResultSet acc) {
 
-        if (!init()) return 0;
+        if (!init()) return;
 
-        while (tstampC != null && acc.size() < limit) {
+        while (tstampC != null && acc.needMore()) {
             if (!align()) break;
-
-            if (skip == 0) {
-                acc.add(store.getChunkMetadata(tstampC));
-            } else {
-                skip--;
-            }
-
+            acc.add(store.getChunkMetadata(tstampC));
             tstampC = tstamps.lowerKey(tstampC);
-            count++;
         }
-
-        return count;
     }
 
 }

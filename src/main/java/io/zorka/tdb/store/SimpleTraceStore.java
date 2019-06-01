@@ -427,10 +427,5 @@ public class SimpleTraceStore implements TraceStore {
                 .forEach(handlers::remove);
         }
     }
-
-    public int search(TraceSearchQuery query, int limit, int offset, List<ChunkMetadata> acc) {
-        return new SimpleTraceStoreSearchContext(this, query, limit, offset).search(acc);
-    }
-
 }
 

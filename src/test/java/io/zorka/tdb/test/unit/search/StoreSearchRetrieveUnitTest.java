@@ -3,6 +3,7 @@ package io.zorka.tdb.test.unit.search;
 import io.zorka.tdb.store.ChunkMetadata;
 import io.zorka.tdb.store.RotatingTraceStore;
 import io.zorka.tdb.store.TraceSearchQuery;
+import io.zorka.tdb.store.TraceSearchResultSet;
 import io.zorka.tdb.test.support.TraceTestDataBuilder;
 import io.zorka.tdb.test.support.ZicoTestFixture;
 import org.junit.Before;
@@ -50,14 +51,14 @@ public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
 
     @Test
     public void testSearchAllChunks() {
-        List<ChunkMetadata> lst = store.searchChunks(new TraceSearchQuery(), 10, 0);
+        TraceSearchResultSet lst = store.searchChunks(new TraceSearchQuery().withSpansOnly(), 10, 0);
         assertEquals(3, lst.size());
     }
 
     @Test
     public void testCheckParentChildRelationship() {
-        List<ChunkMetadata> l = store.searchChunks(new TraceSearchQuery(), 10, 0);
-        ChunkMetadata c = bySid(l, 2);
+        TraceSearchResultSet l = store.searchChunks(new TraceSearchQuery().withSpansOnly(), 10, 0);
+        ChunkMetadata c = bySid(l.getResults(), 2);
         assertNotNull(c);
         assertEquals(1L, c.getParentId());
     }
@@ -83,24 +84,24 @@ public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
 
     @Test
     public void testSearchByDuration() {
-        TraceSearchQuery q = new TraceSearchQuery().setMinDuration(1000000000L);
-        List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);
+        TraceSearchQuery q = new TraceSearchQuery().setMinDuration(1000000000L).withSpansOnly();
+        TraceSearchResultSet lst = store.searchChunks(q, 10, 0);
         assertEquals(1, lst.size());
     }
 
     @Test
     public void testSearchByAttrs() {
-        TraceSearchQuery q = new TraceSearchQuery().attrMatch(COMPONENT, "http");
-        List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);
+        TraceSearchQuery q = new TraceSearchQuery().attrMatch(COMPONENT, "http").withSpansOnly();
+        TraceSearchResultSet lst = store.searchChunks(q, 10, 0);
         assertEquals(2, lst.size());
     }
 
     @Test
     public void testShallowSearch() {
-        TraceSearchQuery q = new TraceSearchQuery().attrMatch(COMPONENT, "db");
-        List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);
+        TraceSearchQuery q = new TraceSearchQuery().attrMatch(COMPONENT, "db").withSpansOnly();
+        TraceSearchResultSet lst = store.searchChunks(q, 10, 0);
         assertEquals(1, lst.size());
-        assertEquals(2L, lst.get(0).getSpanId());
+        assertEquals(2L, lst.getResults().get(0).getSpanId());
     }
 
     @Test
@@ -132,9 +133,9 @@ public class StoreSearchRetrieveUnitTest extends ZicoTestFixture {
 
     @Test
     public void searchFreeText() {
-        TraceSearchQuery q = new TraceSearchQuery().setText("select 1");
-        List<ChunkMetadata> lst = store.searchChunks(q, 10, 0);
+        TraceSearchQuery q = new TraceSearchQuery().setText("select 1").withSpansOnly();
+        TraceSearchResultSet lst = store.searchChunks(q, 10, 0);
         assertEquals(1, lst.size());
-        assertEquals(2L, lst.get(0).getSpanId());
+        assertEquals(2L, lst.getResults().get(0).getSpanId());
     }
 }
