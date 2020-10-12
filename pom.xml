@@ -12,7 +12,7 @@
     <properties>
         <jdk.version>1.8</jdk.version>
         <compiler.plugin.version>2.3.2</compiler.plugin.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
         <jmh.version>1.17.3</jmh.version>
         <asm.version>7.0</asm.version>
         <mapdb.version>1.0.9</mapdb.version>
